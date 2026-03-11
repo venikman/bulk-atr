@@ -107,6 +107,7 @@ const buildPublicManifest = (origin: string, jobId: string, manifest: StoredMani
 const scheduleExportJob = async (
   jobId: string,
   groupId: string,
+  transactionTime: string,
   requestUrl: string,
   normalizedTypes: SupportedResourceType[],
   authMode: AuthMode,
@@ -134,13 +135,7 @@ const scheduleExportJob = async (
     });
   }
 
-  const transactionTime = new Date().toISOString();
-  const manifest = buildStoredManifest(
-    transactionTime,
-    buildCanonicalRequestUrl(requestUrl, normalizedTypes, exportTypeValue),
-    normalizedTypes,
-    authMode,
-  );
+  const manifest = buildStoredManifest(transactionTime, requestUrl, normalizedTypes, authMode);
   const manifestKey = await artifactStore.writeManifest(jobId, manifest);
   await jobRepository.markCompleted(jobId, manifestKey, files);
 };
@@ -235,11 +230,12 @@ export const createBulkRoutes = ({
 
     const transactionTime = new Date().toISOString();
     const jobId = randomUUID();
+    const requestUrl = buildCanonicalRequestUrl(context.req.url, normalizedTypes, exportTypeValue);
     await jobRepository.createJob({
       jobId,
       groupId,
       transactionTime,
-      requestUrl: buildCanonicalRequestUrl(context.req.url, normalizedTypes, exportTypeValue),
+      requestUrl,
       normalizedTypes,
       exportType: exportTypeValue,
     });
@@ -249,7 +245,8 @@ export const createBulkRoutes = ({
         scheduleExportJob(
           jobId,
           groupId,
-          context.req.url,
+          transactionTime,
+          requestUrl,
           normalizedTypes,
           authMode,
           jobRepository,

@@ -1,3 +1,4 @@
+import { getGroupIdentifierTokens } from './group-identifiers.js';
 import type { RawDomainStore } from './raw-domain-store.js';
 import type {
   RawAddress,
@@ -123,6 +124,11 @@ export class AtrMapper {
   private toRelatedPersonReference(sourceId?: string | null) {
     const relatedPerson = this.getRelatedPersonBySourceId(sourceId);
     return relatedPerson ? { reference: `RelatedPerson/${relatedPerson.fhirId}` } : undefined;
+  }
+
+  private toPractitionerReference(sourceId?: string | null) {
+    const practitioner = this.getPractitionerBySourceId(sourceId);
+    return practitioner ? { reference: `Practitioner/${practitioner.fhirId}` } : undefined;
   }
 
   private toRoleReference(sourceId?: string | null) {
@@ -291,6 +297,13 @@ export class AtrMapper {
   }
 
   mapPractitionerRole(raw: RawPractitionerRole): FhirResource {
+    const practitioner = this.toPractitionerReference(raw.practitionerSourceId);
+    if (!practitioner) {
+      throw new Error(
+        `PractitionerRole ${raw.sourceId} is missing practitioner ${raw.practitionerSourceId}.`,
+      );
+    }
+
     return {
       resourceType: 'PractitionerRole',
       id: raw.fhirId,
@@ -304,9 +317,7 @@ export class AtrMapper {
             },
           }
         : {}),
-      practitioner: {
-        reference: `Practitioner/${this.getPractitionerBySourceId(raw.practitionerSourceId)?.fhirId}`,
-      },
+      practitioner,
       organization: this.toOrganizationReference(raw.organizationSourceId),
       location: compact(
         raw.locationSourceIds.map((sourceId) => {
@@ -610,63 +621,47 @@ export class AtrMapper {
           valueCode: raw.status,
         },
       ],
-      identifier: compact([
-        {
-          system: 'http://example.org/contracts',
-          value: raw.contractId,
-        },
-        providerOrganization?.npi
-          ? {
-              system: 'http://hl7.org/fhir/sid/us-npi',
-              value: providerOrganization.npi,
-            }
-          : null,
-        providerOrganization?.tin
-          ? {
-              system: 'urn:oid:2.16.840.1.113883.4.4',
-              value: providerOrganization.tin,
-            }
-          : null,
-        {
-          system: 'http://example.org/settlement-entities',
-          value: raw.settlementEntityId,
-        },
-      ]),
+      identifier: getGroupIdentifierTokens(raw, providerOrganization),
       active: true,
       type: 'person',
       actual: true,
       name: raw.displayName,
       quantity: raw.members.length,
-      member: raw.members.map((member) => ({
-        extension: compact([
-          {
-            url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-changeType',
-            valueCode: member.changeType,
+      member: raw.members.map((member) => {
+        const coverage = this.store.indexes.coveragesBySourceId.get(member.coverageSourceId);
+        const role = this.store.indexes.rolesBySourceId.get(member.practitionerRoleSourceId);
+
+        return {
+          extension: compact([
+            {
+              url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-changeType',
+              valueCode: member.changeType,
+            },
+            coverage
+              ? {
+                  url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-coverageReference',
+                  valueReference: {
+                    reference: `Coverage/${coverage.fhirId}`,
+                  },
+                }
+              : null,
+            role
+              ? {
+                  url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributedProvider',
+                  valueReference: {
+                    reference: `PractitionerRole/${role.fhirId}`,
+                  },
+                }
+              : null,
+          ]),
+          entity: this.toPatientReference(member.patientSourceId),
+          period: {
+            start: member.attributionStart,
+            end: member.attributionEnd,
           },
-          this.store.indexes.coveragesBySourceId.get(member.coverageSourceId)
-            ? {
-                url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-coverageReference',
-                valueReference: {
-                  reference: `Coverage/${this.store.indexes.coveragesBySourceId.get(member.coverageSourceId)?.fhirId}`,
-                },
-              }
-            : null,
-          this.store.indexes.rolesBySourceId.get(member.practitionerRoleSourceId)
-            ? {
-                url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributedProvider',
-                valueReference: {
-                  reference: `PractitionerRole/${this.store.indexes.rolesBySourceId.get(member.practitionerRoleSourceId)?.fhirId}`,
-                },
-              }
-            : null,
-        ]),
-        entity: this.toPatientReference(member.patientSourceId),
-        period: {
-          start: member.attributionStart,
-          end: member.attributionEnd,
-        },
-        inactive: member.inactive,
-      })),
+          inactive: member.inactive,
+        };
+      }),
     };
   }
 }

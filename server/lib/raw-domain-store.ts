@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { getGroupIdentifierTokens } from './group-identifiers.js';
 import type {
   ClaimsAttributionSourceDocument,
   MemberCoverageSourceDocument,
@@ -65,7 +66,7 @@ export type RawDomainStore = {
     coveragesByFhirId: Map<string, RawCoverage>;
     relatedPersonsBySourceId: Map<string, RawRelatedPerson>;
     relatedPersonsByFhirId: Map<string, RawRelatedPerson>;
-    relatedPersonsByPatientSourceId: Map<string, RawRelatedPerson>;
+    relatedPersonsByPatientSourceId: Map<string, RawRelatedPerson[]>;
     practitionersBySourceId: Map<string, RawPractitioner>;
     practitionersByFhirId: Map<string, RawPractitioner>;
     rolesBySourceId: Map<string, RawPractitionerRole>;
@@ -184,7 +185,11 @@ export const createRawDomainStoreFromDocuments = ({
   for (const relatedPerson of relatedPersons) {
     store.indexes.relatedPersonsBySourceId.set(relatedPerson.sourceId, relatedPerson);
     store.indexes.relatedPersonsByFhirId.set(relatedPerson.fhirId, relatedPerson);
-    store.indexes.relatedPersonsByPatientSourceId.set(relatedPerson.patientSourceId, relatedPerson);
+    pushIndexValue(
+      store.indexes.relatedPersonsByPatientSourceId,
+      relatedPerson.patientSourceId,
+      relatedPerson,
+    );
   }
 
   for (const practitioner of practitioners) {
@@ -217,11 +222,15 @@ export const createRawDomainStoreFromDocuments = ({
 
     store.indexes.attributionListsBySourceId.set(attributionList.sourceId, attributionList);
     store.indexes.attributionListsByGroupId.set(attributionList.fhirId, attributionList);
-    pushIndexValue(
-      store.indexes.attributionListsByIdentifier,
-      `http://example.org/contracts|${attributionList.contractId}`,
-      attributionList,
-    );
+    const providerOrganization =
+      store.indexes.orgsBySourceId.get(attributionList.providerOrganizationSourceId) || null;
+    for (const identifier of getGroupIdentifierTokens(attributionList, providerOrganization)) {
+      pushIndexValue(
+        store.indexes.attributionListsByIdentifier,
+        `${identifier.system}|${identifier.value}`,
+        attributionList,
+      );
+    }
     pushIndexValue(
       store.indexes.attributionListsByName,
       attributionList.displayName.toLowerCase(),

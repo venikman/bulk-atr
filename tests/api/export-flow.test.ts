@@ -1,9 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createTestServer } from './test-helpers.js';
 
 const minimumTypes =
   'Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location';
 
 type ManifestPayload = {
+  transactionTime: string;
   requiresAccessToken: boolean;
   output: Array<{
     type: string;
@@ -49,6 +52,12 @@ describe('bulk export flow', () => {
       expect(kickoff.status).toBe(202);
       const contentLocation = kickoff.headers.get('content-location');
       expect(contentLocation).toContain('/fhir/bulk-status/');
+      const jobId = contentLocation?.split('/').at(-1);
+      expect(jobId).toBeTruthy();
+      const jobPath = join(server.runtimeDir, 'jobs', `${jobId}.json`);
+      const createdJob = JSON.parse(await readFile(jobPath, 'utf-8')) as {
+        transactionTime: string;
+      };
 
       const initialStatus = await server.request(contentLocation || '');
       expect(initialStatus.status).toBe(202);
@@ -60,6 +69,7 @@ describe('bulk export flow', () => {
       const manifest = (await completedStatus.json()) as ManifestPayload;
 
       expect(completedStatus.status).toBe(200);
+      expect(manifest.transactionTime).toBe(createdJob.transactionTime);
       expect(manifest.requiresAccessToken).toBe(false);
       expect(manifest.output).toHaveLength(8);
 
@@ -158,6 +168,49 @@ describe('bulk export flow', () => {
         '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&resourceTypes=Group,Patient,Coverage',
       );
       expect(aliasKickoff.status).toBe(202);
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  test('traverses through PractitionerRole even when that type is not requested', async () => {
+    const server = await createTestServer();
+
+    try {
+      const requestedTypes = 'Group,Patient,Coverage,Practitioner,Organization';
+      const kickoff = await server.request(
+        `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${requestedTypes}`,
+      );
+      expect(kickoff.status).toBe(202);
+
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
+      const status = await server.request(kickoff.headers.get('content-location') || '');
+      const manifest = (await status.json()) as ManifestPayload;
+
+      expect(status.status).toBe(200);
+      expect(manifest.output.map((entry) => entry.type)).toEqual([
+        'Group',
+        'Patient',
+        'Coverage',
+        'Practitioner',
+        'Organization',
+      ]);
+
+      const resourcesByType = new Map<string, Array<{ resourceType: string; id: string }>>();
+      for (const entry of manifest.output) {
+        const fileResponse = await server.request(new URL(entry.url).pathname);
+        const ndjson = await fileResponse.text();
+        const lines = ndjson.trim().split('\n').filter(Boolean);
+        resourcesByType.set(
+          entry.type,
+          lines.map((line) => JSON.parse(line) as { resourceType: string; id: string }),
+        );
+      }
+
+      expect(resourcesByType.get('Practitioner')?.length).toBeGreaterThan(0);
+      expect(resourcesByType.get('Organization')?.length).toBeGreaterThan(0);
+      expect(resourcesByType.has('PractitionerRole')).toBe(false);
     } finally {
       await server.cleanup();
     }

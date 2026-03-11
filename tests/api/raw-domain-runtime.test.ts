@@ -1,7 +1,10 @@
 import { resolve } from 'node:path';
 import atrFixture from '../../output/atr_bulk_export_single.json' with { type: 'json' };
 import { AtrResolver } from '../../server/lib/atr-resolver.js';
-import { loadRawDomainStore } from '../../server/lib/raw-domain-store.js';
+import {
+  createRawDomainStoreFromDocuments,
+  loadRawDomainStore,
+} from '../../server/lib/raw-domain-store.js';
 import { supportedResourceTypes } from '../../server/lib/types.js';
 
 const loadResolver = async () => {
@@ -101,5 +104,54 @@ describe('raw-domain runtime', () => {
     );
     expect(exportResources?.Location).toHaveLength(5);
     expect(exportResources).not.toHaveProperty('Claim');
+  });
+
+  test('keeps all related persons indexed for a patient when multiple source rows share the patient', async () => {
+    const { store } = await loadResolver();
+    const memberCoverage = structuredClone(store.memberCoverage);
+    const providerDirectory = structuredClone(store.providerDirectory);
+    const claimsAttribution = structuredClone(store.claimsAttribution);
+    const patientSourceId = memberCoverage.functions.listRelatedPersons.items[0].patientSourceId;
+
+    memberCoverage.functions.listRelatedPersons.items.push({
+      ...memberCoverage.functions.listRelatedPersons.items[0],
+      sourceId: 'relatedperson-source-duplicate',
+      fhirId: 'relatedperson-duplicate',
+    });
+
+    const duplicateStore = createRawDomainStoreFromDocuments({
+      memberCoverage,
+      providerDirectory,
+      claimsAttribution,
+    });
+
+    expect(
+      duplicateStore.indexes.relatedPersonsByPatientSourceId.get(patientSourceId),
+    ).toHaveLength(2);
+  });
+
+  test('throws a descriptive error when a PractitionerRole references a missing practitioner', async () => {
+    const { store } = await loadResolver();
+    const memberCoverage = structuredClone(store.memberCoverage);
+    const providerDirectory = structuredClone(store.providerDirectory);
+    const claimsAttribution = structuredClone(store.claimsAttribution);
+    const role = providerDirectory.functions.listPractitionerRoles.items[0];
+
+    providerDirectory.functions.listPractitionerRoles.items[0] = {
+      ...role,
+      practitionerSourceId: 'missing-practitioner-source-id',
+    };
+
+    const resolver = new AtrResolver(
+      createRawDomainStoreFromDocuments({
+        memberCoverage,
+        providerDirectory,
+        claimsAttribution,
+      }),
+    );
+
+    expect(() => resolver.getResource('PractitionerRole', role.fhirId)).toThrow(
+      `PractitionerRole ${role.sourceId} is missing practitioner missing-practitioner-source-id.`,
+    );
   });
 });

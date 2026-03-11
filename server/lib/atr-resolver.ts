@@ -133,40 +133,34 @@ export class AtrResolver {
     });
   }
 
-  private listResources(resourceType: SupportedResourceType) {
+  private listResourceIds(resourceType: SupportedResourceType) {
     switch (resourceType) {
       case 'Group':
-        return this.store.claimsAttribution.functions.listAttributionLists.items.map((raw) =>
-          this.getGroupById(raw.fhirId),
+        return this.store.claimsAttribution.functions.listAttributionLists.items.map(
+          (raw) => raw.fhirId,
         );
       case 'Patient':
-        return this.store.memberCoverage.functions.listPatients.items.map((raw) =>
-          this.getResource('Patient', raw.fhirId),
-        );
+        return this.store.memberCoverage.functions.listPatients.items.map((raw) => raw.fhirId);
       case 'Coverage':
-        return this.store.memberCoverage.functions.listCoverages.items.map((raw) =>
-          this.getResource('Coverage', raw.fhirId),
-        );
+        return this.store.memberCoverage.functions.listCoverages.items.map((raw) => raw.fhirId);
       case 'RelatedPerson':
-        return this.store.memberCoverage.functions.listRelatedPersons.items.map((raw) =>
-          this.getResource('RelatedPerson', raw.fhirId),
+        return this.store.memberCoverage.functions.listRelatedPersons.items.map(
+          (raw) => raw.fhirId,
         );
       case 'Practitioner':
-        return this.store.providerDirectory.functions.listPractitioners.items.map((raw) =>
-          this.getResource('Practitioner', raw.fhirId),
+        return this.store.providerDirectory.functions.listPractitioners.items.map(
+          (raw) => raw.fhirId,
         );
       case 'PractitionerRole':
-        return this.store.providerDirectory.functions.listPractitionerRoles.items.map((raw) =>
-          this.getResource('PractitionerRole', raw.fhirId),
+        return this.store.providerDirectory.functions.listPractitionerRoles.items.map(
+          (raw) => raw.fhirId,
         );
       case 'Organization':
-        return this.store.providerDirectory.functions.listOrganizations.items.map((raw) =>
-          this.getResource('Organization', raw.fhirId),
+        return this.store.providerDirectory.functions.listOrganizations.items.map(
+          (raw) => raw.fhirId,
         );
       case 'Location':
-        return this.store.providerDirectory.functions.listLocations.items.map((raw) =>
-          this.getResource('Location', raw.fhirId),
-        );
+        return this.store.providerDirectory.functions.listLocations.items.map((raw) => raw.fhirId);
     }
   }
 
@@ -196,11 +190,8 @@ export class AtrResolver {
 
     const requested = new Set(requestedTypes);
     const selectedKeys = new Set<string>();
+    const visitedKeys = new Set<string>([`Group/${group.id}`]);
     const queue: FhirResource[] = [group];
-
-    if (requested.has('Group')) {
-      selectedKeys.add(`Group/${group.id}`);
-    }
 
     while (queue.length > 0) {
       const resource = queue.shift();
@@ -208,12 +199,17 @@ export class AtrResolver {
         continue;
       }
 
+      const key = `${resource.resourceType}/${resource.id}`;
+      if (requested.has(resource.resourceType as SupportedResourceType)) {
+        selectedKeys.add(key);
+      }
+
       const references = new Set<string>();
       collectReferences(resource, references);
 
       for (const reference of references) {
         const parsed = parseReference(reference);
-        if (!parsed || !requested.has(parsed.resourceType)) {
+        if (!parsed) {
           continue;
         }
 
@@ -222,22 +218,29 @@ export class AtrResolver {
           continue;
         }
 
-        const key = `${referenced.resourceType}/${referenced.id}`;
-        if (selectedKeys.has(key)) {
+        const referencedKey = `${referenced.resourceType}/${referenced.id}`;
+        if (visitedKeys.has(referencedKey)) {
           continue;
         }
 
-        selectedKeys.add(key);
+        visitedKeys.add(referencedKey);
         queue.push(referenced);
       }
     }
 
     return Object.fromEntries(
       requestedTypes.map((type) => {
-        const resources = this.listResources(type).filter(
-          (resource): resource is FhirResource =>
-            !!resource && selectedKeys.has(`${resource.resourceType}/${resource.id}`),
-        );
+        const resources: FhirResource[] = [];
+        for (const id of this.listResourceIds(type)) {
+          if (!selectedKeys.has(`${type}/${id}`)) {
+            continue;
+          }
+
+          const resource = this.getResource(type, id);
+          if (resource) {
+            resources.push(resource);
+          }
+        }
         return [type, resources];
       }),
     ) as Partial<ResourceCollection>;
