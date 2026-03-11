@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
+import type { AtrResolver } from './lib/atr-resolver.js';
 import { type AppEnv, type AuthMode, normalizeAuthMode } from './lib/auth.js';
 import type { BackgroundTaskRunner } from './lib/background-task-runner.js';
 import type { ExportArtifactStore } from './lib/export-artifact-store.js';
 import type { ExportJobRepository } from './lib/export-job-repository.js';
-import type { ProjectionStore } from './lib/projection-store.js';
 import { createBulkRoutes } from './routes/bulk.js';
 import { createGroupRoutes } from './routes/group.js';
 import { createMetadataRoutes } from './routes/metadata.js';
@@ -11,7 +11,7 @@ import { createResourceReadRoutes } from './routes/resource-read.js';
 
 export type AppOptions = {
   authMode?: AuthMode;
-  projectionStore: ProjectionStore;
+  resolver: AtrResolver;
   artifactStore: ExportArtifactStore;
   jobRepository: ExportJobRepository;
   backgroundTaskRunner: BackgroundTaskRunner;
@@ -20,7 +20,7 @@ export type AppOptions = {
 
 export const createApp = ({
   authMode = normalizeAuthMode(process.env.AUTH_MODE),
-  projectionStore,
+  resolver,
   artifactStore,
   jobRepository,
   backgroundTaskRunner,
@@ -30,11 +30,11 @@ export const createApp = ({
   const fhir = new Hono<AppEnv>();
 
   fhir.route('/', createMetadataRoutes(authMode));
-  fhir.route('/', createGroupRoutes({ projectionStore, authMode }));
+  fhir.route('/', createGroupRoutes({ resolver, authMode }));
   fhir.route(
     '/',
     createBulkRoutes({
-      projectionStore,
+      resolver,
       artifactStore,
       jobRepository,
       backgroundTaskRunner,
@@ -42,7 +42,7 @@ export const createApp = ({
       jobDelayMs,
     }),
   );
-  fhir.route('/', createResourceReadRoutes({ projectionStore, authMode }));
+  fhir.route('/', createResourceReadRoutes({ resolver, authMode }));
 
   app.route('/fhir', fhir);
 

@@ -235,6 +235,20 @@ Important:
 
 Returns the single contract-scoped attribution roster.
 
+Fields include:
+
+- `sourceId`
+- `fhirId`
+- `displayName`
+- `contractId`
+- `settlementEntityId`
+- `payerOrganizationSourceId`
+- `providerOrganizationSourceId`
+- `status`
+- `contractStart`
+- `contractEnd`
+- `members`
+
 Mapped FHIR output:
 
 - one `Group`

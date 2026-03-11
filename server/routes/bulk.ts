@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
+import type { AtrResolver } from '../lib/atr-resolver.js';
 import {
   type AppEnv,
   type AuthMode,
@@ -11,7 +12,6 @@ import type { BackgroundTaskRunner } from '../lib/background-task-runner.js';
 import type { ExportArtifactStore } from '../lib/export-artifact-store.js';
 import type { ExportJobRepository } from '../lib/export-job-repository.js';
 import { fhirOperationOutcome } from '../lib/operation-outcome.js';
-import type { ProjectionStore } from '../lib/projection-store.js';
 import {
   type StoredManifest,
   type SupportedResourceType,
@@ -33,7 +33,7 @@ type NormalizedTypeParameter =
   | null;
 
 type BulkRoutesOptions = {
-  projectionStore: ProjectionStore;
+  resolver: AtrResolver;
   jobRepository: ExportJobRepository;
   artifactStore: ExportArtifactStore;
   backgroundTaskRunner: BackgroundTaskRunner;
@@ -112,9 +112,9 @@ const scheduleExportJob = async (
   authMode: AuthMode,
   jobRepository: ExportJobRepository,
   artifactStore: ExportArtifactStore,
-  projectionStore: ProjectionStore,
+  resolver: AtrResolver,
 ) => {
-  const exportResources = projectionStore.buildExportResources(groupId, normalizedTypes);
+  const exportResources = resolver.buildExportResources(groupId, normalizedTypes);
   if (!exportResources) {
     await jobRepository.markFailed(jobId, ['Group snapshot could not be resolved for export.']);
     return;
@@ -146,7 +146,7 @@ const scheduleExportJob = async (
 };
 
 export const createBulkRoutes = ({
-  projectionStore,
+  resolver,
   jobRepository,
   artifactStore,
   backgroundTaskRunner,
@@ -160,7 +160,7 @@ export const createBulkRoutes = ({
 
   app.get('/Group/:id/$davinci-data-export', async (context) => {
     const groupId = context.req.param('id');
-    const group = projectionStore.getGroupById(groupId);
+    const group = resolver.getGroupById(groupId);
     if (!group) {
       return fhirOperationOutcome(context, 404, 'not-found', 'Group was not found.');
     }
@@ -254,7 +254,7 @@ export const createBulkRoutes = ({
           authMode,
           jobRepository,
           artifactStore,
-          projectionStore,
+          resolver,
         ).catch(async (error: unknown) => {
           const diagnostics =
             error instanceof Error ? error.message : 'Unexpected export generation failure.';
