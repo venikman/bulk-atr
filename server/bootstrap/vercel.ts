@@ -7,7 +7,7 @@ import {
 } from '../adapters/postgres-export-job-repository.js';
 import { VercelBackgroundTaskRunner } from '../adapters/vercel-background-task-runner.js';
 import { createApp } from '../app.js';
-import type { AuthMode } from '../lib/auth.js';
+import { type AuthMode, normalizeAuthMode } from '../lib/auth.js';
 import { ProjectionStore } from '../lib/projection-store.js';
 
 let poolPromise: Promise<Pool> | null = null;
@@ -41,7 +41,7 @@ const getPool = async () => {
 };
 
 export const createVercelApp = async ({
-  authMode = (process.env.AUTH_MODE as AuthMode | undefined) || 'none',
+  authMode = normalizeAuthMode(process.env.AUTH_MODE),
   jobDelayMs = 50,
   blobPrefix = 'bulk-atr',
 }: {

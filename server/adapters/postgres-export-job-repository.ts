@@ -5,6 +5,7 @@ import type { ExportFileRecord, ExportJobRecord } from '../lib/types.js';
 const STATUS_POLL_WINDOW_MS = 1000;
 const COMPLETED_JOB_TTL_MS = 60 * 60 * 1000;
 const ACTIVE_JOB_TTL_MS = 15 * 60 * 1000;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type Queryable = {
   query<T extends QueryResultRow = QueryResultRow>(
@@ -35,6 +36,7 @@ type ExportJobRow = {
 };
 
 const addMs = (iso: string, ms: number) => new Date(new Date(iso).getTime() + ms).toISOString();
+const isUuid = (value: string) => UUID_PATTERN.test(value);
 
 const parseJsonArray = <T>(value: T[] | string | null | undefined) => {
   if (!value) {
@@ -147,6 +149,10 @@ export class PostgresExportJobRepository implements ExportJobRepository {
   }
 
   async getJob(jobId: string) {
+    if (!isUuid(jobId)) {
+      return null;
+    }
+
     const result = await this.pool.query<ExportJobRow>(
       'select * from export_jobs where job_id = $1',
       [jobId],

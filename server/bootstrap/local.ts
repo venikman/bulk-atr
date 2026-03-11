@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { LocalBackgroundTaskRunner } from '../adapters/local-background-task-runner.js';
 import { createApp } from '../app.js';
-import type { AuthMode } from '../lib/auth.js';
+import { type AuthMode, normalizeAuthMode } from '../lib/auth.js';
 import { ExportJobStore } from '../lib/export-jobs.js';
 import { FileStore } from '../lib/file-store.js';
 import { ProjectionStore } from '../lib/projection-store.js';
@@ -14,7 +14,7 @@ export type CreateLocalAppOptions = {
 };
 
 export const createLocalApp = async ({
-  authMode = (process.env.AUTH_MODE as AuthMode | undefined) || 'none',
+  authMode = normalizeAuthMode(process.env.AUTH_MODE),
   runtimeDir = resolve('.runtime/atr'),
   fixturePath = resolve('output/atr_bulk_export_single.json'),
   jobDelayMs = 50,

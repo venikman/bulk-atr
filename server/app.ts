@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { AppEnv, AuthMode } from './lib/auth.js';
+import { type AppEnv, type AuthMode, normalizeAuthMode } from './lib/auth.js';
 import type { BackgroundTaskRunner } from './lib/background-task-runner.js';
 import type { ExportArtifactStore } from './lib/export-artifact-store.js';
 import type { ExportJobRepository } from './lib/export-job-repository.js';
@@ -19,7 +19,7 @@ export type AppOptions = {
 };
 
 export const createApp = ({
-  authMode = (process.env.AUTH_MODE as AuthMode | undefined) || 'none',
+  authMode = normalizeAuthMode(process.env.AUTH_MODE),
   projectionStore,
   artifactStore,
   jobRepository,

@@ -13,6 +13,11 @@ export type AppEnv = {
   };
 };
 
+export const normalizeAuthMode = (value: string | null | undefined): AuthMode => {
+  const normalized = value?.trim();
+  return normalized === 'smart-backend' ? 'smart-backend' : 'none';
+};
+
 const buildCallerId = (forwarded: string | undefined, fallback = 'anonymous') => {
   if (!forwarded) {
     return fallback;
