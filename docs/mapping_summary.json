@@ -1,9 +1,11 @@
 {
+  "generatedAt": "2026-03-11T12:00:00Z",
+  "artifactType": "atr-bulk-export-single",
   "inputCounts": {
     "patients": 50,
     "coverages": 50,
     "relatedPersons": 16,
-    "memberServiceLocations": 4,
+    "memberServiceLocations": 50,
     "practitioners": 10,
     "practitionerRoles": 10,
     "organizations": 6,
@@ -12,63 +14,85 @@
     "attributionMembers": 50
   },
   "outputCounts": {
-    "Group": 1,
-    "Patient": 50,
-    "Coverage": 50,
-    "RelatedPerson": 16,
+    "Organization": 6,
+    "Location": 5,
     "Practitioner": 10,
     "PractitionerRole": 10,
-    "Organization": 6,
-    "Location": 5
+    "Patient": 50,
+    "RelatedPerson": 16,
+    "Coverage": 50,
+    "Group": 1
   },
-  "demographicPolicy": {
-    "patient": [
-      "identifier.memberId",
-      "identifier.mrn",
-      "identifier.optionalPayerOrProgramIds",
-      "name.official",
-      "name.usual",
-      "telecom.home",
-      "telecom.mobile",
-      "telecom.email",
-      "gender",
-      "birthDate",
-      "birthSex",
-      "race",
-      "ethnicity",
-      "maritalStatus",
-      "address.lineCityDistrictStatePostalCountry",
-      "communication.language",
-      "contact.emergencyOrNextOfKin",
-      "generalPractitioner",
-      "managingOrganization"
+  "deterministicRules": {
+    "generatedAt": "2026-03-11T12:00:00Z",
+    "changeTypeDistribution": {
+      "nochange": 35,
+      "changed": 10,
+      "new": 5
+    },
+    "dependentMembers": [
+      3,
+      6,
+      9,
+      12,
+      15,
+      18,
+      21,
+      24,
+      27,
+      30,
+      33,
+      36,
+      39,
+      42,
+      45,
+      48
     ],
-    "practitioner": [
-      "identifier.npi",
-      "identifier.internalProviderId",
-      "identifier.stateLicense",
-      "name.official",
-      "telecom.work",
-      "telecom.email",
-      "address",
-      "gender",
-      "birthDate",
-      "qualification",
-      "communication.language"
-    ]
+    "memberRoleRule": "member i uses practitionerrole-((i-1) mod 10)+1",
+    "roleLocationRule": "role i uses location-((i-1) mod 5)+1",
+    "roleOrganizationRule": "role i uses provider organization-((i-1) mod 3)+1"
   },
-  "sourceOnlyArtifacts": {
-    "claims": "Used to justify attribution and to drive member-to-provider assignment. Not exported as ATR output resources.",
-    "memberServiceLocations": "Remain in source mocks unless explicitly mapped into a provider-facing use case."
-  },
-  "mappingRules": {
+  "referenceRules": {
     "groupMemberEntity": "Patient/{patient.fhirId}",
-    "groupMemberCoverageExtension": "Coverage/{coverage.fhirId}",
-    "groupMemberAttributedProviderExtension": "PractitionerRole/{role.fhirId}",
+    "groupMemberCoverageReference": "Coverage/{coverage.fhirId}",
+    "groupMemberAttributedProvider": "PractitionerRole/{role.fhirId}",
     "coverageBeneficiary": "Patient/{patient.fhirId}",
-    "coverageSubscriber": "Patient or RelatedPerson depending on self/dependent case",
+    "coverageSubscriber": "Patient/{patient.fhirId} or RelatedPerson/{relatedPerson.fhirId}",
+    "coveragePolicyHolder": "Patient/{patient.fhirId} or RelatedPerson/{relatedPerson.fhirId}",
     "rolePractitioner": "Practitioner/{practitioner.fhirId}",
     "roleOrganization": "Organization/{organization.fhirId}",
-    "roleLocation": "Location/{location.fhirId}"
+    "roleLocation": "Location/{location.fhirId}",
+    "relatedPersonPatient": "Patient/{patient.fhirId}"
+  },
+  "excludedArtifacts": {
+    "Claim": "Claims remain source-only in input-services/claims-attribution-service.json and are not exported as FHIR resources.",
+    "MemberLocations": "Member-side locations remain source mocks only and are excluded from final ATR output."
+  },
+  "fileLayout": {
+    "inputs": [
+      "input-services/member-coverage-service.json",
+      "input-services/provider-directory-service.json",
+      "input-services/claims-attribution-service.json"
+    ],
+    "system": [
+      "system/atr-producer-mapper.json"
+    ],
+    "outputs": [
+      "output/atr_bulk_export_single.json",
+      "output/bulk_status_response.json",
+      "output/ndjson/Group.ndjson",
+      "output/ndjson/Patient.ndjson",
+      "output/ndjson/Coverage.ndjson",
+      "output/ndjson/RelatedPerson.ndjson",
+      "output/ndjson/Practitioner.ndjson",
+      "output/ndjson/PractitionerRole.ndjson",
+      "output/ndjson/Organization.ndjson",
+      "output/ndjson/Location.ndjson"
+    ],
+    "docs": [
+      "docs/plan.md",
+      "docs/mapping_summary.json",
+      "docs/codex_prompt.txt"
+    ]
   }
 }

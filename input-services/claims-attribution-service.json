@@ -17,29 +17,2095 @@
           "renderingPractitionerRoleSourceId": "prole-src-001",
           "serviceOrganizationSourceId": "org-src-clinic-001",
           "serviceLocationSourceId": "loc-src-provider-001",
-          "billablePeriodStart": "2026-01-14",
-          "billablePeriodEnd": "2026-01-15",
+          "billablePeriodStart": "2026-02-04",
+          "billablePeriodEnd": "2026-02-04",
           "claimType": "professional",
-          "diagnosisCodes": ["Z00.00"],
-          "procedureCodes": ["99213"],
-          "allowedAmount": 77.30,
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 76.85,
           "currency": "USD"
         },
         {
           "sourceId": "claim-src-00002",
           "claimNumber": "CLM00000002",
+          "memberId": "MBR000001",
+          "patientSourceId": "pat-src-0001",
+          "coverageSourceId": "cov-src-0001",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-06-09",
+          "billablePeriodEnd": "2026-06-10",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 88.1,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00003",
+          "claimNumber": "CLM00000003",
+          "memberId": "MBR000002",
+          "patientSourceId": "pat-src-0002",
+          "coverageSourceId": "cov-src-0002",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-03-07",
+          "billablePeriodEnd": "2026-03-07",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 81.2,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00004",
+          "claimNumber": "CLM00000004",
+          "memberId": "MBR000002",
+          "patientSourceId": "pat-src-0002",
+          "coverageSourceId": "cov-src-0002",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-07-12",
+          "billablePeriodEnd": "2026-07-13",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 92.45,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00005",
+          "claimNumber": "CLM00000005",
           "memberId": "MBR000003",
           "patientSourceId": "pat-src-0003",
           "coverageSourceId": "cov-src-0003",
           "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-04-10",
+          "billablePeriodEnd": "2026-04-10",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 85.55,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00006",
+          "claimNumber": "CLM00000006",
+          "memberId": "MBR000003",
+          "patientSourceId": "pat-src-0003",
+          "coverageSourceId": "cov-src-0003",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-08-15",
+          "billablePeriodEnd": "2026-08-16",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 96.8,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00007",
+          "claimNumber": "CLM00000007",
+          "memberId": "MBR000004",
+          "patientSourceId": "pat-src-0004",
+          "coverageSourceId": "cov-src-0004",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-05-13",
+          "billablePeriodEnd": "2026-05-13",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 89.9,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00008",
+          "claimNumber": "CLM00000008",
+          "memberId": "MBR000004",
+          "patientSourceId": "pat-src-0004",
+          "coverageSourceId": "cov-src-0004",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-09-18",
+          "billablePeriodEnd": "2026-09-19",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 101.15,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00009",
+          "claimNumber": "CLM00000009",
+          "memberId": "MBR000005",
+          "patientSourceId": "pat-src-0005",
+          "coverageSourceId": "cov-src-0005",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-06-16",
+          "billablePeriodEnd": "2026-06-16",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 94.25,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00010",
+          "claimNumber": "CLM00000010",
+          "memberId": "MBR000005",
+          "patientSourceId": "pat-src-0005",
+          "coverageSourceId": "cov-src-0005",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-10-21",
+          "billablePeriodEnd": "2026-10-22",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 105.5,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00011",
+          "claimNumber": "CLM00000011",
+          "memberId": "MBR000006",
+          "patientSourceId": "pat-src-0006",
+          "coverageSourceId": "cov-src-0006",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-07-19",
+          "billablePeriodEnd": "2026-07-19",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 98.6,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00012",
+          "claimNumber": "CLM00000012",
+          "memberId": "MBR000006",
+          "patientSourceId": "pat-src-0006",
+          "coverageSourceId": "cov-src-0006",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-11-24",
+          "billablePeriodEnd": "2026-11-25",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 109.85,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00013",
+          "claimNumber": "CLM00000013",
+          "memberId": "MBR000007",
+          "patientSourceId": "pat-src-0007",
+          "coverageSourceId": "cov-src-0007",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-08-22",
+          "billablePeriodEnd": "2026-08-22",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 102.95,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00014",
+          "claimNumber": "CLM00000014",
+          "memberId": "MBR000007",
+          "patientSourceId": "pat-src-0007",
+          "coverageSourceId": "cov-src-0007",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-12-27",
+          "billablePeriodEnd": "2026-12-28",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 114.2,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00015",
+          "claimNumber": "CLM00000015",
+          "memberId": "MBR000008",
+          "patientSourceId": "pat-src-0008",
+          "coverageSourceId": "cov-src-0008",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-09-25",
+          "billablePeriodEnd": "2026-09-25",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 107.3,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00016",
+          "claimNumber": "CLM00000016",
+          "memberId": "MBR000008",
+          "patientSourceId": "pat-src-0008",
+          "coverageSourceId": "cov-src-0008",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-01-02",
+          "billablePeriodEnd": "2026-01-03",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 118.55,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00017",
+          "claimNumber": "CLM00000017",
+          "memberId": "MBR000009",
+          "patientSourceId": "pat-src-0009",
+          "coverageSourceId": "cov-src-0009",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-10-28",
+          "billablePeriodEnd": "2026-10-28",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 111.65,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00018",
+          "claimNumber": "CLM00000018",
+          "memberId": "MBR000009",
+          "patientSourceId": "pat-src-0009",
+          "coverageSourceId": "cov-src-0009",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-02-05",
+          "billablePeriodEnd": "2026-02-06",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 122.9,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00019",
+          "claimNumber": "CLM00000019",
+          "memberId": "MBR000010",
+          "patientSourceId": "pat-src-0010",
+          "coverageSourceId": "cov-src-0010",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-11-03",
+          "billablePeriodEnd": "2026-11-03",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 116.0,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00020",
+          "claimNumber": "CLM00000020",
+          "memberId": "MBR000010",
+          "patientSourceId": "pat-src-0010",
+          "coverageSourceId": "cov-src-0010",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-03-08",
+          "billablePeriodEnd": "2026-03-09",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 127.25,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00021",
+          "claimNumber": "CLM00000021",
+          "memberId": "MBR000011",
+          "patientSourceId": "pat-src-0011",
+          "coverageSourceId": "cov-src-0011",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-12-06",
+          "billablePeriodEnd": "2026-12-06",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 120.35,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00022",
+          "claimNumber": "CLM00000022",
+          "memberId": "MBR000011",
+          "patientSourceId": "pat-src-0011",
+          "coverageSourceId": "cov-src-0011",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-04-11",
+          "billablePeriodEnd": "2026-04-12",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 131.6,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00023",
+          "claimNumber": "CLM00000023",
+          "memberId": "MBR000012",
+          "patientSourceId": "pat-src-0012",
+          "coverageSourceId": "cov-src-0012",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
           "serviceOrganizationSourceId": "org-src-clinic-002",
           "serviceLocationSourceId": "loc-src-provider-002",
-          "billablePeriodStart": "2026-02-03",
-          "billablePeriodEnd": "2026-02-03",
+          "billablePeriodStart": "2026-01-09",
+          "billablePeriodEnd": "2026-01-09",
           "claimType": "professional",
-          "diagnosisCodes": ["J06.9"],
-          "procedureCodes": ["99214"],
-          "allowedAmount": 91.10,
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 124.7,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00024",
+          "claimNumber": "CLM00000024",
+          "memberId": "MBR000012",
+          "patientSourceId": "pat-src-0012",
+          "coverageSourceId": "cov-src-0012",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-05-14",
+          "billablePeriodEnd": "2026-05-15",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 135.95,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00025",
+          "claimNumber": "CLM00000025",
+          "memberId": "MBR000013",
+          "patientSourceId": "pat-src-0013",
+          "coverageSourceId": "cov-src-0013",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-02-12",
+          "billablePeriodEnd": "2026-02-12",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 129.05,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00026",
+          "claimNumber": "CLM00000026",
+          "memberId": "MBR000013",
+          "patientSourceId": "pat-src-0013",
+          "coverageSourceId": "cov-src-0013",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-06-17",
+          "billablePeriodEnd": "2026-06-18",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 140.3,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00027",
+          "claimNumber": "CLM00000027",
+          "memberId": "MBR000014",
+          "patientSourceId": "pat-src-0014",
+          "coverageSourceId": "cov-src-0014",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-03-15",
+          "billablePeriodEnd": "2026-03-15",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 133.4,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00028",
+          "claimNumber": "CLM00000028",
+          "memberId": "MBR000014",
+          "patientSourceId": "pat-src-0014",
+          "coverageSourceId": "cov-src-0014",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-07-20",
+          "billablePeriodEnd": "2026-07-21",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 144.65,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00029",
+          "claimNumber": "CLM00000029",
+          "memberId": "MBR000015",
+          "patientSourceId": "pat-src-0015",
+          "coverageSourceId": "cov-src-0015",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-04-18",
+          "billablePeriodEnd": "2026-04-18",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 137.75,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00030",
+          "claimNumber": "CLM00000030",
+          "memberId": "MBR000015",
+          "patientSourceId": "pat-src-0015",
+          "coverageSourceId": "cov-src-0015",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-08-23",
+          "billablePeriodEnd": "2026-08-24",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 149.0,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00031",
+          "claimNumber": "CLM00000031",
+          "memberId": "MBR000016",
+          "patientSourceId": "pat-src-0016",
+          "coverageSourceId": "cov-src-0016",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-05-21",
+          "billablePeriodEnd": "2026-05-21",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 142.1,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00032",
+          "claimNumber": "CLM00000032",
+          "memberId": "MBR000016",
+          "patientSourceId": "pat-src-0016",
+          "coverageSourceId": "cov-src-0016",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-09-26",
+          "billablePeriodEnd": "2026-09-27",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 153.35,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00033",
+          "claimNumber": "CLM00000033",
+          "memberId": "MBR000017",
+          "patientSourceId": "pat-src-0017",
+          "coverageSourceId": "cov-src-0017",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-06-24",
+          "billablePeriodEnd": "2026-06-24",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 146.45,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00034",
+          "claimNumber": "CLM00000034",
+          "memberId": "MBR000017",
+          "patientSourceId": "pat-src-0017",
+          "coverageSourceId": "cov-src-0017",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-10-01",
+          "billablePeriodEnd": "2026-10-02",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 157.7,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00035",
+          "claimNumber": "CLM00000035",
+          "memberId": "MBR000018",
+          "patientSourceId": "pat-src-0018",
+          "coverageSourceId": "cov-src-0018",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-07-27",
+          "billablePeriodEnd": "2026-07-27",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 150.8,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00036",
+          "claimNumber": "CLM00000036",
+          "memberId": "MBR000018",
+          "patientSourceId": "pat-src-0018",
+          "coverageSourceId": "cov-src-0018",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-11-04",
+          "billablePeriodEnd": "2026-11-05",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 162.05,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00037",
+          "claimNumber": "CLM00000037",
+          "memberId": "MBR000019",
+          "patientSourceId": "pat-src-0019",
+          "coverageSourceId": "cov-src-0019",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-08-02",
+          "billablePeriodEnd": "2026-08-02",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 155.15,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00038",
+          "claimNumber": "CLM00000038",
+          "memberId": "MBR000019",
+          "patientSourceId": "pat-src-0019",
+          "coverageSourceId": "cov-src-0019",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-12-07",
+          "billablePeriodEnd": "2026-12-08",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 166.4,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00039",
+          "claimNumber": "CLM00000039",
+          "memberId": "MBR000020",
+          "patientSourceId": "pat-src-0020",
+          "coverageSourceId": "cov-src-0020",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-09-05",
+          "billablePeriodEnd": "2026-09-05",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 159.5,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00040",
+          "claimNumber": "CLM00000040",
+          "memberId": "MBR000020",
+          "patientSourceId": "pat-src-0020",
+          "coverageSourceId": "cov-src-0020",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-01-10",
+          "billablePeriodEnd": "2026-01-11",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 170.75,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00041",
+          "claimNumber": "CLM00000041",
+          "memberId": "MBR000021",
+          "patientSourceId": "pat-src-0021",
+          "coverageSourceId": "cov-src-0021",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-10-08",
+          "billablePeriodEnd": "2026-10-08",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 163.85,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00042",
+          "claimNumber": "CLM00000042",
+          "memberId": "MBR000021",
+          "patientSourceId": "pat-src-0021",
+          "coverageSourceId": "cov-src-0021",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-02-13",
+          "billablePeriodEnd": "2026-02-14",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 175.1,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00043",
+          "claimNumber": "CLM00000043",
+          "memberId": "MBR000022",
+          "patientSourceId": "pat-src-0022",
+          "coverageSourceId": "cov-src-0022",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-11-11",
+          "billablePeriodEnd": "2026-11-11",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 168.2,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00044",
+          "claimNumber": "CLM00000044",
+          "memberId": "MBR000022",
+          "patientSourceId": "pat-src-0022",
+          "coverageSourceId": "cov-src-0022",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-03-16",
+          "billablePeriodEnd": "2026-03-17",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 179.45,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00045",
+          "claimNumber": "CLM00000045",
+          "memberId": "MBR000023",
+          "patientSourceId": "pat-src-0023",
+          "coverageSourceId": "cov-src-0023",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-12-14",
+          "billablePeriodEnd": "2026-12-14",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 172.55,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00046",
+          "claimNumber": "CLM00000046",
+          "memberId": "MBR000023",
+          "patientSourceId": "pat-src-0023",
+          "coverageSourceId": "cov-src-0023",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-04-19",
+          "billablePeriodEnd": "2026-04-20",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 183.8,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00047",
+          "claimNumber": "CLM00000047",
+          "memberId": "MBR000024",
+          "patientSourceId": "pat-src-0024",
+          "coverageSourceId": "cov-src-0024",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-01-17",
+          "billablePeriodEnd": "2026-01-17",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 176.9,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00048",
+          "claimNumber": "CLM00000048",
+          "memberId": "MBR000024",
+          "patientSourceId": "pat-src-0024",
+          "coverageSourceId": "cov-src-0024",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-05-22",
+          "billablePeriodEnd": "2026-05-23",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 188.15,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00049",
+          "claimNumber": "CLM00000049",
+          "memberId": "MBR000025",
+          "patientSourceId": "pat-src-0025",
+          "coverageSourceId": "cov-src-0025",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-02-20",
+          "billablePeriodEnd": "2026-02-20",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 181.25,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00050",
+          "claimNumber": "CLM00000050",
+          "memberId": "MBR000025",
+          "patientSourceId": "pat-src-0025",
+          "coverageSourceId": "cov-src-0025",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-06-25",
+          "billablePeriodEnd": "2026-06-26",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 192.5,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00051",
+          "claimNumber": "CLM00000051",
+          "memberId": "MBR000026",
+          "patientSourceId": "pat-src-0026",
+          "coverageSourceId": "cov-src-0026",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-03-23",
+          "billablePeriodEnd": "2026-03-23",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 185.6,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00052",
+          "claimNumber": "CLM00000052",
+          "memberId": "MBR000026",
+          "patientSourceId": "pat-src-0026",
+          "coverageSourceId": "cov-src-0026",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-07-28",
+          "billablePeriodEnd": "2026-07-28",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 196.85,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00053",
+          "claimNumber": "CLM00000053",
+          "memberId": "MBR000027",
+          "patientSourceId": "pat-src-0027",
+          "coverageSourceId": "cov-src-0027",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-04-26",
+          "billablePeriodEnd": "2026-04-26",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 189.95,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00054",
+          "claimNumber": "CLM00000054",
+          "memberId": "MBR000027",
+          "patientSourceId": "pat-src-0027",
+          "coverageSourceId": "cov-src-0027",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-08-03",
+          "billablePeriodEnd": "2026-08-04",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 201.2,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00055",
+          "claimNumber": "CLM00000055",
+          "memberId": "MBR000028",
+          "patientSourceId": "pat-src-0028",
+          "coverageSourceId": "cov-src-0028",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-05-01",
+          "billablePeriodEnd": "2026-05-01",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 194.3,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00056",
+          "claimNumber": "CLM00000056",
+          "memberId": "MBR000028",
+          "patientSourceId": "pat-src-0028",
+          "coverageSourceId": "cov-src-0028",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-09-06",
+          "billablePeriodEnd": "2026-09-07",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 205.55,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00057",
+          "claimNumber": "CLM00000057",
+          "memberId": "MBR000029",
+          "patientSourceId": "pat-src-0029",
+          "coverageSourceId": "cov-src-0029",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-06-04",
+          "billablePeriodEnd": "2026-06-04",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 198.65,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00058",
+          "claimNumber": "CLM00000058",
+          "memberId": "MBR000029",
+          "patientSourceId": "pat-src-0029",
+          "coverageSourceId": "cov-src-0029",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-10-09",
+          "billablePeriodEnd": "2026-10-10",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 209.9,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00059",
+          "claimNumber": "CLM00000059",
+          "memberId": "MBR000030",
+          "patientSourceId": "pat-src-0030",
+          "coverageSourceId": "cov-src-0030",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-07-07",
+          "billablePeriodEnd": "2026-07-07",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 203.0,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00060",
+          "claimNumber": "CLM00000060",
+          "memberId": "MBR000030",
+          "patientSourceId": "pat-src-0030",
+          "coverageSourceId": "cov-src-0030",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-11-12",
+          "billablePeriodEnd": "2026-11-13",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 214.25,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00061",
+          "claimNumber": "CLM00000061",
+          "memberId": "MBR000031",
+          "patientSourceId": "pat-src-0031",
+          "coverageSourceId": "cov-src-0031",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-08-10",
+          "billablePeriodEnd": "2026-08-10",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 207.35,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00062",
+          "claimNumber": "CLM00000062",
+          "memberId": "MBR000031",
+          "patientSourceId": "pat-src-0031",
+          "coverageSourceId": "cov-src-0031",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-12-15",
+          "billablePeriodEnd": "2026-12-16",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 218.6,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00063",
+          "claimNumber": "CLM00000063",
+          "memberId": "MBR000032",
+          "patientSourceId": "pat-src-0032",
+          "coverageSourceId": "cov-src-0032",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-09-13",
+          "billablePeriodEnd": "2026-09-13",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 211.7,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00064",
+          "claimNumber": "CLM00000064",
+          "memberId": "MBR000032",
+          "patientSourceId": "pat-src-0032",
+          "coverageSourceId": "cov-src-0032",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-01-18",
+          "billablePeriodEnd": "2026-01-19",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 222.95,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00065",
+          "claimNumber": "CLM00000065",
+          "memberId": "MBR000033",
+          "patientSourceId": "pat-src-0033",
+          "coverageSourceId": "cov-src-0033",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-10-16",
+          "billablePeriodEnd": "2026-10-16",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 216.05,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00066",
+          "claimNumber": "CLM00000066",
+          "memberId": "MBR000033",
+          "patientSourceId": "pat-src-0033",
+          "coverageSourceId": "cov-src-0033",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-02-21",
+          "billablePeriodEnd": "2026-02-22",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 227.3,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00067",
+          "claimNumber": "CLM00000067",
+          "memberId": "MBR000034",
+          "patientSourceId": "pat-src-0034",
+          "coverageSourceId": "cov-src-0034",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-11-19",
+          "billablePeriodEnd": "2026-11-19",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 220.4,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00068",
+          "claimNumber": "CLM00000068",
+          "memberId": "MBR000034",
+          "patientSourceId": "pat-src-0034",
+          "coverageSourceId": "cov-src-0034",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-03-24",
+          "billablePeriodEnd": "2026-03-25",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 231.65,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00069",
+          "claimNumber": "CLM00000069",
+          "memberId": "MBR000035",
+          "patientSourceId": "pat-src-0035",
+          "coverageSourceId": "cov-src-0035",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-12-22",
+          "billablePeriodEnd": "2026-12-22",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 224.75,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00070",
+          "claimNumber": "CLM00000070",
+          "memberId": "MBR000035",
+          "patientSourceId": "pat-src-0035",
+          "coverageSourceId": "cov-src-0035",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-04-27",
+          "billablePeriodEnd": "2026-04-28",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 236.0,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00071",
+          "claimNumber": "CLM00000071",
+          "memberId": "MBR000036",
+          "patientSourceId": "pat-src-0036",
+          "coverageSourceId": "cov-src-0036",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-01-25",
+          "billablePeriodEnd": "2026-01-25",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 229.1,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00072",
+          "claimNumber": "CLM00000072",
+          "memberId": "MBR000036",
+          "patientSourceId": "pat-src-0036",
+          "coverageSourceId": "cov-src-0036",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-05-02",
+          "billablePeriodEnd": "2026-05-03",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 240.35,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00073",
+          "claimNumber": "CLM00000073",
+          "memberId": "MBR000037",
+          "patientSourceId": "pat-src-0037",
+          "coverageSourceId": "cov-src-0037",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-02-28",
+          "billablePeriodEnd": "2026-02-28",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 233.45,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00074",
+          "claimNumber": "CLM00000074",
+          "memberId": "MBR000037",
+          "patientSourceId": "pat-src-0037",
+          "coverageSourceId": "cov-src-0037",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-06-05",
+          "billablePeriodEnd": "2026-06-06",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 244.7,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00075",
+          "claimNumber": "CLM00000075",
+          "memberId": "MBR000038",
+          "patientSourceId": "pat-src-0038",
+          "coverageSourceId": "cov-src-0038",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-03-03",
+          "billablePeriodEnd": "2026-03-03",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 237.8,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00076",
+          "claimNumber": "CLM00000076",
+          "memberId": "MBR000038",
+          "patientSourceId": "pat-src-0038",
+          "coverageSourceId": "cov-src-0038",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-07-08",
+          "billablePeriodEnd": "2026-07-09",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 249.05,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00077",
+          "claimNumber": "CLM00000077",
+          "memberId": "MBR000039",
+          "patientSourceId": "pat-src-0039",
+          "coverageSourceId": "cov-src-0039",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-04-06",
+          "billablePeriodEnd": "2026-04-06",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 242.15,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00078",
+          "claimNumber": "CLM00000078",
+          "memberId": "MBR000039",
+          "patientSourceId": "pat-src-0039",
+          "coverageSourceId": "cov-src-0039",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-08-11",
+          "billablePeriodEnd": "2026-08-12",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 253.4,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00079",
+          "claimNumber": "CLM00000079",
+          "memberId": "MBR000040",
+          "patientSourceId": "pat-src-0040",
+          "coverageSourceId": "cov-src-0040",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-05-09",
+          "billablePeriodEnd": "2026-05-09",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 246.5,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00080",
+          "claimNumber": "CLM00000080",
+          "memberId": "MBR000040",
+          "patientSourceId": "pat-src-0040",
+          "coverageSourceId": "cov-src-0040",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-09-14",
+          "billablePeriodEnd": "2026-09-15",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 257.75,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00081",
+          "claimNumber": "CLM00000081",
+          "memberId": "MBR000041",
+          "patientSourceId": "pat-src-0041",
+          "coverageSourceId": "cov-src-0041",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-06-12",
+          "billablePeriodEnd": "2026-06-12",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 250.85,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00082",
+          "claimNumber": "CLM00000082",
+          "memberId": "MBR000041",
+          "patientSourceId": "pat-src-0041",
+          "coverageSourceId": "cov-src-0041",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-10-17",
+          "billablePeriodEnd": "2026-10-18",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 262.1,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00083",
+          "claimNumber": "CLM00000083",
+          "memberId": "MBR000042",
+          "patientSourceId": "pat-src-0042",
+          "coverageSourceId": "cov-src-0042",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-07-15",
+          "billablePeriodEnd": "2026-07-15",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "I10"
+          ],
+          "procedureCodes": [
+            "99214"
+          ],
+          "allowedAmount": 255.2,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00084",
+          "claimNumber": "CLM00000084",
+          "memberId": "MBR000042",
+          "patientSourceId": "pat-src-0042",
+          "coverageSourceId": "cov-src-0042",
+          "renderingPractitionerRoleSourceId": "prole-src-002",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-11-20",
+          "billablePeriodEnd": "2026-11-21",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 266.45,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00085",
+          "claimNumber": "CLM00000085",
+          "memberId": "MBR000043",
+          "patientSourceId": "pat-src-0043",
+          "coverageSourceId": "cov-src-0043",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-08-18",
+          "billablePeriodEnd": "2026-08-18",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E11.9"
+          ],
+          "procedureCodes": [
+            "G0438"
+          ],
+          "allowedAmount": 259.55,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00086",
+          "claimNumber": "CLM00000086",
+          "memberId": "MBR000043",
+          "patientSourceId": "pat-src-0043",
+          "coverageSourceId": "cov-src-0043",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-12-23",
+          "billablePeriodEnd": "2026-12-24",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 270.8,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00087",
+          "claimNumber": "CLM00000087",
+          "memberId": "MBR000044",
+          "patientSourceId": "pat-src-0044",
+          "coverageSourceId": "cov-src-0044",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-09-21",
+          "billablePeriodEnd": "2026-09-21",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "J06.9"
+          ],
+          "procedureCodes": [
+            "83036"
+          ],
+          "allowedAmount": 263.9,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00088",
+          "claimNumber": "CLM00000088",
+          "memberId": "MBR000044",
+          "patientSourceId": "pat-src-0044",
+          "coverageSourceId": "cov-src-0044",
+          "renderingPractitionerRoleSourceId": "prole-src-004",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-01-26",
+          "billablePeriodEnd": "2026-01-27",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 275.15,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00089",
+          "claimNumber": "CLM00000089",
+          "memberId": "MBR000045",
+          "patientSourceId": "pat-src-0045",
+          "coverageSourceId": "cov-src-0045",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-10-24",
+          "billablePeriodEnd": "2026-10-24",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "M54.50"
+          ],
+          "procedureCodes": [
+            "93000"
+          ],
+          "allowedAmount": 268.25,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00090",
+          "claimNumber": "CLM00000090",
+          "memberId": "MBR000045",
+          "patientSourceId": "pat-src-0045",
+          "coverageSourceId": "cov-src-0045",
+          "renderingPractitionerRoleSourceId": "prole-src-005",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-02-01",
+          "billablePeriodEnd": "2026-02-02",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 279.5,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00091",
+          "claimNumber": "CLM00000091",
+          "memberId": "MBR000046",
+          "patientSourceId": "pat-src-0046",
+          "coverageSourceId": "cov-src-0046",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-11-27",
+          "billablePeriodEnd": "2026-11-27",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z79.899"
+          ],
+          "procedureCodes": [
+            "81002"
+          ],
+          "allowedAmount": 272.6,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00092",
+          "claimNumber": "CLM00000092",
+          "memberId": "MBR000046",
+          "patientSourceId": "pat-src-0046",
+          "coverageSourceId": "cov-src-0046",
+          "renderingPractitionerRoleSourceId": "prole-src-006",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-03-04",
+          "billablePeriodEnd": "2026-03-05",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 283.85,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00093",
+          "claimNumber": "CLM00000093",
+          "memberId": "MBR000047",
+          "patientSourceId": "pat-src-0047",
+          "coverageSourceId": "cov-src-0047",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-12-02",
+          "billablePeriodEnd": "2026-12-02",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "R73.03"
+          ],
+          "procedureCodes": [
+            "36415"
+          ],
+          "allowedAmount": 276.95,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00094",
+          "claimNumber": "CLM00000094",
+          "memberId": "MBR000047",
+          "patientSourceId": "pat-src-0047",
+          "coverageSourceId": "cov-src-0047",
+          "renderingPractitionerRoleSourceId": "prole-src-007",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-04-07",
+          "billablePeriodEnd": "2026-04-08",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 288.2,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00095",
+          "claimNumber": "CLM00000095",
+          "memberId": "MBR000048",
+          "patientSourceId": "pat-src-0048",
+          "coverageSourceId": "cov-src-0048",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-01-05",
+          "billablePeriodEnd": "2026-01-05",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "E78.5"
+          ],
+          "procedureCodes": [
+            "90686"
+          ],
+          "allowedAmount": 281.3,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00096",
+          "claimNumber": "CLM00000096",
+          "memberId": "MBR000048",
+          "patientSourceId": "pat-src-0048",
+          "coverageSourceId": "cov-src-0048",
+          "renderingPractitionerRoleSourceId": "prole-src-008",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-003",
+          "billablePeriodStart": "2026-05-10",
+          "billablePeriodEnd": "2026-05-11",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 292.55,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00097",
+          "claimNumber": "CLM00000097",
+          "memberId": "MBR000049",
+          "patientSourceId": "pat-src-0049",
+          "coverageSourceId": "cov-src-0049",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-02-08",
+          "billablePeriodEnd": "2026-02-08",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "N18.2"
+          ],
+          "procedureCodes": [
+            "80053"
+          ],
+          "allowedAmount": 285.65,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00098",
+          "claimNumber": "CLM00000098",
+          "memberId": "MBR000049",
+          "patientSourceId": "pat-src-0049",
+          "coverageSourceId": "cov-src-0049",
+          "renderingPractitionerRoleSourceId": "prole-src-009",
+          "serviceOrganizationSourceId": "org-src-clinic-003",
+          "serviceLocationSourceId": "loc-src-provider-004",
+          "billablePeriodStart": "2026-06-13",
+          "billablePeriodEnd": "2026-06-14",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 296.9,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00099",
+          "claimNumber": "CLM00000099",
+          "memberId": "MBR000050",
+          "patientSourceId": "pat-src-0050",
+          "coverageSourceId": "cov-src-0050",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-03-11",
+          "billablePeriodEnd": "2026-03-11",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "F41.1"
+          ],
+          "procedureCodes": [
+            "87086"
+          ],
+          "allowedAmount": 290.0,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00100",
+          "claimNumber": "CLM00000100",
+          "memberId": "MBR000050",
+          "patientSourceId": "pat-src-0050",
+          "coverageSourceId": "cov-src-0050",
+          "renderingPractitionerRoleSourceId": "prole-src-010",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-005",
+          "billablePeriodStart": "2026-07-16",
+          "billablePeriodEnd": "2026-07-17",
+          "claimType": "professional",
+          "diagnosisCodes": [
+            "Z00.00"
+          ],
+          "procedureCodes": [
+            "99213"
+          ],
+          "allowedAmount": 301.25,
           "currency": "USD"
         }
       ]
@@ -51,8 +2117,8 @@
           "sourceId": "attr-list-src-001",
           "contractId": "CTR-2026-NWACO-001",
           "settlementEntityId": "NWACO-001",
-          "providerOrganizationSourceId": "org-src-clinic-001",
           "payerOrganizationSourceId": "org-src-payer-001",
+          "providerOrganizationSourceId": "org-src-clinic-001",
           "status": "open",
           "contractStart": "2026-01-01",
           "contractEnd": "2026-12-31",
@@ -65,6 +2131,18 @@
               "attributionStart": "2026-01-01",
               "attributionEnd": "2026-12-31",
               "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000002",
+              "patientSourceId": "pat-src-0002",
+              "coverageSourceId": "cov-src-0002",
+              "practitionerRoleSourceId": "prole-src-002",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
               "inactive": false
             },
             {
@@ -75,6 +2153,524 @@
               "attributionStart": "2026-01-01",
               "attributionEnd": "2026-12-31",
               "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000004",
+              "patientSourceId": "pat-src-0004",
+              "coverageSourceId": "cov-src-0004",
+              "practitionerRoleSourceId": "prole-src-004",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000005",
+              "patientSourceId": "pat-src-0005",
+              "coverageSourceId": "cov-src-0005",
+              "practitionerRoleSourceId": "prole-src-005",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000006",
+              "patientSourceId": "pat-src-0006",
+              "coverageSourceId": "cov-src-0006",
+              "practitionerRoleSourceId": "prole-src-006",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000007",
+              "patientSourceId": "pat-src-0007",
+              "coverageSourceId": "cov-src-0007",
+              "practitionerRoleSourceId": "prole-src-007",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000008",
+              "patientSourceId": "pat-src-0008",
+              "coverageSourceId": "cov-src-0008",
+              "practitionerRoleSourceId": "prole-src-008",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000009",
+              "patientSourceId": "pat-src-0009",
+              "coverageSourceId": "cov-src-0009",
+              "practitionerRoleSourceId": "prole-src-009",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000010",
+              "patientSourceId": "pat-src-0010",
+              "coverageSourceId": "cov-src-0010",
+              "practitionerRoleSourceId": "prole-src-010",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000011",
+              "patientSourceId": "pat-src-0011",
+              "coverageSourceId": "cov-src-0011",
+              "practitionerRoleSourceId": "prole-src-001",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000012",
+              "patientSourceId": "pat-src-0012",
+              "coverageSourceId": "cov-src-0012",
+              "practitionerRoleSourceId": "prole-src-002",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000013",
+              "patientSourceId": "pat-src-0013",
+              "coverageSourceId": "cov-src-0013",
+              "practitionerRoleSourceId": "prole-src-003",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000014",
+              "patientSourceId": "pat-src-0014",
+              "coverageSourceId": "cov-src-0014",
+              "practitionerRoleSourceId": "prole-src-004",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000015",
+              "patientSourceId": "pat-src-0015",
+              "coverageSourceId": "cov-src-0015",
+              "practitionerRoleSourceId": "prole-src-005",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000016",
+              "patientSourceId": "pat-src-0016",
+              "coverageSourceId": "cov-src-0016",
+              "practitionerRoleSourceId": "prole-src-006",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000017",
+              "patientSourceId": "pat-src-0017",
+              "coverageSourceId": "cov-src-0017",
+              "practitionerRoleSourceId": "prole-src-007",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000018",
+              "patientSourceId": "pat-src-0018",
+              "coverageSourceId": "cov-src-0018",
+              "practitionerRoleSourceId": "prole-src-008",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000019",
+              "patientSourceId": "pat-src-0019",
+              "coverageSourceId": "cov-src-0019",
+              "practitionerRoleSourceId": "prole-src-009",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000020",
+              "patientSourceId": "pat-src-0020",
+              "coverageSourceId": "cov-src-0020",
+              "practitionerRoleSourceId": "prole-src-010",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000021",
+              "patientSourceId": "pat-src-0021",
+              "coverageSourceId": "cov-src-0021",
+              "practitionerRoleSourceId": "prole-src-001",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000022",
+              "patientSourceId": "pat-src-0022",
+              "coverageSourceId": "cov-src-0022",
+              "practitionerRoleSourceId": "prole-src-002",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000023",
+              "patientSourceId": "pat-src-0023",
+              "coverageSourceId": "cov-src-0023",
+              "practitionerRoleSourceId": "prole-src-003",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000024",
+              "patientSourceId": "pat-src-0024",
+              "coverageSourceId": "cov-src-0024",
+              "practitionerRoleSourceId": "prole-src-004",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000025",
+              "patientSourceId": "pat-src-0025",
+              "coverageSourceId": "cov-src-0025",
+              "practitionerRoleSourceId": "prole-src-005",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000026",
+              "patientSourceId": "pat-src-0026",
+              "coverageSourceId": "cov-src-0026",
+              "practitionerRoleSourceId": "prole-src-006",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000027",
+              "patientSourceId": "pat-src-0027",
+              "coverageSourceId": "cov-src-0027",
+              "practitionerRoleSourceId": "prole-src-007",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000028",
+              "patientSourceId": "pat-src-0028",
+              "coverageSourceId": "cov-src-0028",
+              "practitionerRoleSourceId": "prole-src-008",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000029",
+              "patientSourceId": "pat-src-0029",
+              "coverageSourceId": "cov-src-0029",
+              "practitionerRoleSourceId": "prole-src-009",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000030",
+              "patientSourceId": "pat-src-0030",
+              "coverageSourceId": "cov-src-0030",
+              "practitionerRoleSourceId": "prole-src-010",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000031",
+              "patientSourceId": "pat-src-0031",
+              "coverageSourceId": "cov-src-0031",
+              "practitionerRoleSourceId": "prole-src-001",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000032",
+              "patientSourceId": "pat-src-0032",
+              "coverageSourceId": "cov-src-0032",
+              "practitionerRoleSourceId": "prole-src-002",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000033",
+              "patientSourceId": "pat-src-0033",
+              "coverageSourceId": "cov-src-0033",
+              "practitionerRoleSourceId": "prole-src-003",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000034",
+              "patientSourceId": "pat-src-0034",
+              "coverageSourceId": "cov-src-0034",
+              "practitionerRoleSourceId": "prole-src-004",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000035",
+              "patientSourceId": "pat-src-0035",
+              "coverageSourceId": "cov-src-0035",
+              "practitionerRoleSourceId": "prole-src-005",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000036",
+              "patientSourceId": "pat-src-0036",
+              "coverageSourceId": "cov-src-0036",
+              "practitionerRoleSourceId": "prole-src-006",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000037",
+              "patientSourceId": "pat-src-0037",
+              "coverageSourceId": "cov-src-0037",
+              "practitionerRoleSourceId": "prole-src-007",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000038",
+              "patientSourceId": "pat-src-0038",
+              "coverageSourceId": "cov-src-0038",
+              "practitionerRoleSourceId": "prole-src-008",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000039",
+              "patientSourceId": "pat-src-0039",
+              "coverageSourceId": "cov-src-0039",
+              "practitionerRoleSourceId": "prole-src-009",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000040",
+              "patientSourceId": "pat-src-0040",
+              "coverageSourceId": "cov-src-0040",
+              "practitionerRoleSourceId": "prole-src-010",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000041",
+              "patientSourceId": "pat-src-0041",
+              "coverageSourceId": "cov-src-0041",
+              "practitionerRoleSourceId": "prole-src-001",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000042",
+              "patientSourceId": "pat-src-0042",
+              "coverageSourceId": "cov-src-0042",
+              "practitionerRoleSourceId": "prole-src-002",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000043",
+              "patientSourceId": "pat-src-0043",
+              "coverageSourceId": "cov-src-0043",
+              "practitionerRoleSourceId": "prole-src-003",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000044",
+              "patientSourceId": "pat-src-0044",
+              "coverageSourceId": "cov-src-0044",
+              "practitionerRoleSourceId": "prole-src-004",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000045",
+              "patientSourceId": "pat-src-0045",
+              "coverageSourceId": "cov-src-0045",
+              "practitionerRoleSourceId": "prole-src-005",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "changed",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000046",
+              "patientSourceId": "pat-src-0046",
+              "coverageSourceId": "cov-src-0046",
+              "practitionerRoleSourceId": "prole-src-006",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "new",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000047",
+              "patientSourceId": "pat-src-0047",
+              "coverageSourceId": "cov-src-0047",
+              "practitionerRoleSourceId": "prole-src-007",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "new",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000048",
+              "patientSourceId": "pat-src-0048",
+              "coverageSourceId": "cov-src-0048",
+              "practitionerRoleSourceId": "prole-src-008",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "new",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000049",
+              "patientSourceId": "pat-src-0049",
+              "coverageSourceId": "cov-src-0049",
+              "practitionerRoleSourceId": "prole-src-009",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "new",
+              "status": "active",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000050",
+              "patientSourceId": "pat-src-0050",
+              "coverageSourceId": "cov-src-0050",
+              "practitionerRoleSourceId": "prole-src-010",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "new",
+              "status": "active",
               "inactive": false
             }
           ]

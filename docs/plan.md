@@ -1,66 +1,39 @@
-# ATR mock plan
+# Static ATR Mock Package
 
-## Assumptions
-- Target IG: Da Vinci Member Attribution (ATR) List v2.1.0 on FHIR R4.
-- No API server is needed yet. Static JSON and NDJSON artifacts are enough.
-- Final ATR scope is one contract-scoped Group resource with exactly 50 members.
-- "Full demographics" means default provider-shareable ATR/US Core-aligned demographics for Patient and Practitioner.
-- Omit SSN by default. Synthetic MRN, member ID, payer member number, Medicare or Medicaid identifiers may be included.
+## Summary
+- Deterministic Da Vinci ATR v2.1.0 mock package on FHIR R4 for one 2026 contract-scoped attribution list.
+- Synthetic data only. No API, server, CLI, database schema, or Claim export artifacts.
+- Fixed generated timestamp: `2026-03-11T12:00:00Z`.
 
-## Model
-- member-coverage-service owns Patient, Coverage, RelatedPerson, and member-side Location source data.
-- provider-directory-service owns Practitioner, PractitionerRole, Organization, and provider-side Location source data.
-- claims-attribution-service owns Claim evidence and one internal attribution roster.
-- atr-producer-mapper consumes the three upstream services and emits one consolidated ATR export plus NDJSON by resource type.
+## Package Contents
+- `input-services/member-coverage-service.json`: 50 Patients, 50 Coverages, 16 RelatedPersons, 50 member-side source Locations.
+- `input-services/provider-directory-service.json`: 10 Practitioners, 10 PractitionerRoles, 6 Organizations, 5 provider Locations.
+- `input-services/claims-attribution-service.json`: 100 source Claims and one attribution list with 50 member rows.
+- `system/atr-producer-mapper.json`: offline `buildBulkExport` mapping contract.
+- `output/atr_bulk_export_single.json`: consolidated ATR export.
+- `output/bulk_status_response.json`: bulk-style manifest for 8 NDJSON outputs.
+- `output/ndjson/*.ndjson`: one file each for Group, Patient, Coverage, RelatedPerson, Practitioner, PractitionerRole, Organization, and Location.
 
-## Pick
-- Build one Group resource for one 2026 contract and 50 attributed members.
-- Emit a local consolidated JSON file for debugging plus a bulk-status manifest plus NDJSON output files.
-- Use deterministic IDs and repeatable sequencing for all source IDs and FHIR IDs.
-- Use 10 Practitioners, 10 PractitionerRoles, 6 Organizations, 5 provider Locations, 50 Patients, 50 Coverages, 16 RelatedPersons, and 100 Claims.
+## Deterministic Rules
+- Members, Patients, and Coverages are numbered 1..50.
+- Practitioners and PractitionerRoles are numbered 1..10.
+- Organizations are fixed at 6 and provider Locations at 5.
+- Each member rotates across attributed PractitionerRole ids using `((i-1) mod 10)+1`.
+- Each role rotates across provider Locations using `((i-1) mod 5)+1` and provider Organizations using `((i-1) mod 3)+1`.
+- Dependent coverages exist for members 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, and 48.
+- Change types are fixed: members 1..35 `nochange`, 36..45 `changed`, and 46..50 `new`.
 
-## Data policy
-- Patient demographics include identifiers, official/usual names, telecom, gender, birthDate, birthSex, race, ethnicity, maritalStatus, county/district address, communication language, emergency contact, generalPractitioner, and managingOrganization.
-- Practitioner demographics include NPI plus internal/provider-license identifiers, official name with prefix/suffix, telecom, address, gender, birthDate, qualification, and communication language.
-- PractitionerRole carries organization, specialty, role, office telecom, and location references.
-- Service addresses belong on Location; Practitioner.address is mailing/home/provider identity data.
+## Mapping Notes
+- Upstream `sourceId` values never replace FHIR resource ids.
+- Patient examples include ATR profile plus US Core race, ethnicity, and birth sex extensions.
+- Practitioner examples keep personal or mailing identity address on Practitioner and service-site address on Location.
+- Coverage references Patient or RelatedPerson for subscriber and policyHolder depending on dependent status.
+- Claims remain source-only inputs used to justify attribution and are intentionally absent from ATR outputs.
 
-## Generation rules
-- Member index range is 1..50.
-- RelatedPerson subscriber cases occur for 16 members with a realistic dependent mix.
-- Claims are 2 per member for a total of 100 source claims.
-- ChangeType distribution is 35 nochange, 10 changed, and 5 new.
-- Attributed PractitionerRole rotates across 10 roles. Role locations rotate across 5 provider sites.
-
-## Mapping
-- Group.member.entity -> Patient
-- Group.member.extension.ext-coverageReference -> Coverage
-- Group.member.extension.ext-attributedProvider -> PractitionerRole
-- Group.member.extension.ext-changeType -> new | changed | nochange
-- Coverage.beneficiary -> Patient
-- Coverage.subscriber / policyHolder -> Patient or RelatedPerson based on self/dependent case
-- PractitionerRole.practitioner -> Practitioner
-- PractitionerRole.organization -> Organization
-- PractitionerRole.location -> Location
-
-## Tests
-- Group.quantity == 50
-- len(Group.member) == 50
-- len(Patient) == 50
-- len(Coverage) == 50
-- len(RelatedPerson) >= 16
-- len(PractitionerRole) >= 10
-- len(Location) >= 5
-- len(Claim source records) >= 100
-- Every reference resolves
-- NDJSON parses line by line
-- Claims do not appear in ATR export files
-
-## Risks
-- CI-build examples and published pages can differ slightly; use published canonical URLs and current change codes.
-- Some trading partners will want a lighter demographic payload; keep full/default/minimal as a future generator toggle.
-- Claim evidence is source-only here and not part of the exported ATR payload.
-
-## Next
-- Add a generator script with knobs for counts, geography, payer/provider mix, and demographic richness.
-- Add validation against the ATR profiles with the HL7 validator once you choose the validation toolchain.
+## Validation Targets
+- Group quantity and Group member count both equal 50.
+- Patient count equals 50, Coverage count equals 50, RelatedPerson count equals 16.
+- PractitionerRole count equals 10, Organization count equals 6, Location count equals 5.
+- Every FHIR reference resolves within the consolidated export.
+- Every NDJSON file parses one JSON object per line.
+- `output/bulk_status_response.json` lists all 8 NDJSON files.
