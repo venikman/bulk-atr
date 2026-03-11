@@ -1,0 +1,66 @@
+{
+  "systemName": "atr-producer-mapper",
+  "description": "Offline mapper that reads three service JSON files and emits one consolidated ATR export JSON, one bulk status manifest, and NDJSON by resource type.",
+  "version": "1.0.0",
+  "functions": {
+    "buildBulkExport": {
+      "inputs": [
+        "input-services/member-coverage-service.json",
+        "input-services/provider-directory-service.json",
+        "input-services/claims-attribution-service.json"
+      ],
+      "steps": [
+        "Load all source records from the three service files.",
+        "Build indexes by sourceId and by fhirId.",
+        "Construct Organization resources first.",
+        "Construct Location resources for provider-side locations.",
+        "Construct Practitioner resources with full provider-shareable demographics.",
+        "Construct PractitionerRole resources that link Practitioner, Organization, and Location.",
+        "Construct Patient resources with ATR/US Core demographic payload.",
+        "Construct RelatedPerson resources for dependent subscriber cases.",
+        "Construct Coverage resources for all 50 members.",
+        "Construct a single Group resource for the contract-scoped attribution list.",
+        "Attach Group.member extensions for changeType, coverageReference, and attributedProvider.",
+        "Write output/atr_bulk_export_single.json.",
+        "Write output/bulk_status_response.json.",
+        "Write NDJSON files grouped by FHIR resource type."
+      ],
+      "outputs": [
+        "output/atr_bulk_export_single.json",
+        "output/bulk_status_response.json",
+        "output/ndjson/Group.ndjson",
+        "output/ndjson/Patient.ndjson",
+        "output/ndjson/Coverage.ndjson",
+        "output/ndjson/RelatedPerson.ndjson",
+        "output/ndjson/Practitioner.ndjson",
+        "output/ndjson/PractitionerRole.ndjson",
+        "output/ndjson/Organization.ndjson",
+        "output/ndjson/Location.ndjson"
+      ],
+      "determinism": {
+        "memberCount": 50,
+        "claimCount": 100,
+        "relatedPersonCount": 16,
+        "practitionerCount": 10,
+        "practitionerRoleCount": 10,
+        "organizationCount": 6,
+        "providerLocationCount": 5,
+        "changeTypeDistribution": {
+          "nochange": 35,
+          "changed": 10,
+          "new": 5
+        }
+      },
+      "referenceRules": {
+        "groupMemberEntity": "Patient/{patient.fhirId}",
+        "groupMemberCoverageReference": "Coverage/{coverage.fhirId}",
+        "groupMemberAttributedProvider": "PractitionerRole/{role.fhirId}",
+        "coverageBeneficiary": "Patient/{patient.fhirId}",
+        "coverageSubscriber": "Patient/{patient.fhirId} or RelatedPerson/{relatedPerson.fhirId}",
+        "rolePractitioner": "Practitioner/{practitioner.fhirId}",
+        "roleOrganization": "Organization/{organization.fhirId}",
+        "roleLocation": "Location/{location.fhirId}"
+      }
+    }
+  }
+}

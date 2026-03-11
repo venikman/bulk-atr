@@ -1,0 +1,74 @@
+{
+  "inputCounts": {
+    "patients": 50,
+    "coverages": 50,
+    "relatedPersons": 16,
+    "memberServiceLocations": 4,
+    "practitioners": 10,
+    "practitionerRoles": 10,
+    "organizations": 6,
+    "providerLocations": 5,
+    "claims": 100,
+    "attributionMembers": 50
+  },
+  "outputCounts": {
+    "Group": 1,
+    "Patient": 50,
+    "Coverage": 50,
+    "RelatedPerson": 16,
+    "Practitioner": 10,
+    "PractitionerRole": 10,
+    "Organization": 6,
+    "Location": 5
+  },
+  "demographicPolicy": {
+    "patient": [
+      "identifier.memberId",
+      "identifier.mrn",
+      "identifier.optionalPayerOrProgramIds",
+      "name.official",
+      "name.usual",
+      "telecom.home",
+      "telecom.mobile",
+      "telecom.email",
+      "gender",
+      "birthDate",
+      "birthSex",
+      "race",
+      "ethnicity",
+      "maritalStatus",
+      "address.lineCityDistrictStatePostalCountry",
+      "communication.language",
+      "contact.emergencyOrNextOfKin",
+      "generalPractitioner",
+      "managingOrganization"
+    ],
+    "practitioner": [
+      "identifier.npi",
+      "identifier.internalProviderId",
+      "identifier.stateLicense",
+      "name.official",
+      "telecom.work",
+      "telecom.email",
+      "address",
+      "gender",
+      "birthDate",
+      "qualification",
+      "communication.language"
+    ]
+  },
+  "sourceOnlyArtifacts": {
+    "claims": "Used to justify attribution and to drive member-to-provider assignment. Not exported as ATR output resources.",
+    "memberServiceLocations": "Remain in source mocks unless explicitly mapped into a provider-facing use case."
+  },
+  "mappingRules": {
+    "groupMemberEntity": "Patient/{patient.fhirId}",
+    "groupMemberCoverageExtension": "Coverage/{coverage.fhirId}",
+    "groupMemberAttributedProviderExtension": "PractitionerRole/{role.fhirId}",
+    "coverageBeneficiary": "Patient/{patient.fhirId}",
+    "coverageSubscriber": "Patient or RelatedPerson depending on self/dependent case",
+    "rolePractitioner": "Practitioner/{practitioner.fhirId}",
+    "roleOrganization": "Organization/{organization.fhirId}",
+    "roleLocation": "Location/{location.fhirId}"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "serviceName": "claims-attribution-service",
+  "description": "Owns claim evidence and a single internal attribution roster used to produce the ATR Group export.",
+  "version": "1.0.0",
+  "generatedAt": "2026-03-11T12:00:00Z",
+  "functions": {
+    "listClaims": {
+      "targetCount": 100,
+      "idPattern": "claim-src-00001..claim-src-00100",
+      "items": [
+        {
+          "sourceId": "claim-src-00001",
+          "claimNumber": "CLM00000001",
+          "memberId": "MBR000001",
+          "patientSourceId": "pat-src-0001",
+          "coverageSourceId": "cov-src-0001",
+          "renderingPractitionerRoleSourceId": "prole-src-001",
+          "serviceOrganizationSourceId": "org-src-clinic-001",
+          "serviceLocationSourceId": "loc-src-provider-001",
+          "billablePeriodStart": "2026-01-14",
+          "billablePeriodEnd": "2026-01-15",
+          "claimType": "professional",
+          "diagnosisCodes": ["Z00.00"],
+          "procedureCodes": ["99213"],
+          "allowedAmount": 77.30,
+          "currency": "USD"
+        },
+        {
+          "sourceId": "claim-src-00002",
+          "claimNumber": "CLM00000002",
+          "memberId": "MBR000003",
+          "patientSourceId": "pat-src-0003",
+          "coverageSourceId": "cov-src-0003",
+          "renderingPractitionerRoleSourceId": "prole-src-003",
+          "serviceOrganizationSourceId": "org-src-clinic-002",
+          "serviceLocationSourceId": "loc-src-provider-002",
+          "billablePeriodStart": "2026-02-03",
+          "billablePeriodEnd": "2026-02-03",
+          "claimType": "professional",
+          "diagnosisCodes": ["J06.9"],
+          "procedureCodes": ["99214"],
+          "allowedAmount": 91.10,
+          "currency": "USD"
+        }
+      ]
+    },
+    "listAttributionLists": {
+      "targetCount": 1,
+      "items": [
+        {
+          "sourceId": "attr-list-src-001",
+          "contractId": "CTR-2026-NWACO-001",
+          "settlementEntityId": "NWACO-001",
+          "providerOrganizationSourceId": "org-src-clinic-001",
+          "payerOrganizationSourceId": "org-src-payer-001",
+          "status": "open",
+          "contractStart": "2026-01-01",
+          "contractEnd": "2026-12-31",
+          "members": [
+            {
+              "memberId": "MBR000001",
+              "patientSourceId": "pat-src-0001",
+              "coverageSourceId": "cov-src-0001",
+              "practitionerRoleSourceId": "prole-src-001",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "inactive": false
+            },
+            {
+              "memberId": "MBR000003",
+              "patientSourceId": "pat-src-0003",
+              "coverageSourceId": "cov-src-0003",
+              "practitionerRoleSourceId": "prole-src-003",
+              "attributionStart": "2026-01-01",
+              "attributionEnd": "2026-12-31",
+              "changeType": "nochange",
+              "inactive": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

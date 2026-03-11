@@ -1,0 +1,297 @@
+You are generating a static mock data package for an HL7 FHIR R4 Da Vinci ATR producer.
+
+Goal:
+Create mock enterprise input data and mapped ATR bulk-export artifacts for one contract-scoped attribution list with exactly 50 members.
+
+Do not build any API, server, CLI, HTTP routes, or database schema. Generate static files only.
+
+Normative target:
+- Da Vinci ATR v2.1.0 on FHIR R4
+- Attribution list represented as one Group resource
+- Full list export represented as bulk-style NDJSON plus one convenience consolidated JSON file
+
+Important design decisions:
+1. Use synthetic data only.
+2. Keep IDs stable and deterministic.
+3. Keep upstream source IDs separate from FHIR IDs.
+4. Model three upstream services with different internal data models.
+5. Model one mapper system that reads all source JSON and writes the ATR output JSON/NDJSON.
+6. Keep Claim data source-only. Do not emit Claim resources in ATR output files.
+7. Emit exactly 50 Group.member entries.
+8. Use current change codes: new, changed, nochange.
+
+FHIR resources to include in ATR output:
+- Group
+- Patient
+- Coverage
+- RelatedPerson
+- Practitioner
+- PractitionerRole
+- Organization
+- Location
+
+Official ATR profile URLs to use in meta.profile:
+- Group: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-group
+- Patient: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-patient
+- Coverage: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-coverage
+- RelatedPerson: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-relatedperson
+- Practitioner: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-practitioner
+- PractitionerRole: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-practitionerrole
+- Organization: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-organization
+- Location: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-location
+
+ATR extension URLs to use:
+- attributedProvider: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributedProvider
+- changeType: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-changeType
+- coverageReference: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-coverageReference
+- contractValidityPeriod: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-contractValidityPeriod
+- attributionListStatus: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributionListStatus
+- insuranceProductType: http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-insuranceProductType
+
+Upstream services to generate:
+
+A. member-coverage-service
+Functions:
+- listPatients
+- listCoverages
+- listRelatedPersons
+- listLocations
+
+B. provider-directory-service
+Functions:
+- listPractitioners
+- listPractitionerRoles
+- listOrganizations
+- listLocations
+
+C. claims-attribution-service
+Functions:
+- listClaims
+- listAttributionLists
+
+Also generate:
+D. system/atr-producer-mapper.json
+Describe one offline mapping function:
+- buildBulkExport
+
+Files to create:
+1. input-services/member-coverage-service.json
+2. input-services/provider-directory-service.json
+3. input-services/claims-attribution-service.json
+4. system/atr-producer-mapper.json
+5. output/atr_bulk_export_single.json
+6. output/bulk_status_response.json
+7. output/ndjson/Group.ndjson
+8. output/ndjson/Patient.ndjson
+9. output/ndjson/Coverage.ndjson
+10. output/ndjson/RelatedPerson.ndjson
+11. output/ndjson/Practitioner.ndjson
+12. output/ndjson/PractitionerRole.ndjson
+13. output/ndjson/Organization.ndjson
+14. output/ndjson/Location.ndjson
+15. docs/plan.md
+16. docs/mapping_summary.json
+17. docs/codex_prompt.txt
+
+Patient demographic requirements:
+Create full default provider-shareable patient demographics aligned to ATR Patient / US Core Patient:
+- stable sourceId, fhirId, memberId
+- identifiers: MRN, member number, optional synthetic Medicare/Medicaid identifier
+- official legal name and usual name
+- telecom: home phone, mobile phone, email
+- administrative gender
+- birthDate
+- birthSex
+- race
+- ethnicity
+- maritalStatus when age-appropriate
+- home address with line, city, district/county, state, postalCode, country, period
+- communication language and preferred flag
+- contact/emergency contact
+- generalPractitionerRoleSourceId
+- managingOrganizationSourceId
+- homeLocationSourceId
+Do not include SSN by default.
+
+Practitioner demographic requirements:
+Create full default provider-shareable practitioner demographics aligned to ATR Practitioner / US Core Practitioner:
+- stable sourceId, fhirId
+- NPI
+- internal provider identifier
+- optional synthetic state license identifier
+- official name with prefix, given, family, suffix, credentials text
+- active
+- telecom: work phone, fax optional, email
+- address
+- administrative gender
+- birthDate
+- qualification array with code, identifier, period, issuer organization
+- communication language
+Important:
+- Put office/service site address on Location referenced from PractitionerRole.
+- Practitioner.address is personal/mailing identity data, not the service-site address.
+
+Coverage requirements:
+- 50 coverage records
+- one coverage per attributed member
+- member number identifier
+- subscriberId
+- beneficiary reference
+- subscriber reference
+- policyHolder reference
+- self and dependent mixes
+- payor reference
+- class slice with type=plan
+- insurance product type extension
+- period
+- relationship code
+
+RelatedPerson requirements:
+- at least 16 related persons
+- use them for dependent subscriber cases
+- include name, telecom, gender, birthDate when useful, relationship, address, patient reference
+
+Organization requirements:
+- at least 6 organizations total
+- include 1 payer organization
+- include 1 settlement entity / ACO
+- include 3 provider organizations
+- include 1 licensing/issuer organization used by Practitioner qualification
+- include name, identifiers, telecom, address, and type/kind
+
+Location requirements:
+- at least 5 provider-side locations
+- include address, telecom, managingOrganization
+- linked from PractitionerRole.location
+- member-side location source data can exist in source mocks but is not required in final ATR export
+
+PractitionerRole requirements:
+- at least 10 roles
+- each role links one practitioner to one organization and one or more locations
+- include role text, specialty, active, period, telecom
+- use PractitionerRole as the attributed provider reference in Group.member
+
+Claim source requirements:
+- exactly 100 claim source records
+- two claims per member
+- fields include patient, coverage, rendering practitioner role, service organization, service location, dates, diagnosis codes, procedure codes, allowed amount
+- claims drive attribution evidence but are not exported as FHIR Claim resources
+
+Attribution roster requirements:
+- exactly one listAttributionLists record
+- one contract id
+- one settlement entity id
+- one payer organization source id
+- one provider organization source id
+- contract start 2026-01-01
+- contract end 2026-12-31
+- exactly 50 member roster rows
+- each member row identifies patient, coverage, practitioner role, attribution start/end, changeType, and status
+
+Deterministic generation rules:
+- Members 1..50
+- Patients 1..50
+- Coverages 1..50
+- RelatedPersons for 16 members
+- Practitioners 1..10
+- PractitionerRoles 1..10
+- Organizations 1..6
+- Provider locations 1..5
+- Claims 1..100
+- ChangeType distribution:
+  - members 1..35 => nochange
+  - members 36..45 => changed
+  - members 46..50 => new
+- Attributed role rotation:
+  - member i uses practitionerrole-((i-1) mod 10)+1
+- Location rotation:
+  - role i uses location-((i-1) mod 5)+1
+- Create realistic demographic diversity for names, sex, ages, languages, counties, and cities
+- Keep all data in New York State for consistency
+
+FHIR mapping rules:
+- Group.id = group-2026-northwind-atr-001
+- Group.quantity = 50
+- Group.type = person
+- Group.actual = true
+- Group.name = "Northwind ACO 2026 Member Attribution List"
+- Group.extension.contractValidityPeriod = 2026-01-01..2026-12-31
+- Group.extension.attributionListStatus = open
+- Group.identifier includes:
+  - contract identifier
+  - provider NPI
+  - provider TIN
+  - settlement entity / ACO identifier
+- Group.member.entity -> Patient/{id}
+- Group.member.period -> attribution period
+- Group.member.inactive false unless explicitly dropped
+- Group.member.extension.changeType -> new | changed | nochange
+- Group.member.extension.coverageReference -> Coverage/{id}
+- Group.member.extension.attributedProvider -> PractitionerRole/{id}
+
+- Patient.meta.profile includes atr-patient
+- Patient includes identifiers, names, telecom, gender, birthDate, address with district, communication, generalPractitioner, managingOrganization
+- Also include US Core race / ethnicity / birthsex extensions in Patient examples
+
+- Practitioner.meta.profile includes atr-practitioner
+- Practitioner includes NPI identifier, internal/provider-license identifiers, names, telecom, address, gender, birthDate, qualification, communication
+
+- PractitionerRole.meta.profile includes atr-practitionerrole
+- PractitionerRole.practitioner -> Practitioner/{id}
+- PractitionerRole.organization -> Organization/{id}
+- PractitionerRole.location -> Location/{id}
+
+- Coverage.meta.profile includes atr-coverage
+- Coverage.beneficiary -> Patient/{id}
+- Coverage.subscriber and policyHolder -> Patient or RelatedPerson
+- Coverage.payor -> Organization/{payer}
+- Coverage.extension.insuranceProductType populated
+- Coverage.class includes plan slice
+
+- RelatedPerson.meta.profile includes atr-relatedperson
+- RelatedPerson.patient -> Patient/{beneficiary}
+
+- Organization.meta.profile includes atr-organization
+- Location.meta.profile includes atr-location
+
+Output file rules:
+- Pretty JSON for normal .json files
+- NDJSON for output/ndjson/*.ndjson
+- One JSON object per line in each NDJSON file
+- Group.ndjson contains one line because there is one Group
+- bulk_status_response.json lists all NDJSON output files
+
+Recommended top-level structure for output/atr_bulk_export_single.json:
+{
+  "artifactType": "atr-bulk-export-single",
+  "exportType": "hl7.fhir.us.davinci-atr",
+  "groupId": "group-2026-northwind-atr-001",
+  "generatedAt": "...",
+  "resourceCounts": { ... },
+  "resources": {
+    "Organization": [ ... ],
+    "Location": [ ... ],
+    "Practitioner": [ ... ],
+    "PractitionerRole": [ ... ],
+    "Patient": [ ... ],
+    "RelatedPerson": [ ... ],
+    "Coverage": [ ... ],
+    "Group": [ ... ]
+  }
+}
+
+Acceptance checks:
+- JSON parses
+- NDJSON parses line by line
+- All references resolve
+- Group.quantity == 50
+- len(Group.member) == 50
+- len(Patient) == 50
+- len(Coverage) == 50
+- len(RelatedPerson) >= 16
+- len(PractitionerRole) >= 10
+- len(Location) >= 5
+- claims are absent from ATR output files
+- bulk_status_response.json references all NDJSON files
+
+Return the full file tree and all file contents.

@@ -1,0 +1,269 @@
+{
+  "serviceName": "member-coverage-service",
+  "description": "Owns member demographics, coverage, subscriber/dependent relationships, and member-side location source data.",
+  "version": "1.0.0",
+  "generatedAt": "2026-03-11T12:00:00Z",
+  "functions": {
+    "listPatients": {
+      "targetCount": 50,
+      "idPattern": "pat-src-0001..pat-src-0050",
+      "fhirIdPattern": "patient-0001..patient-0050",
+      "items": [
+        {
+          "sourceId": "pat-src-0001",
+          "fhirId": "patient-0001",
+          "memberId": "MBR000001",
+          "identifiers": {
+            "mrn": "MRN000001",
+            "memberNumber": "MBN000001",
+            "medicareBeneficiaryId": "1EG4TE5MK73",
+            "medicaidId": null
+          },
+          "name": {
+            "official": {
+              "prefix": ["Mr"],
+              "given": ["Liam", "Noah"],
+              "family": "Keller",
+              "suffix": []
+            },
+            "usual": {
+              "given": ["Liam"],
+              "family": "Keller"
+            }
+          },
+          "gender": "male",
+          "birthDate": "1956-02-04",
+          "birthSex": "M",
+          "race": {
+            "ombCategoryCode": "2106-3",
+            "display": "White",
+            "text": "White"
+          },
+          "ethnicity": {
+            "ombCategoryCode": "2186-5",
+            "display": "Not Hispanic or Latino",
+            "text": "Not Hispanic or Latino"
+          },
+          "maritalStatus": {
+            "code": "M",
+            "display": "Married"
+          },
+          "active": true,
+          "telecom": {
+            "homePhone": "347-555-1001",
+            "mobilePhone": "929-555-1001",
+            "email": "liam.keller1@example-patients.test"
+          },
+          "address": {
+            "use": "home",
+            "line1": "101 Maple Ave",
+            "line2": null,
+            "city": "Albany",
+            "district": "Albany",
+            "state": "NY",
+            "postalCode": "12207",
+            "country": "US",
+            "periodStart": "2020-01-01",
+            "periodEnd": null
+          },
+          "communication": {
+            "languageCode": "en",
+            "languageDisplay": "English",
+            "preferred": true
+          },
+          "contact": {
+            "relationshipCode": "ECON",
+            "relationshipDisplay": "Emergency Contact",
+            "name": {
+              "given": ["Olivia"],
+              "family": "Keller"
+            },
+            "phone": "347-555-2001",
+            "addressSameAsPatient": true
+          },
+          "generalPractitionerRoleSourceId": "prole-src-001",
+          "managingOrganizationSourceId": "org-src-clinic-001",
+          "homeLocationSourceId": "loc-src-member-001"
+        },
+        {
+          "sourceId": "pat-src-0003",
+          "fhirId": "patient-0003",
+          "memberId": "MBR000003",
+          "identifiers": {
+            "mrn": "MRN000003",
+            "memberNumber": "MBN000003",
+            "medicareBeneficiaryId": null,
+            "medicaidId": "NYM000003"
+          },
+          "name": {
+            "official": {
+              "prefix": ["Ms"],
+              "given": ["Emma", "Grace"],
+              "family": "Rivera",
+              "suffix": []
+            },
+            "usual": {
+              "given": ["Emma"],
+              "family": "Rivera"
+            }
+          },
+          "gender": "female",
+          "birthDate": "2014-07-19",
+          "birthSex": "F",
+          "race": {
+            "ombCategoryCode": "2054-5",
+            "display": "Black or African American",
+            "text": "Black or African American"
+          },
+          "ethnicity": {
+            "ombCategoryCode": "2135-2",
+            "display": "Hispanic or Latino",
+            "text": "Hispanic or Latino"
+          },
+          "maritalStatus": null,
+          "active": true,
+          "telecom": {
+            "homePhone": "718-555-1003",
+            "mobilePhone": null,
+            "email": null
+          },
+          "address": {
+            "use": "home",
+            "line1": "303 Cedar St",
+            "line2": "Apt 2B",
+            "city": "Bronx",
+            "district": "Bronx",
+            "state": "NY",
+            "postalCode": "10451",
+            "country": "US",
+            "periodStart": "2021-09-01",
+            "periodEnd": null
+          },
+          "communication": {
+            "languageCode": "es",
+            "languageDisplay": "Spanish",
+            "preferred": true
+          },
+          "contact": {
+            "relationshipCode": "NOK",
+            "relationshipDisplay": "Next of kin",
+            "name": {
+              "given": ["Sofia"],
+              "family": "Rivera"
+            },
+            "phone": "718-555-2003",
+            "addressSameAsPatient": true
+          },
+          "generalPractitionerRoleSourceId": "prole-src-003",
+          "managingOrganizationSourceId": "org-src-clinic-002",
+          "homeLocationSourceId": "loc-src-member-003"
+        }
+      ]
+    },
+    "listCoverages": {
+      "targetCount": 50,
+      "idPattern": "cov-src-0001..cov-src-0050",
+      "fhirIdPattern": "coverage-0001..coverage-0050",
+      "items": [
+        {
+          "sourceId": "cov-src-0001",
+          "fhirId": "coverage-0001",
+          "memberId": "MBR000001",
+          "beneficiaryPatientSourceId": "pat-src-0001",
+          "policyHolderSourceId": "pat-src-0001",
+          "policyHolderType": "Patient",
+          "subscriberSourceId": "pat-src-0001",
+          "subscriberType": "Patient",
+          "subscriberId": "SUB000001",
+          "memberNumber": "MBN000001",
+          "dependentNumber": "00",
+          "relationshipCode": "self",
+          "relationshipDisplay": "Self",
+          "payorOrganizationSourceId": "org-src-payer-001",
+          "planCode": "commppo",
+          "planDisplay": "Commercial PPO",
+          "planId": "PPO-PLUS-2026",
+          "periodStart": "2025-01-01",
+          "periodEnd": "2026-12-31"
+        },
+        {
+          "sourceId": "cov-src-0003",
+          "fhirId": "coverage-0003",
+          "memberId": "MBR000003",
+          "beneficiaryPatientSourceId": "pat-src-0003",
+          "policyHolderSourceId": "rel-src-0003",
+          "policyHolderType": "RelatedPerson",
+          "subscriberSourceId": "rel-src-0003",
+          "subscriberType": "RelatedPerson",
+          "subscriberId": "SUB000003",
+          "memberNumber": "MBN000003",
+          "dependentNumber": "01",
+          "relationshipCode": "child",
+          "relationshipDisplay": "Child",
+          "payorOrganizationSourceId": "org-src-payer-001",
+          "planCode": "commhmo",
+          "planDisplay": "Commercial HMO",
+          "planId": "HMO-FAMILY-2026",
+          "periodStart": "2025-01-01",
+          "periodEnd": "2026-12-31"
+        }
+      ]
+    },
+    "listRelatedPersons": {
+      "targetCount": 16,
+      "idPattern": "rel-src-0003..rel-src-0048 (selected dependent members)",
+      "fhirIdPattern": "relatedperson-0003..relatedperson-0048",
+      "items": [
+        {
+          "sourceId": "rel-src-0003",
+          "fhirId": "relatedperson-0003",
+          "patientSourceId": "pat-src-0003",
+          "subscriberRole": "policyHolder",
+          "firstName": "Sofia",
+          "lastName": "Rivera",
+          "gender": "female",
+          "birthDate": "1986-05-22",
+          "relationshipCode": "MTH",
+          "relationshipDisplay": "Mother",
+          "coverageRelationshipCode": "child",
+          "coverageRelationshipDisplay": "Child",
+          "phone": "718-555-3003",
+          "email": "sofia.rivera@example-family.test",
+          "address": {
+            "line1": "303 Cedar St",
+            "line2": "Apt 2B",
+            "city": "Bronx",
+            "district": "Bronx",
+            "state": "NY",
+            "postalCode": "10451",
+            "country": "US"
+          }
+        }
+      ]
+    },
+    "listLocations": {
+      "targetCount": 4,
+      "idPattern": "loc-src-member-001..loc-src-member-004",
+      "items": [
+        {
+          "sourceId": "loc-src-member-001",
+          "domainType": "member-home-region",
+          "label": "Capital Region Home Segment",
+          "county": "Albany",
+          "state": "NY",
+          "postalCode": "12207",
+          "city": "Albany"
+        },
+        {
+          "sourceId": "loc-src-member-003",
+          "domainType": "member-home-region",
+          "label": "Bronx Home Segment",
+          "county": "Bronx",
+          "state": "NY",
+          "postalCode": "10451",
+          "city": "Bronx"
+        }
+      ]
+    }
+  }
+}

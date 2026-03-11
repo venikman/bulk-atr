@@ -1,0 +1,40 @@
+{
+  "transactionTime": "2026-03-11T12:00:00Z",
+  "request": "/Group/group-2026-northwind-atr-001/$davinci-data-export?_type=Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location&exportType=hl7.fhir.us.davinci-atr",
+  "requiresAccessToken": true,
+  "output": [
+    {
+      "type": "Group",
+      "url": "./ndjson/Group.ndjson"
+    },
+    {
+      "type": "Patient",
+      "url": "./ndjson/Patient.ndjson"
+    },
+    {
+      "type": "Coverage",
+      "url": "./ndjson/Coverage.ndjson"
+    },
+    {
+      "type": "RelatedPerson",
+      "url": "./ndjson/RelatedPerson.ndjson"
+    },
+    {
+      "type": "Practitioner",
+      "url": "./ndjson/Practitioner.ndjson"
+    },
+    {
+      "type": "PractitionerRole",
+      "url": "./ndjson/PractitionerRole.ndjson"
+    },
+    {
+      "type": "Organization",
+      "url": "./ndjson/Organization.ndjson"
+    },
+    {
+      "type": "Location",
+      "url": "./ndjson/Location.ndjson"
+    }
+  ],
+  "error": []
+}
