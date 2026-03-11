@@ -224,12 +224,12 @@ export const createRawDomainStoreFromDocuments = ({
     store.indexes.attributionListsByGroupId.set(attributionList.fhirId, attributionList);
     const providerOrganization =
       store.indexes.orgsBySourceId.get(attributionList.providerOrganizationSourceId) || null;
+    const identifierKeys = new Set<string>();
     for (const identifier of getGroupIdentifierTokens(attributionList, providerOrganization)) {
-      pushIndexValue(
-        store.indexes.attributionListsByIdentifier,
-        `${identifier.system}|${identifier.value}`,
-        attributionList,
-      );
+      identifierKeys.add(`${identifier.system}|${identifier.value}`);
+    }
+    for (const identifierKey of identifierKeys) {
+      pushIndexValue(store.indexes.attributionListsByIdentifier, identifierKey, attributionList);
     }
     pushIndexValue(
       store.indexes.attributionListsByName,
