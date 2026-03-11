@@ -231,8 +231,13 @@ export class AtrResolver {
     return Object.fromEntries(
       requestedTypes.map((type) => {
         const resources: FhirResource[] = [];
+        const selectedIds = new Set(
+          Array.from(selectedKeys)
+            .filter((key) => key.startsWith(`${type}/`))
+            .map((key) => key.substring(type.length + 1)),
+        );
         for (const id of this.listResourceIds(type)) {
-          if (!selectedKeys.has(`${type}/${id}`)) {
+          if (!selectedIds.has(id)) {
             continue;
           }
 
