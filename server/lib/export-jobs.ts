@@ -1,23 +1,15 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import type { ExportFileRecord, ExportJobRecord, SupportedResourceType } from './types.js';
+import type { CreateExportJobInput, ExportJobRepository } from './export-job-repository.js';
+import type { ExportFileRecord, ExportJobRecord } from './types.js';
 
 const STATUS_POLL_WINDOW_MS = 1000;
 const COMPLETED_JOB_TTL_MS = 60 * 60 * 1000;
 const ACTIVE_JOB_TTL_MS = 15 * 60 * 1000;
 
-type CreateJobInput = {
-  jobId: string;
-  groupId: string;
-  transactionTime: string;
-  requestUrl: string;
-  normalizedTypes: SupportedResourceType[];
-  exportType: string;
-};
-
 const addMs = (iso: string, ms: number) => new Date(new Date(iso).getTime() + ms).toISOString();
 
-export class ExportJobStore {
+export class ExportJobStore implements ExportJobRepository {
   readonly runtimeDir: string;
 
   readonly jobsDir: string;
@@ -43,7 +35,7 @@ export class ExportJobStore {
     await writeFile(path, `${JSON.stringify(job, null, 2)}\n`, 'utf-8');
   }
 
-  async createJob(input: CreateJobInput) {
+  async createJob(input: CreateExportJobInput) {
     const now = new Date().toISOString();
     const job: ExportJobRecord = {
       jobId: input.jobId,
@@ -57,7 +49,7 @@ export class ExportJobStore {
       updatedAt: now,
       expiresAt: addMs(now, ACTIVE_JOB_TTL_MS),
       progress: 'accepted',
-      manifestPath: null,
+      manifestKey: null,
       files: [],
       error: [],
     };
@@ -112,7 +104,7 @@ export class ExportJobStore {
       ...job,
       status: 'completed',
       progress: 'completed',
-      manifestPath,
+      manifestKey: manifestPath,
       files,
       updatedAt: new Date().toISOString(),
       expiresAt: addMs(new Date().toISOString(), COMPLETED_JOB_TTL_MS),
@@ -130,7 +122,7 @@ export class ExportJobStore {
     }));
   }
 
-  canPoll(jobId: string, callerId: string) {
+  async canPoll(jobId: string, callerId: string) {
     const key = `${jobId}:${callerId}`;
     const now = Date.now();
     const lastPoll = this.pollMap.get(key);

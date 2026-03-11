@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/fhir",
+      "dest": "index.ts"
+    },
+    {
+      "src": "/fhir/(.*)",
+      "dest": "index.ts"
+    }
+  ]
+}

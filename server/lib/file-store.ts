@@ -1,8 +1,9 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import type { FhirResource } from './types.js';
+import type { ExportArtifactStore } from './export-artifact-store.js';
+import type { FhirResource, StoredManifest } from './types.js';
 
-export class FileStore {
+export class FileStore implements ExportArtifactStore {
   readonly runtimeDir: string;
 
   readonly filesDir: string;
@@ -28,20 +29,19 @@ export class FileStore {
     return filePath;
   }
 
-  async writeManifest(jobId: string, manifest: Record<string, unknown>) {
+  async writeManifest(jobId: string, manifest: StoredManifest) {
     const filePath = join(this.manifestsDir, `${jobId}.json`);
     await mkdir(dirname(filePath), { recursive: true });
     await writeFile(filePath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf-8');
     return filePath;
   }
 
-  async readManifest(manifestPath: string) {
-    const content = await readFile(manifestPath, 'utf-8');
-    return JSON.parse(content) as Record<string, unknown>;
+  async readManifest(manifestKey: string) {
+    const content = await readFile(manifestKey, 'utf-8');
+    return JSON.parse(content) as StoredManifest;
   }
 
-  async readNdjson(jobId: string, fileName: string) {
-    const filePath = join(this.filesDir, jobId, fileName);
-    return readFile(filePath, 'utf-8');
+  async readNdjson(artifactKey: string) {
+    return readFile(artifactKey, 'utf-8');
   }
 }

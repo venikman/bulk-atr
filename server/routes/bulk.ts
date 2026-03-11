@@ -7,16 +7,22 @@ import {
   getCallerId,
   requiresAccessToken,
 } from '../lib/auth.js';
-import type { ExportJobStore } from '../lib/export-jobs.js';
-import type { FileStore } from '../lib/file-store.js';
+import type { BackgroundTaskRunner } from '../lib/background-task-runner.js';
+import type { ExportArtifactStore } from '../lib/export-artifact-store.js';
+import type { ExportJobRepository } from '../lib/export-job-repository.js';
 import { fhirOperationOutcome } from '../lib/operation-outcome.js';
 import type { ProjectionStore } from '../lib/projection-store.js';
-import { type SupportedResourceType, supportedResourceTypes } from '../lib/types.js';
+import {
+  type StoredManifest,
+  type SupportedResourceType,
+  supportedResourceTypes,
+} from '../lib/types.js';
 
 const minimumResourceTypes: SupportedResourceType[] = ['Group', 'Patient', 'Coverage'];
 const canonicalResourceTypeOrder = supportedResourceTypes;
 const exportTypeValue = 'hl7.fhir.us.davinci-atr';
 const unsupportedParameters = ['_since', '_until', '_typeFilter', 'patient'] as const;
+
 type NormalizedTypeParameter =
   | {
       normalized: SupportedResourceType[];
@@ -28,8 +34,9 @@ type NormalizedTypeParameter =
 
 type BulkRoutesOptions = {
   projectionStore: ProjectionStore;
-  jobStore: ExportJobStore;
-  fileStore: FileStore;
+  jobRepository: ExportJobRepository;
+  artifactStore: ExportArtifactStore;
+  backgroundTaskRunner: BackgroundTaskRunner;
   authMode: AuthMode;
   jobDelayMs?: number;
 };
@@ -73,22 +80,28 @@ const buildCanonicalRequestUrl = (
   return url.toString();
 };
 
-const buildManifest = (
-  baseUrl: string,
-  jobId: string,
+const buildStoredManifest = (
   transactionTime: string,
   requestUrl: string,
   normalizedTypes: SupportedResourceType[],
   authMode: AuthMode,
-) => ({
+): StoredManifest => ({
   transactionTime,
   request: requestUrl,
   requiresAccessToken: requiresAccessToken(authMode),
   output: normalizedTypes.map((type) => ({
     type,
-    url: `${baseUrl}/fhir/bulk-files/${jobId}/${type}-1.ndjson`,
+    fileName: `${type}-1.ndjson`,
   })),
   error: [],
+});
+
+const buildPublicManifest = (origin: string, jobId: string, manifest: StoredManifest) => ({
+  ...manifest,
+  output: manifest.output.map((entry) => ({
+    type: entry.type,
+    url: `${origin}/fhir/bulk-files/${jobId}/${entry.fileName}`,
+  })),
 });
 
 const scheduleExportJob = async (
@@ -97,49 +110,46 @@ const scheduleExportJob = async (
   requestUrl: string,
   normalizedTypes: SupportedResourceType[],
   authMode: AuthMode,
-  jobStore: ExportJobStore,
-  fileStore: FileStore,
+  jobRepository: ExportJobRepository,
+  artifactStore: ExportArtifactStore,
   projectionStore: ProjectionStore,
 ) => {
-  const baseUrl = new URL(requestUrl).origin;
   const exportResources = projectionStore.buildExportResources(groupId, normalizedTypes);
   if (!exportResources) {
-    await jobStore.markFailed(jobId, ['Group snapshot could not be resolved for export.']);
+    await jobRepository.markFailed(jobId, ['Group snapshot could not be resolved for export.']);
     return;
   }
 
-  await jobStore.markRunning(jobId, 'writing ndjson files');
+  await jobRepository.markRunning(jobId, 'writing ndjson files');
 
   const files = [];
   for (const type of normalizedTypes) {
     const resources = exportResources[type] || [];
     const fileName = `${type}-1.ndjson`;
-    const path = await fileStore.writeNdjson(jobId, fileName, resources);
+    const artifactKey = await artifactStore.writeNdjson(jobId, fileName, resources);
     files.push({
       type,
       fileName,
-      path,
-      url: `${baseUrl}/fhir/bulk-files/${jobId}/${fileName}`,
+      artifactKey,
     });
   }
 
   const transactionTime = new Date().toISOString();
-  const manifest = buildManifest(
-    baseUrl,
-    jobId,
+  const manifest = buildStoredManifest(
     transactionTime,
     buildCanonicalRequestUrl(requestUrl, normalizedTypes, exportTypeValue),
     normalizedTypes,
     authMode,
   );
-  const manifestPath = await fileStore.writeManifest(jobId, manifest);
-  await jobStore.markCompleted(jobId, manifestPath, files);
+  const manifestKey = await artifactStore.writeManifest(jobId, manifest);
+  await jobRepository.markCompleted(jobId, manifestKey, files);
 };
 
 export const createBulkRoutes = ({
   projectionStore,
-  jobStore,
-  fileStore,
+  jobRepository,
+  artifactStore,
+  backgroundTaskRunner,
   authMode,
   jobDelayMs = 50,
 }: BulkRoutesOptions) => {
@@ -225,7 +235,7 @@ export const createBulkRoutes = ({
 
     const transactionTime = new Date().toISOString();
     const jobId = randomUUID();
-    await jobStore.createJob({
+    await jobRepository.createJob({
       jobId,
       groupId,
       transactionTime,
@@ -234,22 +244,24 @@ export const createBulkRoutes = ({
       exportType: exportTypeValue,
     });
 
-    setTimeout(() => {
-      void scheduleExportJob(
-        jobId,
-        groupId,
-        context.req.url,
-        normalizedTypes,
-        authMode,
-        jobStore,
-        fileStore,
-        projectionStore,
-      ).catch(async (error: unknown) => {
-        const diagnostics =
-          error instanceof Error ? error.message : 'Unexpected export generation failure.';
-        await jobStore.markFailed(jobId, [diagnostics]);
-      });
-    }, jobDelayMs);
+    backgroundTaskRunner.run(
+      () =>
+        scheduleExportJob(
+          jobId,
+          groupId,
+          context.req.url,
+          normalizedTypes,
+          authMode,
+          jobRepository,
+          artifactStore,
+          projectionStore,
+        ).catch(async (error: unknown) => {
+          const diagnostics =
+            error instanceof Error ? error.message : 'Unexpected export generation failure.';
+          await jobRepository.markFailed(jobId, [diagnostics]);
+        }),
+      jobDelayMs,
+    );
 
     const contentLocation = `${new URL(context.req.url).origin}/fhir/bulk-status/${jobId}`;
     context.header('content-location', contentLocation);
@@ -261,13 +273,13 @@ export const createBulkRoutes = ({
     const auth = context.get('auth');
     const callerId = getCallerId(auth);
     const jobId = context.req.param('jobId');
-    const job = await jobStore.getJob(jobId);
+    const job = await jobRepository.getJob(jobId);
 
     if (!job || job.status === 'expired') {
       return fhirOperationOutcome(context, 404, 'not-found', 'Bulk export job was not found.');
     }
 
-    if (!jobStore.canPoll(jobId, callerId)) {
+    if (!(await jobRepository.canPoll(jobId, callerId))) {
       context.header('retry-after', '1');
       return fhirOperationOutcome(
         context,
@@ -292,25 +304,25 @@ export const createBulkRoutes = ({
       );
     }
 
-    if (!job.manifestPath) {
+    if (!job.manifestKey) {
       return fhirOperationOutcome(
         context,
         500,
         'exception',
-        'Bulk export job completed without a manifest path.',
+        'Bulk export job completed without a manifest key.',
       );
     }
 
-    const manifest = await fileStore.readManifest(job.manifestPath);
+    const manifest = await artifactStore.readManifest(job.manifestKey);
     context.header('expires', job.expiresAt);
     context.header('content-type', 'application/json; charset=utf-8');
-    return context.json(manifest);
+    return context.json(buildPublicManifest(new URL(context.req.url).origin, jobId, manifest));
   });
 
   app.get('/bulk-files/:jobId/:fileName', async (context) => {
     const jobId = context.req.param('jobId');
     const fileName = context.req.param('fileName');
-    const job = await jobStore.getJob(jobId);
+    const job = await jobRepository.getJob(jobId);
 
     if (!job || job.status === 'expired') {
       return fhirOperationOutcome(context, 404, 'not-found', 'Bulk export job was not found.');
@@ -322,7 +334,7 @@ export const createBulkRoutes = ({
     }
 
     try {
-      const content = await fileStore.readNdjson(jobId, fileName);
+      const content = await artifactStore.readNdjson(file.artifactKey);
       context.header('content-type', 'application/fhir+ndjson; charset=utf-8');
       return context.body(content, 200);
     } catch {

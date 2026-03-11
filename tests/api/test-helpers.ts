@@ -1,11 +1,11 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createApp } from '../../server/app.js';
+import { createLocalApp } from '../../server/bootstrap/local.js';
 
 export const createTestServer = async (authMode: 'none' | 'smart-backend' = 'none') => {
   const runtimeDir = await mkdtemp(join(tmpdir(), 'bulk-atr-'));
-  const app = await createApp({
+  const app = await createLocalApp({
     authMode,
     runtimeDir,
   });

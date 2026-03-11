@@ -89,11 +89,7 @@ export class ProjectionStore {
     }
   }
 
-  static async load(fixturePath: string) {
-    const absolute = resolve(fixturePath);
-    const content = await readFile(absolute, 'utf-8');
-    const parsed = JSON.parse(content) as { resources: Record<string, unknown> };
-
+  static fromFixtureDocument(parsed: { resources: Record<string, unknown> }) {
     const collection = Object.fromEntries(
       supportedResourceTypes.map((type) => {
         const resources = parsed.resources?.[type];
@@ -106,6 +102,14 @@ export class ProjectionStore {
     ) as ResourceCollection;
 
     return new ProjectionStore(collection);
+  }
+
+  static async load(fixturePath: string) {
+    const absolute = resolve(fixturePath);
+    const content = await readFile(absolute, 'utf-8');
+    const parsed = JSON.parse(content) as { resources: Record<string, unknown> };
+
+    return ProjectionStore.fromFixtureDocument(parsed);
   }
 
   getGroupById(id: string) {

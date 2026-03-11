@@ -33,8 +33,20 @@ export type BulkStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'canc
 export type ExportFileRecord = {
   type: SupportedResourceType;
   fileName: string;
-  path: string;
-  url: string;
+  artifactKey: string;
+};
+
+export type StoredManifestOutputRecord = {
+  type: SupportedResourceType;
+  fileName: string;
+};
+
+export type StoredManifest = {
+  transactionTime: string;
+  request: string;
+  requiresAccessToken: boolean;
+  output: StoredManifestOutputRecord[];
+  error: string[];
 };
 
 export type ExportJobRecord = {
@@ -49,7 +61,7 @@ export type ExportJobRecord = {
   updatedAt: string;
   expiresAt: string;
   progress: string;
-  manifestPath: string | null;
+  manifestKey: string | null;
   files: ExportFileRecord[];
   error: string[];
 };
