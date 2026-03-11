@@ -18,6 +18,36 @@ type OutcomePayload = {
   resourceType: string;
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForCompletedManifest = async (
+  server: Awaited<ReturnType<typeof createTestServer>>,
+  contentLocation: string,
+  init?: RequestInit,
+  timeoutMs = 4000,
+) => {
+  const deadline = Date.now() + timeoutMs;
+  let lastStatus: number | null = null;
+
+  while (Date.now() < deadline) {
+    const response = await server.request(contentLocation, init);
+    lastStatus = response.status;
+    if (response.status === 200) {
+      return {
+        response,
+        manifest: (await response.json()) as ManifestPayload,
+      };
+    }
+    await sleep(150);
+  }
+
+  throw new Error(
+    `Bulk export did not complete within ${timeoutMs}ms for ${contentLocation}. Last status: ${
+      lastStatus ?? 'none'
+    }.`,
+  );
+};
+
 const collectReferences = (value: unknown, refs: Set<string>) => {
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -63,10 +93,10 @@ describe('bulk export flow', () => {
       expect(initialStatus.status).toBe(202);
       expect(initialStatus.headers.get('retry-after')).toBe('1');
 
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-
-      const completedStatus = await server.request(contentLocation || '');
-      const manifest = (await completedStatus.json()) as ManifestPayload;
+      const { response: completedStatus, manifest } = await waitForCompletedManifest(
+        server,
+        contentLocation || '',
+      );
 
       expect(completedStatus.status).toBe(200);
       expect(manifest.transactionTime).toBe(createdJob.transactionTime);
@@ -157,7 +187,6 @@ describe('bulk export flow', () => {
       expect(secondPoll.status).toBe(429);
       expect(((await secondPoll.json()) as OutcomePayload).resourceType).toBe('OperationOutcome');
 
-      await new Promise((resolve) => setTimeout(resolve, 1100));
       const missingFile = await server.request('/fhir/bulk-files/not-a-job/Patient-1.ndjson');
       expect(missingFile.status).toBe(404);
 
@@ -183,10 +212,10 @@ describe('bulk export flow', () => {
       );
       expect(kickoff.status).toBe(202);
 
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-
-      const status = await server.request(kickoff.headers.get('content-location') || '');
-      const manifest = (await status.json()) as ManifestPayload;
+      const { response: status, manifest } = await waitForCompletedManifest(
+        server,
+        kickoff.headers.get('content-location') || '',
+      );
 
       expect(status.status).toBe(200);
       expect(manifest.output.map((entry) => entry.type)).toEqual([
@@ -236,14 +265,15 @@ describe('bulk export flow', () => {
       expect(authorizedKickoff.status).toBe(202);
 
       const contentLocation = authorizedKickoff.headers.get('content-location') || '';
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-
-      const manifestResponse = await server.request(contentLocation, {
-        headers: {
-          authorization: 'Bearer dev-token',
+      const { response: manifestResponse, manifest } = await waitForCompletedManifest(
+        server,
+        contentLocation,
+        {
+          headers: {
+            authorization: 'Bearer dev-token',
+          },
         },
-      });
-      const manifest = (await manifestResponse.json()) as ManifestPayload;
+      );
 
       expect(manifestResponse.status).toBe(200);
       expect(manifest.requiresAccessToken).toBe(true);

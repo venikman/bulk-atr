@@ -7,8 +7,10 @@ import type {
   MemberCoverageSourceDocument,
   ProviderDirectorySourceDocument,
   RawAttributionList,
+  RawClaim,
   RawCoverage,
   RawLocation,
+  RawMemberLocation,
   RawOrganization,
   RawPatient,
   RawPractitioner,
@@ -37,7 +39,12 @@ const stableSerialize = (value: unknown): string => {
 const readJsonFile = async <T>(path: string) => {
   const absolute = resolve(path);
   const content = await readFile(absolute, 'utf-8');
-  return JSON.parse(content) as T;
+  try {
+    return JSON.parse(content) as T;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse JSON source file ${absolute}: ${message}`, { cause: error });
+  }
 };
 
 const requireItems = <T>(label: string, value: unknown): T[] => {
@@ -52,6 +59,312 @@ const pushIndexValue = <T>(index: Map<string, T[]>, key: string, value: T) => {
   const current = index.get(key) || [];
   current.push(value);
   index.set(key, current);
+};
+
+const buildSourceIdSet = (items: Array<{ sourceId: string }>) =>
+  new Set(items.map((item) => item.sourceId));
+
+const throwMissingLink = (
+  collection: string,
+  sourceId: string,
+  field: string,
+  targetType: string,
+  targetSourceId: string,
+): never => {
+  throw new Error(
+    `${collection} ${sourceId} field ${field} references missing ${targetType} ${targetSourceId}.`,
+  );
+};
+
+const validateOptionalLink = ({
+  collection,
+  sourceId,
+  field,
+  targetType,
+  targetSourceId,
+  targetIndex,
+}: {
+  collection: string;
+  sourceId: string;
+  field: string;
+  targetType: string;
+  targetSourceId?: string | null;
+  targetIndex: Set<string>;
+}) => {
+  if (!targetSourceId) {
+    return;
+  }
+
+  if (!targetIndex.has(targetSourceId)) {
+    throwMissingLink(collection, sourceId, field, targetType, targetSourceId);
+  }
+};
+
+const validateRequiredLink = ({
+  collection,
+  sourceId,
+  field,
+  targetType,
+  targetSourceId,
+  targetIndex,
+}: {
+  collection: string;
+  sourceId: string;
+  field: string;
+  targetType: string;
+  targetSourceId: string;
+  targetIndex: Set<string>;
+}) => {
+  if (!targetIndex.has(targetSourceId)) {
+    throwMissingLink(collection, sourceId, field, targetType, targetSourceId);
+  }
+};
+
+const validateSourceLinks = ({
+  patients,
+  coverages,
+  relatedPersons,
+  memberLocations,
+  practitioners,
+  roles,
+  orgs,
+  locations,
+  claims,
+  attributionLists,
+}: {
+  patients: RawPatient[];
+  coverages: RawCoverage[];
+  relatedPersons: RawRelatedPerson[];
+  memberLocations: RawMemberLocation[];
+  practitioners: RawPractitioner[];
+  roles: RawPractitionerRole[];
+  orgs: RawOrganization[];
+  locations: RawLocation[];
+  claims: RawClaim[];
+  attributionLists: RawAttributionList[];
+}) => {
+  const patientIds = buildSourceIdSet(patients);
+  const coverageIds = buildSourceIdSet(coverages);
+  const relatedPersonIds = buildSourceIdSet(relatedPersons);
+  const memberLocationIds = buildSourceIdSet(memberLocations);
+  const practitionerIds = buildSourceIdSet(practitioners);
+  const roleIds = buildSourceIdSet(roles);
+  const organizationIds = buildSourceIdSet(orgs);
+  const locationIds = buildSourceIdSet(locations);
+
+  for (const patient of patients) {
+    validateOptionalLink({
+      collection: 'Patient',
+      sourceId: patient.sourceId,
+      field: 'generalPractitionerRoleSourceId',
+      targetType: 'PractitionerRole',
+      targetSourceId: patient.generalPractitionerRoleSourceId,
+      targetIndex: roleIds,
+    });
+    validateOptionalLink({
+      collection: 'Patient',
+      sourceId: patient.sourceId,
+      field: 'managingOrganizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: patient.managingOrganizationSourceId,
+      targetIndex: organizationIds,
+    });
+    validateOptionalLink({
+      collection: 'Patient',
+      sourceId: patient.sourceId,
+      field: 'homeLocationSourceId',
+      targetType: 'MemberLocation',
+      targetSourceId: patient.homeLocationSourceId,
+      targetIndex: memberLocationIds,
+    });
+  }
+
+  for (const coverage of coverages) {
+    validateRequiredLink({
+      collection: 'Coverage',
+      sourceId: coverage.sourceId,
+      field: 'beneficiaryPatientSourceId',
+      targetType: 'Patient',
+      targetSourceId: coverage.beneficiaryPatientSourceId,
+      targetIndex: patientIds,
+    });
+    validateRequiredLink({
+      collection: 'Coverage',
+      sourceId: coverage.sourceId,
+      field: 'policyHolderSourceId',
+      targetType: coverage.policyHolderType,
+      targetSourceId: coverage.policyHolderSourceId,
+      targetIndex: coverage.policyHolderType === 'RelatedPerson' ? relatedPersonIds : patientIds,
+    });
+    validateRequiredLink({
+      collection: 'Coverage',
+      sourceId: coverage.sourceId,
+      field: 'subscriberSourceId',
+      targetType: coverage.subscriberType,
+      targetSourceId: coverage.subscriberSourceId,
+      targetIndex: coverage.subscriberType === 'RelatedPerson' ? relatedPersonIds : patientIds,
+    });
+    validateRequiredLink({
+      collection: 'Coverage',
+      sourceId: coverage.sourceId,
+      field: 'payorOrganizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: coverage.payorOrganizationSourceId,
+      targetIndex: organizationIds,
+    });
+  }
+
+  for (const relatedPerson of relatedPersons) {
+    validateRequiredLink({
+      collection: 'RelatedPerson',
+      sourceId: relatedPerson.sourceId,
+      field: 'patientSourceId',
+      targetType: 'Patient',
+      targetSourceId: relatedPerson.patientSourceId,
+      targetIndex: patientIds,
+    });
+  }
+
+  for (const role of roles) {
+    validateRequiredLink({
+      collection: 'PractitionerRole',
+      sourceId: role.sourceId,
+      field: 'practitionerSourceId',
+      targetType: 'Practitioner',
+      targetSourceId: role.practitionerSourceId,
+      targetIndex: practitionerIds,
+    });
+    validateRequiredLink({
+      collection: 'PractitionerRole',
+      sourceId: role.sourceId,
+      field: 'organizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: role.organizationSourceId,
+      targetIndex: organizationIds,
+    });
+    for (const [index, locationSourceId] of role.locationSourceIds.entries()) {
+      validateRequiredLink({
+        collection: 'PractitionerRole',
+        sourceId: role.sourceId,
+        field: `locationSourceIds[${index}]`,
+        targetType: 'Location',
+        targetSourceId: locationSourceId,
+        targetIndex: locationIds,
+      });
+    }
+  }
+
+  for (const practitioner of practitioners) {
+    practitioner.qualification?.forEach((qualification, index) => {
+      validateOptionalLink({
+        collection: 'Practitioner',
+        sourceId: practitioner.sourceId,
+        field: `qualification[${index}].issuerOrganizationSourceId`,
+        targetType: 'Organization',
+        targetSourceId: qualification.issuerOrganizationSourceId,
+        targetIndex: organizationIds,
+      });
+    });
+  }
+
+  for (const location of locations) {
+    validateRequiredLink({
+      collection: 'Location',
+      sourceId: location.sourceId,
+      field: 'organizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: location.organizationSourceId,
+      targetIndex: organizationIds,
+    });
+  }
+
+  for (const attributionList of attributionLists) {
+    validateRequiredLink({
+      collection: 'AttributionList',
+      sourceId: attributionList.sourceId,
+      field: 'payerOrganizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: attributionList.payerOrganizationSourceId,
+      targetIndex: organizationIds,
+    });
+    validateRequiredLink({
+      collection: 'AttributionList',
+      sourceId: attributionList.sourceId,
+      field: 'providerOrganizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: attributionList.providerOrganizationSourceId,
+      targetIndex: organizationIds,
+    });
+    attributionList.members.forEach((member, index) => {
+      validateRequiredLink({
+        collection: 'AttributionList',
+        sourceId: attributionList.sourceId,
+        field: `members[${index}].patientSourceId`,
+        targetType: 'Patient',
+        targetSourceId: member.patientSourceId,
+        targetIndex: patientIds,
+      });
+      validateRequiredLink({
+        collection: 'AttributionList',
+        sourceId: attributionList.sourceId,
+        field: `members[${index}].coverageSourceId`,
+        targetType: 'Coverage',
+        targetSourceId: member.coverageSourceId,
+        targetIndex: coverageIds,
+      });
+      validateRequiredLink({
+        collection: 'AttributionList',
+        sourceId: attributionList.sourceId,
+        field: `members[${index}].practitionerRoleSourceId`,
+        targetType: 'PractitionerRole',
+        targetSourceId: member.practitionerRoleSourceId,
+        targetIndex: roleIds,
+      });
+    });
+  }
+
+  for (const claim of claims) {
+    validateRequiredLink({
+      collection: 'Claim',
+      sourceId: claim.sourceId,
+      field: 'patientSourceId',
+      targetType: 'Patient',
+      targetSourceId: claim.patientSourceId,
+      targetIndex: patientIds,
+    });
+    validateRequiredLink({
+      collection: 'Claim',
+      sourceId: claim.sourceId,
+      field: 'coverageSourceId',
+      targetType: 'Coverage',
+      targetSourceId: claim.coverageSourceId,
+      targetIndex: coverageIds,
+    });
+    validateRequiredLink({
+      collection: 'Claim',
+      sourceId: claim.sourceId,
+      field: 'renderingPractitionerRoleSourceId',
+      targetType: 'PractitionerRole',
+      targetSourceId: claim.renderingPractitionerRoleSourceId,
+      targetIndex: roleIds,
+    });
+    validateRequiredLink({
+      collection: 'Claim',
+      sourceId: claim.sourceId,
+      field: 'serviceOrganizationSourceId',
+      targetType: 'Organization',
+      targetSourceId: claim.serviceOrganizationSourceId,
+      targetIndex: organizationIds,
+    });
+    validateRequiredLink({
+      collection: 'Claim',
+      sourceId: claim.sourceId,
+      field: 'serviceLocationSourceId',
+      targetType: 'Location',
+      targetSourceId: claim.serviceLocationSourceId,
+      targetIndex: locationIds,
+    });
+  }
 };
 
 export type RawDomainStore = {
@@ -103,7 +416,7 @@ export const createRawDomainStoreFromDocuments = ({
     'memberCoverage.functions.listRelatedPersons.items',
     memberCoverage.functions?.listRelatedPersons?.items,
   );
-  requireItems(
+  const memberLocations = requireItems<RawMemberLocation>(
     'memberCoverage.functions.listLocations.items',
     memberCoverage.functions?.listLocations?.items,
   );
@@ -125,7 +438,7 @@ export const createRawDomainStoreFromDocuments = ({
     providerDirectory.functions?.listLocations?.items,
   );
 
-  requireItems(
+  const claims = requireItems<RawClaim>(
     'claimsAttribution.functions.listClaims.items',
     claimsAttribution.functions?.listClaims?.items,
   );
@@ -133,6 +446,19 @@ export const createRawDomainStoreFromDocuments = ({
     'claimsAttribution.functions.listAttributionLists.items',
     claimsAttribution.functions?.listAttributionLists?.items,
   );
+
+  validateSourceLinks({
+    patients,
+    coverages,
+    relatedPersons,
+    memberLocations,
+    practitioners,
+    roles,
+    orgs,
+    locations,
+    claims,
+    attributionLists,
+  });
 
   const sourceHash = createHash('sha256')
     .update(

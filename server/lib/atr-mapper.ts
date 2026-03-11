@@ -346,6 +346,8 @@ export class AtrMapper {
   }
 
   mapPatient(raw: RawPatient): FhirResource {
+    const generalPractitioner = this.toRoleReference(raw.generalPractitionerRoleSourceId);
+
     return {
       resourceType: 'Patient',
       id: raw.fhirId,
@@ -491,9 +493,9 @@ export class AtrMapper {
             ],
           }
         : {}),
-      ...(raw.generalPractitionerRoleSourceId
+      ...(generalPractitioner
         ? {
-            generalPractitioner: [this.toRoleReference(raw.generalPractitionerRoleSourceId)],
+            generalPractitioner: [generalPractitioner],
           }
         : {}),
       ...(raw.managingOrganizationSourceId
@@ -530,6 +532,8 @@ export class AtrMapper {
   }
 
   mapCoverage(raw: RawCoverage): FhirResource {
+    const payor = this.toOrganizationReference(raw.payorOrganizationSourceId);
+
     return {
       resourceType: 'Coverage',
       id: raw.fhirId,
@@ -581,7 +585,11 @@ export class AtrMapper {
         start: raw.periodStart,
         end: raw.periodEnd,
       },
-      payor: [this.toOrganizationReference(raw.payorOrganizationSourceId)],
+      ...(payor
+        ? {
+            payor: [payor],
+          }
+        : {}),
       class: [
         {
           type: {

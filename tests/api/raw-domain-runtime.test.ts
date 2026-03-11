@@ -1,11 +1,21 @@
-import { resolve } from 'node:path';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import atrFixture from '../../output/atr_bulk_export_single.json' with { type: 'json' };
 import { AtrResolver } from '../../server/lib/atr-resolver.js';
 import {
   createRawDomainStoreFromDocuments,
   loadRawDomainStore,
 } from '../../server/lib/raw-domain-store.js';
+import type { RawCoverage, RawPatient } from '../../server/lib/raw-domain-types.js';
 import { supportedResourceTypes } from '../../server/lib/types.js';
+
+type MapperUnderTest = {
+  mapPatient(raw: RawPatient): unknown;
+  mapCoverage(raw: RawCoverage): unknown;
+  toRoleReference(sourceId?: string | null): { reference: string } | undefined;
+  toOrganizationReference(sourceId?: string | null): { reference: string } | undefined;
+};
 
 const loadResolver = async () => {
   const store = await loadRawDomainStore({
@@ -19,6 +29,12 @@ const loadResolver = async () => {
     resolver: new AtrResolver(store),
   };
 };
+
+const cloneDocuments = (resolver: AtrResolver) => ({
+  memberCoverage: structuredClone(resolver.store.memberCoverage),
+  providerDirectory: structuredClone(resolver.store.providerDirectory),
+  claimsAttribution: structuredClone(resolver.store.claimsAttribution),
+});
 
 describe('raw-domain runtime', () => {
   test('indexes the single Group from raw source data', async () => {
@@ -130,28 +146,179 @@ describe('raw-domain runtime', () => {
     ).toHaveLength(2);
   });
 
-  test('throws a descriptive error when a PractitionerRole references a missing practitioner', async () => {
-    const { store } = await loadResolver();
-    const memberCoverage = structuredClone(store.memberCoverage);
-    const providerDirectory = structuredClone(store.providerDirectory);
-    const claimsAttribution = structuredClone(store.claimsAttribution);
-    const role = providerDirectory.functions.listPractitionerRoles.items[0];
-
-    providerDirectory.functions.listPractitionerRoles.items[0] = {
-      ...role,
-      practitionerSourceId: 'missing-practitioner-source-id',
-    };
-
-    const resolver = new AtrResolver(
-      createRawDomainStoreFromDocuments({
-        memberCoverage,
-        providerDirectory,
-        claimsAttribution,
-      }),
+  test('omits array-wrapped references when helper resolution returns undefined', async () => {
+    const { resolver } = await loadResolver();
+    const mapper = resolver.mapper as unknown as MapperUnderTest;
+    const patient = resolver.store.memberCoverage.functions.listPatients.items.find(
+      (candidate) => candidate.generalPractitionerRoleSourceId,
+    );
+    const coverage = resolver.store.memberCoverage.functions.listCoverages.items.find(
+      (candidate) => candidate.payorOrganizationSourceId,
     );
 
-    expect(() => resolver.getResource('PractitionerRole', role.fhirId)).toThrow(
-      `PractitionerRole ${role.sourceId} is missing practitioner missing-practitioner-source-id.`,
-    );
+    expect(patient).toBeTruthy();
+    expect(coverage).toBeTruthy();
+    if (!patient || !coverage) {
+      throw new Error('Expected fixture data with practitioner and payor source references.');
+    }
+
+    const originalToRoleReference = mapper.toRoleReference;
+    const originalToOrganizationReference = mapper.toOrganizationReference;
+
+    mapper.toRoleReference = () => undefined;
+    mapper.toOrganizationReference = () => undefined;
+
+    try {
+      const mappedPatient = JSON.parse(JSON.stringify(mapper.mapPatient(patient))) as Record<
+        string,
+        unknown
+      >;
+      const mappedCoverage = JSON.parse(JSON.stringify(mapper.mapCoverage(coverage))) as Record<
+        string,
+        unknown
+      >;
+
+      expect(mappedPatient).not.toHaveProperty('generalPractitioner');
+      expect(mappedCoverage).not.toHaveProperty('payor');
+    } finally {
+      mapper.toRoleReference = originalToRoleReference;
+      mapper.toOrganizationReference = originalToOrganizationReference;
+    }
+  });
+
+  test('fails fast when raw source links are dangling across mapped collections', async () => {
+    const { resolver } = await loadResolver();
+
+    const cases = [
+      {
+        label: 'Patient.generalPractitionerRoleSourceId',
+        expected: (sourceId: string) =>
+          `Patient ${sourceId} field generalPractitionerRoleSourceId references missing PractitionerRole missing-role-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const patient = docs.memberCoverage.functions.listPatients.items.find(
+            (candidate) => candidate.generalPractitionerRoleSourceId,
+          );
+          if (!patient) {
+            throw new Error('Expected fixture patient with a general practitioner role source id.');
+          }
+          patient.generalPractitionerRoleSourceId = 'missing-role-source-id';
+          return patient.sourceId;
+        },
+      },
+      {
+        label: 'Coverage.payorOrganizationSourceId',
+        expected: (sourceId: string) =>
+          `Coverage ${sourceId} field payorOrganizationSourceId references missing Organization missing-org-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const coverage = docs.memberCoverage.functions.listCoverages.items[0];
+          coverage.payorOrganizationSourceId = 'missing-org-source-id';
+          return coverage.sourceId;
+        },
+      },
+      {
+        label: 'RelatedPerson.patientSourceId',
+        expected: (sourceId: string) =>
+          `RelatedPerson ${sourceId} field patientSourceId references missing Patient missing-patient-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const relatedPerson = docs.memberCoverage.functions.listRelatedPersons.items[0];
+          relatedPerson.patientSourceId = 'missing-patient-source-id';
+          return relatedPerson.sourceId;
+        },
+      },
+      {
+        label: 'PractitionerRole.practitionerSourceId',
+        expected: (sourceId: string) =>
+          `PractitionerRole ${sourceId} field practitionerSourceId references missing Practitioner missing-practitioner-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const role = docs.providerDirectory.functions.listPractitionerRoles.items[0];
+          role.practitionerSourceId = 'missing-practitioner-source-id';
+          return role.sourceId;
+        },
+      },
+      {
+        label: 'Practitioner.qualification[].issuerOrganizationSourceId',
+        expected: (sourceId: string) =>
+          `Practitioner ${sourceId} field qualification[0].issuerOrganizationSourceId references missing Organization missing-issuer-org-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const practitioner = docs.providerDirectory.functions.listPractitioners.items.find(
+            (candidate) => candidate.qualification?.[0]?.issuerOrganizationSourceId,
+          );
+          if (!practitioner?.qualification?.[0]) {
+            throw new Error(
+              'Expected fixture practitioner qualification with issuer organization.',
+            );
+          }
+          practitioner.qualification[0].issuerOrganizationSourceId = 'missing-issuer-org-source-id';
+          return practitioner.sourceId;
+        },
+      },
+      {
+        label: 'Location.organizationSourceId',
+        expected: (sourceId: string) =>
+          `Location ${sourceId} field organizationSourceId references missing Organization missing-location-org-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const location = docs.providerDirectory.functions.listLocations.items[0];
+          location.organizationSourceId = 'missing-location-org-source-id';
+          return location.sourceId;
+        },
+      },
+      {
+        label: 'AttributionList.members[].practitionerRoleSourceId',
+        expected: (sourceId: string) =>
+          `AttributionList ${sourceId} field members[0].practitionerRoleSourceId references missing PractitionerRole missing-attribution-role-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const attributionList = docs.claimsAttribution.functions.listAttributionLists.items[0];
+          attributionList.members[0].practitionerRoleSourceId =
+            'missing-attribution-role-source-id';
+          return attributionList.sourceId;
+        },
+      },
+      {
+        label: 'Claim.serviceLocationSourceId',
+        expected: (sourceId: string) =>
+          `Claim ${sourceId} field serviceLocationSourceId references missing Location missing-claim-location-source-id.`,
+        mutate: (docs: ReturnType<typeof cloneDocuments>) => {
+          const claim = docs.claimsAttribution.functions.listClaims.items[0];
+          claim.serviceLocationSourceId = 'missing-claim-location-source-id';
+          return claim.sourceId;
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const docs = cloneDocuments(resolver);
+      const sourceId = testCase.mutate(docs);
+      expect(() =>
+        createRawDomainStoreFromDocuments({
+          memberCoverage: docs.memberCoverage,
+          providerDirectory: docs.providerDirectory,
+          claimsAttribution: docs.claimsAttribution,
+        }),
+      ).toThrow(testCase.expected(sourceId));
+    }
+  });
+
+  test('includes the absolute file path when JSON source parsing fails', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'bulk-atr-invalid-json-'));
+    const invalidMemberCoveragePath = join(tempDir, 'member-coverage-service.json');
+
+    try {
+      await writeFile(invalidMemberCoveragePath, '{"functions":', 'utf-8');
+
+      try {
+        await loadRawDomainStore({
+          memberCoveragePath: invalidMemberCoveragePath,
+          providerDirectoryPath: resolve('input-services/provider-directory-service.json'),
+          claimsAttributionPath: resolve('input-services/claims-attribution-service.json'),
+        });
+        throw new Error('Expected loadRawDomainStore() to reject invalid JSON input.');
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toContain(resolve(invalidMemberCoveragePath));
+        expect((error as Error).message).toContain('Unexpected end of JSON input');
+      }
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
