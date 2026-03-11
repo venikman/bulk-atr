@@ -1,0 +1,27 @@
+{
+  "name": "bulk-atr-producer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.13.0"
+  },
+  "scripts": {
+    "dev": "PORT=3001 tsx --watch server/main.ts",
+    "build": "tsc --project tsconfig.server.json",
+    "start": "NODE_ENV=production node build/runtime/server/main.js",
+    "test": "rstest --project api",
+    "check": "biome check . && tsc --noEmit && tsc --project tsconfig.server.json --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.10",
+    "hono": "^4.12.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.5",
+    "@rstest/core": "^0.9.0",
+    "@types/node": "^24.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

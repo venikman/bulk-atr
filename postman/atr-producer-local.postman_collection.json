@@ -1,0 +1,373 @@
+{
+  "info": {
+    "_postman_id": "de3572cc-dfef-4af3-ae18-8f4406144ca2",
+    "name": "ATR Producer Local",
+    "description": "Postman collection for the local ATR producer. Import this together with the matching environment to run the discovery and bulk export flow without manual copy/paste.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Metadata",
+      "item": [
+        {
+          "name": "Read CapabilityStatement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata"
+              ]
+            },
+            "description": "Reads the server CapabilityStatement."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Group",
+      "item": [
+        {
+          "name": "Discover attribution Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Group discovery returns a Bundle', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "const groupId = body?.entry?.[0]?.resource?.id || '';",
+                  "if (groupId) {",
+                  "  pm.environment.set('groupId', groupId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Group?identifier={{groupIdentifier}}&_summary=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Group"
+              ],
+              "query": [
+                {
+                  "key": "identifier",
+                  "value": "{{groupIdentifier}}"
+                },
+                {
+                  "key": "_summary",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Finds the ATR attribution group and stores its id as a Postman environment variable."
+          }
+        },
+        {
+          "name": "Read attribution Group",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Group/{{groupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Group",
+                "{{groupId}}"
+              ]
+            },
+            "description": "Reads the ATR attribution group using the current groupId variable."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Export",
+      "item": [
+        {
+          "name": "Kick off ATR bulk export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Bulk export kickoff is accepted', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "const contentLocation = pm.response.headers.get('content-location') || '';",
+                  "pm.environment.set('bulkStatusUrl', contentLocation);",
+                  "pm.environment.set('jobId', contentLocation ? contentLocation.split('/').pop() : '');",
+                  "[",
+                  "  'groupFileUrl',",
+                  "  'patientFileUrl',",
+                  "  'coverageFileUrl',",
+                  "  'relatedPersonFileUrl',",
+                  "  'practitionerFileUrl',",
+                  "  'practitionerRoleFileUrl',",
+                  "  'organizationFileUrl',",
+                  "  'locationFileUrl'",
+                  "].forEach(function (key) {",
+                  "  pm.environment.set(key, '');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Group/{{groupId}}/$davinci-data-export?exportType={{exportType}}&_type={{exportTypes}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Group",
+                "{{groupId}}",
+                "$davinci-data-export"
+              ],
+              "query": [
+                {
+                  "key": "exportType",
+                  "value": "{{exportType}}"
+                },
+                {
+                  "key": "_type",
+                  "value": "{{exportTypes}}"
+                }
+              ]
+            },
+            "description": "Starts the ATR bulk export and stores the returned status URL and job id."
+          }
+        },
+        {
+          "name": "Poll bulk export job status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Bulk export status is accepted or complete', function () {",
+                  "  pm.expect([200, 202]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  const output = Array.isArray(body.output) ? body.output : [];",
+                  "  const byType = Object.fromEntries(output.map(function (entry) {",
+                  "    return [entry.type, entry.url];",
+                  "  }));",
+                  "  pm.environment.set('groupFileUrl', byType.Group || '');",
+                  "  pm.environment.set('patientFileUrl', byType.Patient || '');",
+                  "  pm.environment.set('coverageFileUrl', byType.Coverage || '');",
+                  "  pm.environment.set('relatedPersonFileUrl', byType.RelatedPerson || '');",
+                  "  pm.environment.set('practitionerFileUrl', byType.Practitioner || '');",
+                  "  pm.environment.set('practitionerRoleFileUrl', byType.PractitionerRole || '');",
+                  "  pm.environment.set('organizationFileUrl', byType.Organization || '');",
+                  "  pm.environment.set('locationFileUrl', byType.Location || '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{bulkStatusUrl}}",
+              "host": [
+                "{{bulkStatusUrl}}"
+              ]
+            },
+            "description": "Polls the current bulk status URL and stores manifest file URLs once the export is complete."
+          }
+        },
+        {
+          "name": "Download Group NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{groupFileUrl}}",
+              "host": [
+                "{{groupFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Patient NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{patientFileUrl}}",
+              "host": [
+                "{{patientFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Coverage NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{coverageFileUrl}}",
+              "host": [
+                "{{coverageFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download RelatedPerson NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{relatedPersonFileUrl}}",
+              "host": [
+                "{{relatedPersonFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Practitioner NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{practitionerFileUrl}}",
+              "host": [
+                "{{practitionerFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download PractitionerRole NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{practitionerRoleFileUrl}}",
+              "host": [
+                "{{practitionerRoleFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Organization NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{organizationFileUrl}}",
+              "host": [
+                "{{organizationFileUrl}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Location NDJSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+ndjson"
+              }
+            ],
+            "url": {
+              "raw": "{{locationFileUrl}}",
+              "host": [
+                "{{locationFileUrl}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
