@@ -120,6 +120,24 @@ const validateRequiredLink = ({
   }
 };
 
+const validateCoverageReferenceType = ({
+  sourceId,
+  field,
+  value,
+}: {
+  sourceId: string;
+  field: string;
+  value: string;
+}) => {
+  if (value === 'Patient' || value === 'RelatedPerson') {
+    return;
+  }
+
+  throw new Error(
+    `Coverage ${sourceId} field ${field} must be Patient or RelatedPerson. Received ${value}.`,
+  );
+};
+
 const validateSourceLinks = ({
   patients,
   coverages,
@@ -180,6 +198,16 @@ const validateSourceLinks = ({
   }
 
   for (const coverage of coverages) {
+    validateCoverageReferenceType({
+      sourceId: coverage.sourceId,
+      field: 'policyHolderType',
+      value: coverage.policyHolderType,
+    });
+    validateCoverageReferenceType({
+      sourceId: coverage.sourceId,
+      field: 'subscriberType',
+      value: coverage.subscriberType,
+    });
     validateRequiredLink({
       collection: 'Coverage',
       sourceId: coverage.sourceId,
@@ -547,6 +575,12 @@ export const createRawDomainStoreFromDocuments = ({
     }
 
     store.indexes.attributionListsBySourceId.set(attributionList.sourceId, attributionList);
+    const existingGroup = store.indexes.attributionListsByGroupId.get(attributionList.fhirId);
+    if (existingGroup) {
+      throw new Error(
+        `Duplicate attribution list Group id ${attributionList.fhirId} for ${attributionList.sourceId}; already used by ${existingGroup.sourceId}.`,
+      );
+    }
     store.indexes.attributionListsByGroupId.set(attributionList.fhirId, attributionList);
     const providerOrganization =
       store.indexes.orgsBySourceId.get(attributionList.providerOrganizationSourceId) || null;

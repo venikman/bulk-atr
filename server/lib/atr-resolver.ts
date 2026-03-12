@@ -40,6 +40,52 @@ const parseReference = (reference: string) => {
   return { resourceType: match[1] as SupportedResourceType, id: match[2] };
 };
 
+const buildResourceOrder = (store: RawDomainStore) =>
+  ({
+    Group: new Map(
+      store.claimsAttribution.functions.listAttributionLists.items.map((raw, index) => [
+        raw.fhirId,
+        index,
+      ]),
+    ),
+    Patient: new Map(
+      store.memberCoverage.functions.listPatients.items.map((raw, index) => [raw.fhirId, index]),
+    ),
+    Coverage: new Map(
+      store.memberCoverage.functions.listCoverages.items.map((raw, index) => [raw.fhirId, index]),
+    ),
+    RelatedPerson: new Map(
+      store.memberCoverage.functions.listRelatedPersons.items.map((raw, index) => [
+        raw.fhirId,
+        index,
+      ]),
+    ),
+    Practitioner: new Map(
+      store.providerDirectory.functions.listPractitioners.items.map((raw, index) => [
+        raw.fhirId,
+        index,
+      ]),
+    ),
+    PractitionerRole: new Map(
+      store.providerDirectory.functions.listPractitionerRoles.items.map((raw, index) => [
+        raw.fhirId,
+        index,
+      ]),
+    ),
+    Organization: new Map(
+      store.providerDirectory.functions.listOrganizations.items.map((raw, index) => [
+        raw.fhirId,
+        index,
+      ]),
+    ),
+    Location: new Map(
+      store.providerDirectory.functions.listLocations.items.map((raw, index) => [
+        raw.fhirId,
+        index,
+      ]),
+    ),
+  }) satisfies Record<SupportedResourceType, Map<string, number>>;
+
 export class AtrResolver {
   readonly store: RawDomainStore;
 
@@ -47,9 +93,12 @@ export class AtrResolver {
 
   readonly cache = new Map<string, FhirResource>();
 
+  readonly resourceOrder: Record<SupportedResourceType, Map<string, number>>;
+
   constructor(store: RawDomainStore) {
     this.store = store;
     this.mapper = new AtrMapper(store);
+    this.resourceOrder = buildResourceOrder(store);
   }
 
   private mapCached(key: string, builder: () => FhirResource | null) {
@@ -136,37 +185,6 @@ export class AtrResolver {
     });
   }
 
-  private listResourceIds(resourceType: SupportedResourceType) {
-    switch (resourceType) {
-      case 'Group':
-        return this.store.claimsAttribution.functions.listAttributionLists.items.map(
-          (raw) => raw.fhirId,
-        );
-      case 'Patient':
-        return this.store.memberCoverage.functions.listPatients.items.map((raw) => raw.fhirId);
-      case 'Coverage':
-        return this.store.memberCoverage.functions.listCoverages.items.map((raw) => raw.fhirId);
-      case 'RelatedPerson':
-        return this.store.memberCoverage.functions.listRelatedPersons.items.map(
-          (raw) => raw.fhirId,
-        );
-      case 'Practitioner':
-        return this.store.providerDirectory.functions.listPractitioners.items.map(
-          (raw) => raw.fhirId,
-        );
-      case 'PractitionerRole':
-        return this.store.providerDirectory.functions.listPractitionerRoles.items.map(
-          (raw) => raw.fhirId,
-        );
-      case 'Organization':
-        return this.store.providerDirectory.functions.listOrganizations.items.map(
-          (raw) => raw.fhirId,
-        );
-      case 'Location':
-        return this.store.providerDirectory.functions.listLocations.items.map((raw) => raw.fhirId);
-    }
-  }
-
   buildSearchBundle(resources: FhirResource[], requestUrl: string) {
     return {
       resourceType: 'Bundle',
@@ -192,19 +210,21 @@ export class AtrResolver {
     }
 
     const requested = new Set(requestedTypes);
-    const selectedKeys = new Set<string>();
     const visitedKeys = new Set<string>([`Group/${group.id}`]);
     const queue: FhirResource[] = [group];
+    let queueIndex = 0;
+    const selectedResources = new Map<SupportedResourceType, Map<string, FhirResource>>();
 
-    while (queue.length > 0) {
-      const resource = queue.shift();
-      if (!resource) {
-        continue;
-      }
+    for (const type of requestedTypes) {
+      selectedResources.set(type, new Map());
+    }
 
+    while (queueIndex < queue.length) {
+      const resource = queue[queueIndex++];
       const key = `${resource.resourceType}/${resource.id}`;
-      if (requested.has(resource.resourceType as SupportedResourceType)) {
-        selectedKeys.add(key);
+      const resourceType = resource.resourceType as SupportedResourceType;
+      if (requested.has(resourceType)) {
+        selectedResources.get(resourceType)?.set(key, resource);
       }
 
       const references = new Set<string>();
@@ -233,17 +253,13 @@ export class AtrResolver {
 
     return Object.fromEntries(
       requestedTypes.map((type) => {
-        const resources: FhirResource[] = [];
-        for (const id of this.listResourceIds(type)) {
-          if (!selectedKeys.has(`${type}/${id}`)) {
-            continue;
-          }
-
-          const resource = this.getResource(type, id);
-          if (resource) {
-            resources.push(resource);
-          }
-        }
+        const resources = Array.from(selectedResources.get(type)?.values() || []);
+        const order = this.resourceOrder[type];
+        resources.sort(
+          (left, right) =>
+            (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+            (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+        );
         return [type, resources];
       }),
     ) as Partial<ResourceCollection>;

@@ -38,7 +38,16 @@ const waitForCompletedManifest = async (
         manifest: (await response.json()) as ManifestPayload,
       };
     }
-    await sleep(150);
+
+    const retryAfterSeconds = Number(response.headers.get('retry-after'));
+    const delayMs =
+      Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+        ? retryAfterSeconds * 1000
+        : response.status === 202 || response.status === 429
+          ? 1000
+          : 150;
+
+    await sleep(delayMs);
   }
 
   throw new Error(
@@ -71,6 +80,63 @@ const collectReferences = (value: unknown, refs: Set<string>) => {
 };
 
 describe('bulk export flow', () => {
+  test('waits for Retry-After before polling again', async () => {
+    const firstPollStartedAt = { current: 0 };
+    let retriedTooSoon = false;
+
+    const fakeServer = {
+      request: async () => {
+        const now = Date.now();
+        if (!firstPollStartedAt.current) {
+          firstPollStartedAt.current = now;
+          return new Response(null, {
+            status: 202,
+            headers: {
+              'retry-after': '1',
+            },
+          });
+        }
+
+        if (now - firstPollStartedAt.current < 1000) {
+          retriedTooSoon = true;
+        }
+
+        if (retriedTooSoon) {
+          return new Response(null, {
+            status: 429,
+            headers: {
+              'retry-after': '5',
+            },
+          });
+        }
+
+        return new Response(
+          JSON.stringify({
+            transactionTime: '2026-01-01T00:00:00.000Z',
+            requiresAccessToken: false,
+            output: [],
+          } satisfies ManifestPayload),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'application/json',
+            },
+          },
+        );
+      },
+    } as unknown as Awaited<ReturnType<typeof createTestServer>>;
+
+    const { manifest } = await waitForCompletedManifest(
+      fakeServer,
+      '/fhir/bulk-status/fake',
+      undefined,
+      1600,
+    );
+
+    expect(retriedTooSoon).toBe(false);
+    expect(manifest.output).toEqual([]);
+  });
+
   test('kicks off export, completes asynchronously, and serves ndjson files', async () => {
     const server = await createTestServer();
 

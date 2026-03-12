@@ -351,4 +351,63 @@ describe('raw-domain runtime', () => {
 
     expect(resolver.cache.size).toBe(initialSize);
   });
+
+  test('builds export resources without scanning every resource id collection', async () => {
+    const { resolver } = await loadResolver();
+    const resolverUnderTest = resolver as unknown as {
+      listResourceIds: () => string[];
+      buildExportResources: typeof resolver.buildExportResources;
+    };
+
+    resolverUnderTest.listResourceIds = () => {
+      throw new Error('buildExportResources should not perform a full resource-id scan.');
+    };
+
+    const exportResources = resolverUnderTest.buildExportResources(
+      'group-2026-northwind-atr-001',
+      supportedResourceTypes,
+    );
+
+    expect(exportResources).toEqual(atrFixture.resources);
+  });
+
+  test('rejects invalid coverage holder types from raw JSON before link validation falls back', async () => {
+    const { resolver } = await loadResolver();
+    const docs = cloneDocuments(resolver);
+    const [coverage] = docs.memberCoverage.functions.listCoverages.items;
+
+    coverage.policyHolderType = 'Guarantor' as never;
+
+    expect(() =>
+      createRawDomainStoreFromDocuments({
+        memberCoverage: docs.memberCoverage,
+        providerDirectory: docs.providerDirectory,
+        claimsAttribution: docs.claimsAttribution,
+      }),
+    ).toThrow(
+      `Coverage ${coverage.sourceId} field policyHolderType must be Patient or RelatedPerson. Received Guarantor.`,
+    );
+  });
+
+  test('rejects duplicate attribution list group ids during indexing', async () => {
+    const { resolver } = await loadResolver();
+    const docs = cloneDocuments(resolver);
+    const [firstAttributionList] = docs.claimsAttribution.functions.listAttributionLists.items;
+
+    docs.claimsAttribution.functions.listAttributionLists.items.push({
+      ...firstAttributionList,
+      sourceId: 'atr-list-source-duplicate',
+      contractId: 'CTR-2026-DUPLICATE',
+    });
+
+    expect(() =>
+      createRawDomainStoreFromDocuments({
+        memberCoverage: docs.memberCoverage,
+        providerDirectory: docs.providerDirectory,
+        claimsAttribution: docs.claimsAttribution,
+      }),
+    ).toThrow(
+      `Duplicate attribution list Group id ${firstAttributionList.fhirId} for atr-list-source-duplicate; already used by ${firstAttributionList.sourceId}.`,
+    );
+  });
 });
