@@ -47,6 +47,9 @@ deno task postman:local
 - `deno task db:migrate` applies the raw SQL migrations in `db/migrations/`.
 - Deno Deploy with Prisma Postgres is the only supported production runtime in
   this repo.
+- Production deploys should be triggered only by pushes to `master`.
+- Non-`master` branches may use preview deployments, but only `master` should
+  update the production deployment.
 - npm dependencies are allowed only through Deno `npm:` imports in `deno.json`;
   there is no Node runtime or npm-managed project flow.
 - Bulk export work is claimed and completed on `/fhir/bulk-status/:jobId`; the

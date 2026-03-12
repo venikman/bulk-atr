@@ -51,6 +51,33 @@ describe("operator surface", () => {
     expect(deploymentDoc).toContain("large-200");
   });
 
+  it("checks in a master-gated CI workflow for branch protection", async () => {
+    const workflow = await Deno.readTextFile(
+      new URL(".github/workflows/ci.yml", repoRoot),
+    );
+
+    expect(workflow).toContain("name: CI");
+    expect(workflow).toContain("pull_request:");
+    expect(workflow).toContain("push:");
+    expect(workflow).toContain("- master");
+    expect(workflow).toContain("deno task check");
+    expect(workflow).toContain("deno task test");
+  });
+
+  it("documents that production deploys are triggered only from master pushes", async () => {
+    const readme = await Deno.readTextFile(new URL("README.md", repoRoot));
+    const deploymentDoc = await Deno.readTextFile(
+      new URL("docs/deno-deployment.md", repoRoot),
+    );
+
+    expect(readme).toContain("master");
+    expect(readme).toContain("production deploy");
+    expect(deploymentDoc).toContain("master");
+    expect(deploymentDoc).toContain("production");
+    expect(deploymentDoc).toContain("preview");
+    expect(deploymentDoc).toContain("deno task db:migrate");
+  });
+
   it("removes Node/Vercel project config files from the tracked operator surface", async () => {
     await expect(Deno.stat(new URL("package.json", repoRoot))).rejects
       .toThrow();

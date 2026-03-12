@@ -31,8 +31,14 @@ DATA_PROFILE=large-200 deno task start
 
 ## Production notes
 
+- Deno Deploy production should be wired to the `master` branch only.
+- Production deploys are triggered when commits land on `master`; non-`master`
+  Git activity may still create preview deployments, but it must not update the
+  production URL.
 - Deno Deploy should point at `index.ts` and run `deno task db:migrate` after a
-  successful build.
+  successful build and before traffic shifts to the new revision.
+- GitHub branch protection should require the checked-in `CI` workflow to pass
+  before changes can land on `master`.
 - The repo does not use a Node runtime, `package.json`, `npx`, or npm install
   workflows.
 - Prisma Postgres is infrastructure only in this repo; the app keeps raw SQL
