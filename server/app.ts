@@ -36,15 +36,59 @@ export const createApp = ({
     <main>
       <h1>Bulk ATR Producer API</h1>
       <p>ATR/FHIR API for Group discovery, linked reads, and asynchronous bulk export.</p>
-      <ul>
-        <li><a href="/fhir/metadata">CapabilityStatement</a></li>
-        <li>
-          <a href="/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true">
-            Group discovery
-          </a>
-        </li>
-        <li><a href="/fhir/Group/group-2026-northwind-atr-001">Group read</a></li>
-      </ul>
+      <h2>API Surface</h2>
+
+      <section>
+        <h3>Metadata</h3>
+        <ul>
+          <li><a href="/fhir/metadata">CapabilityStatement</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Group</h3>
+        <ul>
+          <li>
+            <a href="/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true">
+              Search by identifier
+            </a>
+          </li>
+          <li>
+            <a href="/fhir/Group?name=Northwind%20ACO%202026%20Member%20Attribution%20List&_summary=true">
+              Search by name
+            </a>
+          </li>
+          <li><a href="/fhir/Group/group-2026-northwind-atr-001">Read Group by id</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Bulk Export</h3>
+        <ul>
+          <li>
+            <a href="/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage">
+              Kick off export
+            </a>
+          </li>
+          <li><code>/fhir/bulk-status/{jobId}</code></li>
+          <li><code>/fhir/bulk-files/{jobId}/{fileName}</code></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Direct Reads</h3>
+        <ul>
+          <li><a href="/fhir/Patient/patient-0001">Patient</a></li>
+          <li><a href="/fhir/Coverage/coverage-0001">Coverage</a></li>
+          <li><a href="/fhir/RelatedPerson/relatedperson-0003">RelatedPerson</a></li>
+          <li><a href="/fhir/Practitioner/practitioner-001">Practitioner</a></li>
+          <li><a href="/fhir/PractitionerRole/practitionerrole-001">PractitionerRole</a></li>
+          <li><a href="/fhir/Organization/organization-payer-001">Organization</a></li>
+          <li><a href="/fhir/Location/location-001">Location</a></li>
+        </ul>
+      </section>
+
+      <p>Some routes require a bearer token when the server runs in smart-backend mode.</p>
     </main>
   </body>
 </html>`));

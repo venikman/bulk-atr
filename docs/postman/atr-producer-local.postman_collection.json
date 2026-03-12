@@ -508,6 +508,165 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Direct Reads",
+      "item": [
+        {
+          "name": "Read Patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Patient/patient-0001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Patient",
+                "patient-0001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read Coverage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage/coverage-0001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage",
+                "coverage-0001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read RelatedPerson",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/RelatedPerson/relatedperson-0003",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "RelatedPerson",
+                "relatedperson-0003"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read Practitioner",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Practitioner/practitioner-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Practitioner",
+                "practitioner-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read PractitionerRole",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/PractitionerRole/practitionerrole-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "PractitionerRole",
+                "practitionerrole-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read Organization",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Organization/organization-payer-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Organization",
+                "organization-payer-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Location/location-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Location",
+                "location-001"
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

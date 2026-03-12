@@ -179,6 +179,7 @@ describe("postman runner", () => {
       "Bulk Kickoff",
       "Bulk Poll",
       "Bulk Downloads",
+      "Direct Reads",
     ]);
   });
 

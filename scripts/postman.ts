@@ -15,6 +15,7 @@ export const EXPECTED_AUTOMATION_FOLDERS = [
   "Bulk Kickoff",
   "Bulk Poll",
   "Bulk Downloads",
+  "Direct Reads",
 ] as const;
 
 type Workflow = "metadata" | "group" | "bulk" | "full";

@@ -22,7 +22,7 @@ type ResourcePayload = {
 };
 
 describe("metadata and read surface", () => {
-  it("returns a small HTML landing page at / and keeps unrelated root paths 404", async () => {
+  it("returns a grouped API surface page at / and keeps unrelated root paths 404", async () => {
     const server = await createTestServer();
 
     try {
@@ -32,11 +32,34 @@ describe("metadata and read surface", () => {
       expect(rootResponse.status).toBe(200);
       expect(rootResponse.headers.get("content-type")).toContain("text/html");
       expect(rootBody).toContain("ATR");
+      expect(rootBody).toContain("API Surface");
+      expect(rootBody).toContain("Metadata");
+      expect(rootBody).toContain("Group");
+      expect(rootBody).toContain("Bulk Export");
+      expect(rootBody).toContain("Direct Reads");
       expect(rootBody).toContain("/fhir/metadata");
       expect(rootBody).toContain(
         "/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true",
       );
+      expect(rootBody).toContain(
+        "/fhir/Group?name=Northwind%20ACO%202026%20Member%20Attribution%20List&_summary=true",
+      );
       expect(rootBody).toContain("/fhir/Group/group-2026-northwind-atr-001");
+      expect(rootBody).toContain(
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage",
+      );
+      expect(rootBody).toContain("/fhir/bulk-status/{jobId}");
+      expect(rootBody).toContain("/fhir/bulk-files/{jobId}/{fileName}");
+      expect(rootBody).toContain("/fhir/Patient/patient-0001");
+      expect(rootBody).toContain("/fhir/Coverage/coverage-0001");
+      expect(rootBody).toContain("/fhir/RelatedPerson/relatedperson-0003");
+      expect(rootBody).toContain("/fhir/Practitioner/practitioner-001");
+      expect(rootBody).toContain("/fhir/PractitionerRole/practitionerrole-001");
+      expect(rootBody).toContain(
+        "/fhir/Organization/organization-payer-001",
+      );
+      expect(rootBody).toContain("/fhir/Location/location-001");
+      expect(rootBody).toContain("smart-backend");
 
       const unrelatedRoot = await server.request("/foo");
       expect(unrelatedRoot.status).toBe(404);
