@@ -9,11 +9,12 @@
   "tasks": {
     "dev": "deno run --watch --allow-env --allow-net index.ts",
     "start": "deno run --allow-env --allow-net index.ts",
+    "data:generate:large-200": "deno run --allow-read=data/sources --allow-write=data/profiles/large-200 scripts/generate-data-profile.ts",
     "postman": "deno run --allow-read --allow-write --allow-env --allow-run=deno --allow-net scripts/postman.ts",
     "postman:prod": "deno task postman -- full --mode=prod",
     "postman:local": "deno task postman -- full --mode=local",
     "test": "deno test --allow-read --allow-write --allow-env --allow-net",
-    "check": "deno fmt --check && deno lint && deno test --allow-read --allow-write --allow-env --allow-net --no-run && deno check index.ts scripts/migrate.ts scripts/postman.ts",
+    "check": "deno fmt --check && deno lint && deno test --allow-read --allow-write --allow-env --allow-net --no-run && deno check index.ts scripts/migrate.ts scripts/postman.ts scripts/generate-data-profile.ts",
     "db:migrate": "deno run --allow-read=db/migrations --allow-env --allow-net scripts/migrate.ts"
   },
   "deploy": {

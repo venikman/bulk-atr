@@ -1,4 +1,5 @@
 import { createPostgresSqlClient } from "./server/adapters/postgres-sql-client.ts";
+import { getDataProfileFromEnv } from "./server/bootstrap/data-profile.ts";
 import { createRuntimeApp } from "./server/bootstrap/runtime.ts";
 import { normalizeAuthMode } from "./server/lib/auth.ts";
 
@@ -13,10 +14,12 @@ if (!databaseUrl) {
 
 const port = Number.parseInt(Deno.env.get("PORT") ?? "3001", 10);
 const authMode = normalizeAuthMode(Deno.env.get("AUTH_MODE"));
+const dataProfile = getDataProfileFromEnv(Deno.env.get("DATA_PROFILE"));
 const sql = createPostgresSqlClient(databaseUrl);
 const app = await createRuntimeApp({
   authMode,
   sql,
+  dataProfile,
 });
 
 Deno.serve({ port }, app.fetch);

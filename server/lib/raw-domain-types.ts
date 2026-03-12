@@ -264,27 +264,34 @@ export type RawAttributionList = {
   members: RawAttributionMember[];
 };
 
+type RawFunctionItems<T> = {
+  items: T[];
+  targetCount?: number;
+  idPattern?: string;
+  fhirIdPattern?: string;
+};
+
 export type MemberCoverageSourceDocument = {
   functions: {
-    listPatients: { items: RawPatient[] };
-    listCoverages: { items: RawCoverage[] };
-    listRelatedPersons: { items: RawRelatedPerson[] };
-    listLocations: { items: RawMemberLocation[] };
+    listPatients: RawFunctionItems<RawPatient>;
+    listCoverages: RawFunctionItems<RawCoverage>;
+    listRelatedPersons: RawFunctionItems<RawRelatedPerson>;
+    listLocations: RawFunctionItems<RawMemberLocation>;
   };
 };
 
 export type ProviderDirectorySourceDocument = {
   functions: {
-    listPractitioners: { items: RawPractitioner[] };
-    listPractitionerRoles: { items: RawPractitionerRole[] };
-    listOrganizations: { items: RawOrganization[] };
-    listLocations: { items: RawLocation[] };
+    listPractitioners: RawFunctionItems<RawPractitioner>;
+    listPractitionerRoles: RawFunctionItems<RawPractitionerRole>;
+    listOrganizations: RawFunctionItems<RawOrganization>;
+    listLocations: RawFunctionItems<RawLocation>;
   };
 };
 
 export type ClaimsAttributionSourceDocument = {
   functions: {
-    listClaims: { items: RawClaim[] };
-    listAttributionLists: { items: RawAttributionList[] };
+    listClaims: RawFunctionItems<RawClaim>;
+    listAttributionLists: RawFunctionItems<RawAttributionList>;
   };
 };

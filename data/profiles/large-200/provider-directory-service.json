@@ -1,0 +1,1107 @@
+{
+  "serviceName": "provider-directory-service",
+  "description": "Owns practitioner demographics, practitioner roles, organizations, and provider-facing locations.",
+  "version": "1.0.0",
+  "generatedAt": "2026-03-11T12:00:00Z",
+  "functions": {
+    "listPractitioners": {
+      "targetCount": 10,
+      "idPattern": "pract-src-001..pract-src-010",
+      "fhirIdPattern": "practitioner-001..practitioner-010",
+      "items": [
+        {
+          "sourceId": "pract-src-001",
+          "fhirId": "practitioner-001",
+          "npi": "1234570801",
+          "internalProviderId": "PROV000001",
+          "stateLicenseNumber": "LIC-NY-000001",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Liam",
+                "Evan"
+              ],
+              "family": "Adams",
+              "suffix": [
+                "MD"
+              ],
+              "credentialsText": "MD"
+            },
+            "display": "Dr Liam E. Adams, MD"
+          },
+          "gender": "male",
+          "birthDate": "1966-05-07",
+          "telecom": {
+            "workPhone": "518-555-3001",
+            "fax": "518-555-3901",
+            "email": "liam.adams@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "701 Western Ave",
+            "line2": null,
+            "city": "Albany",
+            "district": "Albany",
+            "state": "NY",
+            "postalCode": "12203",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-001",
+              "code": "MD",
+              "display": "Doctor of Medicine",
+              "periodStart": "1997-07-01",
+              "periodEnd": "2030-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "en",
+              "display": "English"
+            },
+            {
+              "code": "es",
+              "display": "Spanish"
+            }
+          ],
+          "specialty": {
+            "code": "207Q00000X",
+            "display": "Family Medicine"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-002",
+          "fhirId": "practitioner-002",
+          "npi": "1234570802",
+          "internalProviderId": "PROV000002",
+          "stateLicenseNumber": "LIC-NY-000002",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Olivia",
+                "Renee"
+              ],
+              "family": "Bennett",
+              "suffix": [
+                "MD"
+              ],
+              "credentialsText": "MD"
+            },
+            "display": "Dr Olivia R. Bennett, MD"
+          },
+          "gender": "female",
+          "birthDate": "1967-09-13",
+          "telecom": {
+            "workPhone": "914-555-3002",
+            "fax": null,
+            "email": "olivia.bennett@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "702 North Ave",
+            "line2": null,
+            "city": "New Rochelle",
+            "district": "Westchester",
+            "state": "NY",
+            "postalCode": "10801",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-002",
+              "code": "MD",
+              "display": "Doctor of Medicine",
+              "periodStart": "1998-07-01",
+              "periodEnd": "2031-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "es",
+              "display": "Spanish"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207R00000X",
+            "display": "Internal Medicine"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-003",
+          "fhirId": "practitioner-003",
+          "npi": "1234570803",
+          "internalProviderId": "PROV000003",
+          "stateLicenseNumber": "LIC-NY-000003",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Mateo",
+                "Julian"
+              ],
+              "family": "Castillo",
+              "suffix": [
+                "DO"
+              ],
+              "credentialsText": "DO"
+            },
+            "display": "Dr Mateo J. Castillo, DO"
+          },
+          "gender": "male",
+          "birthDate": "1968-01-19",
+          "telecom": {
+            "workPhone": "347-555-3003",
+            "fax": "347-555-3903",
+            "email": "mateo.castillo@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "703 Prospect Park West",
+            "line2": "Apt 3",
+            "city": "Brooklyn",
+            "district": "Kings",
+            "state": "NY",
+            "postalCode": "11215",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-003",
+              "code": "DO",
+              "display": "Doctor of Osteopathic Medicine",
+              "periodStart": "1999-07-01",
+              "periodEnd": "2029-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "zh",
+              "display": "Chinese"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207RG0300X",
+            "display": "Geriatric Medicine"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-004",
+          "fhirId": "practitioner-004",
+          "npi": "1234570804",
+          "internalProviderId": "PROV000004",
+          "stateLicenseNumber": "LIC-NY-000004",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Sophia",
+                "Leigh"
+              ],
+              "family": "Dawson",
+              "suffix": [
+                "NP"
+              ],
+              "credentialsText": "NP"
+            },
+            "display": "Dr Sophia L. Dawson, NP"
+          },
+          "gender": "female",
+          "birthDate": "1969-05-25",
+          "telecom": {
+            "workPhone": "315-555-3004",
+            "fax": null,
+            "email": "sophia.dawson@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "704 Euclid Ave",
+            "line2": null,
+            "city": "Syracuse",
+            "district": "Onondaga",
+            "state": "NY",
+            "postalCode": "13210",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-004",
+              "code": "NP",
+              "display": "Nurse Practitioner",
+              "periodStart": "2000-07-01",
+              "periodEnd": "2030-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "ru",
+              "display": "Russian"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "363LF0000X",
+            "display": "Family Nurse Practitioner"
+          },
+          "roleText": "Attributed Advanced Practice Clinician"
+        },
+        {
+          "sourceId": "pract-src-005",
+          "fhirId": "practitioner-005",
+          "npi": "1234570805",
+          "internalProviderId": "PROV000005",
+          "stateLicenseNumber": "LIC-NY-000005",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Gabriel",
+                "Cole"
+              ],
+              "family": "Edwards",
+              "suffix": [
+                "PA-C"
+              ],
+              "credentialsText": "PA-C"
+            },
+            "display": "Dr Gabriel C. Edwards, PA-C"
+          },
+          "gender": "male",
+          "birthDate": "1970-09-03",
+          "telecom": {
+            "workPhone": "716-555-3005",
+            "fax": "716-555-3905",
+            "email": "gabriel.edwards@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "705 Delaware Ave",
+            "line2": null,
+            "city": "Buffalo",
+            "district": "Erie",
+            "state": "NY",
+            "postalCode": "14209",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-005",
+              "code": "PA-C",
+              "display": "Physician Assistant",
+              "periodStart": "2001-07-01",
+              "periodEnd": "2031-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "bn",
+              "display": "Bengali"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "363A00000X",
+            "display": "Physician Assistant"
+          },
+          "roleText": "Attributed Advanced Practice Clinician"
+        },
+        {
+          "sourceId": "pract-src-006",
+          "fhirId": "practitioner-006",
+          "npi": "1234570806",
+          "internalProviderId": "PROV000006",
+          "stateLicenseNumber": "LIC-NY-000006",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Amelia",
+                "Rose"
+              ],
+              "family": "Flores",
+              "suffix": [
+                "MD"
+              ],
+              "credentialsText": "MD"
+            },
+            "display": "Dr Amelia R. Flores, MD"
+          },
+          "gender": "female",
+          "birthDate": "1971-01-09",
+          "telecom": {
+            "workPhone": "585-555-3006",
+            "fax": null,
+            "email": "amelia.flores@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "706 Monroe Ave",
+            "line2": "Apt 6",
+            "city": "Rochester",
+            "district": "Monroe",
+            "state": "NY",
+            "postalCode": "14618",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-006",
+              "code": "MD",
+              "display": "Doctor of Medicine",
+              "periodStart": "2002-07-01",
+              "periodEnd": "2029-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "yi",
+              "display": "Yiddish"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207Q00000X",
+            "display": "Family Medicine"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-007",
+          "fhirId": "practitioner-007",
+          "npi": "1234570807",
+          "internalProviderId": "PROV000007",
+          "stateLicenseNumber": "LIC-NY-000007",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Isaac",
+                "Dean"
+              ],
+              "family": "Gupta",
+              "suffix": [
+                "MD"
+              ],
+              "credentialsText": "MD"
+            },
+            "display": "Dr Isaac D. Gupta, MD"
+          },
+          "gender": "male",
+          "birthDate": "1972-05-15",
+          "telecom": {
+            "workPhone": "914-555-3007",
+            "fax": "914-555-3907",
+            "email": "isaac.gupta@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "707 Central Park Ave",
+            "line2": null,
+            "city": "Yonkers",
+            "district": "Westchester",
+            "state": "NY",
+            "postalCode": "10705",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-007",
+              "code": "MD",
+              "display": "Doctor of Medicine",
+              "periodStart": "2003-07-01",
+              "periodEnd": "2030-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "ko",
+              "display": "Korean"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207R00000X",
+            "display": "Internal Medicine"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-008",
+          "fhirId": "practitioner-008",
+          "npi": "1234570808",
+          "internalProviderId": "PROV000008",
+          "stateLicenseNumber": "LIC-NY-000008",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Harper",
+                "Joy"
+              ],
+              "family": "Harris",
+              "suffix": [
+                "DO"
+              ],
+              "credentialsText": "DO"
+            },
+            "display": "Dr Harper J. Harris, DO"
+          },
+          "gender": "female",
+          "birthDate": "1973-09-21",
+          "telecom": {
+            "workPhone": "917-555-3008",
+            "fax": null,
+            "email": "harper.harris@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "708 Northern Blvd",
+            "line2": null,
+            "city": "Flushing",
+            "district": "Queens",
+            "state": "NY",
+            "postalCode": "11355",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-008",
+              "code": "DO",
+              "display": "Doctor of Osteopathic Medicine",
+              "periodStart": "2004-07-01",
+              "periodEnd": "2031-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "fr",
+              "display": "French"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207RG0300X",
+            "display": "Geriatric Medicine"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-009",
+          "fhirId": "practitioner-009",
+          "npi": "1234570809",
+          "internalProviderId": "PROV000009",
+          "stateLicenseNumber": "LIC-NY-000009",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Nathan",
+                "Blake"
+              ],
+              "family": "Iqbal",
+              "suffix": [
+                "MD"
+              ],
+              "credentialsText": "MD"
+            },
+            "display": "Dr Nathan B. Iqbal, MD"
+          },
+          "gender": "male",
+          "birthDate": "1974-01-27",
+          "telecom": {
+            "workPhone": "929-555-3009",
+            "fax": "929-555-3909",
+            "email": "nathan.iqbal@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "709 Victory Blvd",
+            "line2": "Apt 9",
+            "city": "Staten Island",
+            "district": "Richmond",
+            "state": "NY",
+            "postalCode": "10314",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-009",
+              "code": "MD",
+              "display": "Doctor of Medicine",
+              "periodStart": "2005-07-01",
+              "periodEnd": "2029-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "ar",
+              "display": "Arabic"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207RE0101X",
+            "display": "Endocrinology"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        },
+        {
+          "sourceId": "pract-src-010",
+          "fhirId": "practitioner-010",
+          "npi": "1234570810",
+          "internalProviderId": "PROV000010",
+          "stateLicenseNumber": "LIC-NY-000010",
+          "active": true,
+          "name": {
+            "official": {
+              "prefix": [
+                "Dr"
+              ],
+              "given": [
+                "Camila",
+                "Faith"
+              ],
+              "family": "Johnson",
+              "suffix": [
+                "MD"
+              ],
+              "credentialsText": "MD"
+            },
+            "display": "Dr Camila F. Johnson, MD"
+          },
+          "gender": "female",
+          "birthDate": "1975-05-05",
+          "telecom": {
+            "workPhone": "631-555-3010",
+            "fax": null,
+            "email": "camila.johnson@northwind.example"
+          },
+          "address": {
+            "use": "home",
+            "line1": "710 Park Ave",
+            "line2": null,
+            "city": "Huntington",
+            "district": "Suffolk",
+            "state": "NY",
+            "postalCode": "11743",
+            "country": "US"
+          },
+          "qualification": [
+            {
+              "qualificationId": "QUAL-010",
+              "code": "MD",
+              "display": "Doctor of Medicine",
+              "periodStart": "2006-07-01",
+              "periodEnd": "2030-06-30",
+              "issuerOrganizationSourceId": "org-src-licensing-001"
+            }
+          ],
+          "communication": [
+            {
+              "code": "ht",
+              "display": "Haitian Creole"
+            },
+            {
+              "code": "en",
+              "display": "English"
+            }
+          ],
+          "specialty": {
+            "code": "207RC0000X",
+            "display": "Cardiovascular Disease"
+          },
+          "roleText": "Attributed Primary Care Physician"
+        }
+      ]
+    },
+    "listPractitionerRoles": {
+      "targetCount": 10,
+      "idPattern": "prole-src-001..prole-src-010",
+      "fhirIdPattern": "practitionerrole-001..practitionerrole-010",
+      "items": [
+        {
+          "sourceId": "prole-src-001",
+          "fhirId": "practitionerrole-001",
+          "practitionerSourceId": "pract-src-001",
+          "organizationSourceId": "org-src-clinic-001",
+          "locationSourceIds": [
+            "loc-src-provider-001"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207Q00000X",
+            "display": "Family Medicine"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "100-555-4701",
+          "email": "role1@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-002",
+          "fhirId": "practitionerrole-002",
+          "practitionerSourceId": "pract-src-002",
+          "organizationSourceId": "org-src-clinic-002",
+          "locationSourceIds": [
+            "loc-src-provider-002"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207R00000X",
+            "display": "Internal Medicine"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "104-555-4702",
+          "email": "role2@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-003",
+          "fhirId": "practitionerrole-003",
+          "practitionerSourceId": "pract-src-003",
+          "organizationSourceId": "org-src-clinic-003",
+          "locationSourceIds": [
+            "loc-src-provider-003"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207RG0300X",
+            "display": "Geriatric Medicine"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "142-555-4703",
+          "email": "role3@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-004",
+          "fhirId": "practitionerrole-004",
+          "practitionerSourceId": "pract-src-004",
+          "organizationSourceId": "org-src-clinic-001",
+          "locationSourceIds": [
+            "loc-src-provider-004"
+          ],
+          "roleText": "Attributed Advanced Practice Clinician",
+          "specialty": {
+            "code": "363LF0000X",
+            "display": "Family Nurse Practitioner"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "146-555-4704",
+          "email": "role4@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-005",
+          "fhirId": "practitionerrole-005",
+          "practitionerSourceId": "pract-src-005",
+          "organizationSourceId": "org-src-clinic-002",
+          "locationSourceIds": [
+            "loc-src-provider-005"
+          ],
+          "roleText": "Attributed Advanced Practice Clinician",
+          "specialty": {
+            "code": "363A00000X",
+            "display": "Physician Assistant"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "122-555-4705",
+          "email": "role5@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-006",
+          "fhirId": "practitionerrole-006",
+          "practitionerSourceId": "pract-src-006",
+          "organizationSourceId": "org-src-clinic-003",
+          "locationSourceIds": [
+            "loc-src-provider-001"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207Q00000X",
+            "display": "Family Medicine"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "100-555-4706",
+          "email": "role6@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-007",
+          "fhirId": "practitionerrole-007",
+          "practitionerSourceId": "pract-src-007",
+          "organizationSourceId": "org-src-clinic-001",
+          "locationSourceIds": [
+            "loc-src-provider-002"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207R00000X",
+            "display": "Internal Medicine"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "104-555-4707",
+          "email": "role7@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-008",
+          "fhirId": "practitionerrole-008",
+          "practitionerSourceId": "pract-src-008",
+          "organizationSourceId": "org-src-clinic-002",
+          "locationSourceIds": [
+            "loc-src-provider-003"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207RG0300X",
+            "display": "Geriatric Medicine"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "142-555-4708",
+          "email": "role8@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-009",
+          "fhirId": "practitionerrole-009",
+          "practitionerSourceId": "pract-src-009",
+          "organizationSourceId": "org-src-clinic-003",
+          "locationSourceIds": [
+            "loc-src-provider-004"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207RE0101X",
+            "display": "Endocrinology"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "146-555-4709",
+          "email": "role9@northwind.example"
+        },
+        {
+          "sourceId": "prole-src-010",
+          "fhirId": "practitionerrole-010",
+          "practitionerSourceId": "pract-src-010",
+          "organizationSourceId": "org-src-clinic-001",
+          "locationSourceIds": [
+            "loc-src-provider-005"
+          ],
+          "roleText": "Attributed Primary Care Physician",
+          "specialty": {
+            "code": "207RC0000X",
+            "display": "Cardiovascular Disease"
+          },
+          "active": true,
+          "periodStart": "2024-01-01",
+          "periodEnd": "2027-12-31",
+          "phone": "122-555-4710",
+          "email": "role10@northwind.example"
+        }
+      ]
+    },
+    "listOrganizations": {
+      "targetCount": 6,
+      "idPattern": "org-src-*",
+      "fhirIdPattern": "organization-*",
+      "items": [
+        {
+          "sourceId": "org-src-payer-001",
+          "fhirId": "organization-payer-001",
+          "kind": "payer",
+          "name": "Northwind Health Plan",
+          "payerCode": "NWPAYER",
+          "npi": null,
+          "tin": "11-1111111",
+          "organizationId": "ORG-PAYER-001",
+          "phone": "800-555-1000",
+          "email": "interop@northwind-health.test",
+          "address": {
+            "line1": "1 Payer Plaza",
+            "line2": null,
+            "city": "New York",
+            "district": "New York",
+            "state": "NY",
+            "postalCode": "10001",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "org-src-aco-001",
+          "fhirId": "organization-aco-001",
+          "kind": "settlement-entity",
+          "name": "Northwind ACO",
+          "payerCode": null,
+          "npi": "1234568818",
+          "tin": "83-0000100",
+          "organizationId": "NWACO-001",
+          "phone": "646-555-2000",
+          "email": "contracts@northwind-aco.test",
+          "address": {
+            "line1": "200 ACO Center",
+            "line2": "Floor 8",
+            "city": "New York",
+            "district": "New York",
+            "state": "NY",
+            "postalCode": "10010",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "org-src-clinic-001",
+          "fhirId": "organization-provider-001",
+          "kind": "provider",
+          "name": "Northwind Primary Care Manhattan",
+          "payerCode": null,
+          "npi": "1992000001",
+          "tin": "14-1111111",
+          "organizationId": "ORG-CLINIC-001",
+          "phone": "212-555-4100",
+          "email": "admin.manhattan@northwind.example",
+          "address": {
+            "line1": "10 Hudson Square",
+            "line2": "Suite 210",
+            "city": "New York",
+            "district": "New York",
+            "state": "NY",
+            "postalCode": "10012",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "org-src-clinic-002",
+          "fhirId": "organization-provider-002",
+          "kind": "provider",
+          "name": "Northwind Hudson Valley Medical Group",
+          "payerCode": null,
+          "npi": "1992000002",
+          "tin": "14-2222222",
+          "organizationId": "ORG-CLINIC-002",
+          "phone": "914-555-5100",
+          "email": "admin.hudson@northwind.example",
+          "address": {
+            "line1": "80 Riverfront Blvd",
+            "line2": "Suite 300",
+            "city": "Yonkers",
+            "district": "Westchester",
+            "state": "NY",
+            "postalCode": "10701",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "org-src-clinic-003",
+          "fhirId": "organization-provider-003",
+          "kind": "provider",
+          "name": "Northwind Western New York Primary Care",
+          "payerCode": null,
+          "npi": "1992000003",
+          "tin": "14-3333333",
+          "organizationId": "ORG-CLINIC-003",
+          "phone": "716-555-6100",
+          "email": "admin.wny@northwind.example",
+          "address": {
+            "line1": "400 Lakefront Dr",
+            "line2": "Suite 125",
+            "city": "Buffalo",
+            "district": "Erie",
+            "state": "NY",
+            "postalCode": "14202",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "org-src-licensing-001",
+          "fhirId": "organization-licensing-001",
+          "kind": "licensing-body",
+          "name": "New York State Provider Licensing Office",
+          "payerCode": null,
+          "npi": null,
+          "tin": null,
+          "organizationId": "NYS-LIC-001",
+          "phone": "518-555-9000",
+          "email": "licenses@nys-provider-board.test",
+          "address": {
+            "line1": "89 State Licensing Blvd",
+            "line2": null,
+            "city": "Albany",
+            "district": "Albany",
+            "state": "NY",
+            "postalCode": "12224",
+            "country": "US"
+          }
+        }
+      ]
+    },
+    "listLocations": {
+      "targetCount": 5,
+      "idPattern": "loc-src-provider-001..loc-src-provider-005",
+      "fhirIdPattern": "location-001..location-005",
+      "items": [
+        {
+          "sourceId": "loc-src-provider-001",
+          "fhirId": "location-001",
+          "name": "Northwind Manhattan Care Center",
+          "organizationSourceId": "org-src-aco-001",
+          "status": "active",
+          "phone": "212-555-4200",
+          "address": {
+            "line1": "25 Hudson Square",
+            "line2": "Floor 2",
+            "city": "New York",
+            "district": "New York",
+            "state": "NY",
+            "postalCode": "10013",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "loc-src-provider-002",
+          "fhirId": "location-002",
+          "name": "Northwind Bronx Family Medicine Hub",
+          "organizationSourceId": "org-src-aco-001",
+          "status": "active",
+          "phone": "718-555-4300",
+          "address": {
+            "line1": "500 Grand Concourse",
+            "line2": "Suite 5A",
+            "city": "Bronx",
+            "district": "Bronx",
+            "state": "NY",
+            "postalCode": "10451",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "loc-src-provider-003",
+          "fhirId": "location-003",
+          "name": "Northwind Buffalo Primary Care Commons",
+          "organizationSourceId": "org-src-aco-001",
+          "status": "active",
+          "phone": "716-555-4400",
+          "address": {
+            "line1": "410 Elmwood Ave",
+            "line2": null,
+            "city": "Buffalo",
+            "district": "Erie",
+            "state": "NY",
+            "postalCode": "14202",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "loc-src-provider-004",
+          "fhirId": "location-004",
+          "name": "Northwind Rochester Lakeside Clinic",
+          "organizationSourceId": "org-src-aco-001",
+          "status": "active",
+          "phone": "585-555-4500",
+          "address": {
+            "line1": "88 East Ave",
+            "line2": "Suite 140",
+            "city": "Rochester",
+            "district": "Monroe",
+            "state": "NY",
+            "postalCode": "14604",
+            "country": "US"
+          }
+        },
+        {
+          "sourceId": "loc-src-provider-005",
+          "fhirId": "location-005",
+          "name": "Northwind Albany Capitol Health Office",
+          "organizationSourceId": "org-src-aco-001",
+          "status": "active",
+          "phone": "518-555-4600",
+          "address": {
+            "line1": "300 State St",
+            "line2": "Suite 120",
+            "city": "Albany",
+            "district": "Albany",
+            "state": "NY",
+            "postalCode": "12207",
+            "country": "US"
+          }
+        }
+      ]
+    }
+  }
+}

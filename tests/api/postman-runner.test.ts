@@ -2,6 +2,7 @@ import { describe, expect, it } from "../test-deps.ts";
 import {
   assertLocalModeDatabaseEnv,
   buildLocalServerCommand,
+  buildLocalServerEnv,
   createWorkingEnvironmentFile,
   parsePostmanArgs,
   PROD_BASE_URL,
@@ -40,6 +41,7 @@ describe("postman runner", () => {
       workflow: "full",
       mode: "prod",
       baseUrl: PROD_BASE_URL,
+      dataProfile: "default",
       maxPolls: 30,
       pollIntervalMs: 1000,
       downloadDir: ".artifacts/postman",
@@ -51,6 +53,21 @@ describe("postman runner", () => {
       workflow: "metadata",
       mode: "prod",
       baseUrl: PROD_BASE_URL,
+      dataProfile: "default",
+    });
+  });
+
+  it("parses an explicit data profile for local runs", () => {
+    expect(
+      parsePostmanArgs([
+        "metadata",
+        "--mode=local",
+        "--data-profile=large-200",
+      ]),
+    ).toMatchObject({
+      workflow: "metadata",
+      mode: "local",
+      dataProfile: "large-200",
     });
   });
 
@@ -65,6 +82,73 @@ describe("postman runner", () => {
 
   it("uses deno task start for optional local mode bootstrapping", () => {
     expect(buildLocalServerCommand()).toEqual(["deno", "task", "start"]);
+  });
+
+  it("adds DATA_PROFILE to the local child env only for non-default profiles", () => {
+    expect(buildLocalServerEnv("default")).toEqual({});
+    expect(buildLocalServerEnv("large-200")).toEqual({
+      DATA_PROFILE: "large-200",
+    });
+  });
+
+  it("passes the selected data profile into local auto-start", async () => {
+    const originalDatabaseUrl = Deno.env.get("DATABASE_URL");
+    const originalPostgresUrl = Deno.env.get("POSTGRES_URL");
+    let startedWithProfile: string | null = null;
+
+    Deno.env.set("DATABASE_URL", "postgres://local-test");
+    Deno.env.delete("POSTGRES_URL");
+
+    try {
+      await runPostmanWorkflow(
+        {
+          workflow: "metadata",
+          mode: "local",
+          baseUrl: "http://example.test/fhir",
+          dataProfile: "large-200",
+          downloadDir: ".artifacts/postman",
+          maxPolls: 1,
+          pollIntervalMs: 1,
+        },
+        {
+          fetchImpl: () =>
+            Promise.resolve(
+              new Response(
+                JSON.stringify({ resourceType: "CapabilityStatement" }),
+                {
+                  status: 200,
+                  headers: {
+                    "content-type": "application/fhir+json",
+                  },
+                },
+              ),
+            ),
+          startLocalServer: (dataProfile) => {
+            startedWithProfile = dataProfile;
+            return {
+              kill: () => {},
+              status: Promise.resolve({ success: true, code: 0, signal: null }),
+            } as Deno.ChildProcess;
+          },
+          sleepImpl: () => Promise.resolve(),
+          log: () => {},
+        },
+      );
+    } finally {
+      if (originalDatabaseUrl) {
+        Deno.env.set("DATABASE_URL", originalDatabaseUrl);
+      } else {
+        Deno.env.delete("DATABASE_URL");
+      }
+
+      if (originalPostgresUrl) {
+        Deno.env.set("POSTGRES_URL", originalPostgresUrl);
+      } else {
+        Deno.env.delete("POSTGRES_URL");
+      }
+    }
+
+    expect(startedWithProfile).toBe("large-200");
   });
 
   it("creates a working environment file without mutating the checked-in defaults", async () => {

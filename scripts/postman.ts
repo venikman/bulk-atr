@@ -1,3 +1,9 @@
+import {
+  type DataProfile,
+  DEFAULT_DATA_PROFILE,
+  getDataProfileFromEnv,
+} from "../server/bootstrap/data-profile.ts";
+
 export const PROD_BASE_URL = "https://venikman-bulk-atr.deno.dev/fhir";
 export const LOCAL_BASE_URL = "http://127.0.0.1:3001/fhir";
 export const DEFAULT_DOWNLOAD_DIR = ".artifacts/postman";
@@ -35,6 +41,7 @@ type RunnerOptions = {
   workflow: Workflow;
   mode: Mode;
   baseUrl: string;
+  dataProfile: DataProfile;
   downloadDir: string;
   maxPolls: number;
   pollIntervalMs: number;
@@ -55,7 +62,7 @@ type WorkflowDependencies = {
   fetchImpl?: typeof fetch;
   log?: (message: string) => void;
   sleepImpl?: (ms: number) => Promise<void>;
-  startLocalServer?: () => Deno.ChildProcess;
+  startLocalServer?: (dataProfile: DataProfile) => Deno.ChildProcess;
 };
 
 type EnvironmentValues = Record<string, string>;
@@ -76,6 +83,7 @@ export function parsePostmanArgs(args: string[]): RunnerOptions {
     workflow: "full" as Workflow,
     mode: "prod" as Mode,
     baseUrl: "",
+    dataProfile: getDataProfileFromEnv(Deno.env.get("DATA_PROFILE")),
     downloadDir: DEFAULT_DOWNLOAD_DIR,
     maxPolls: DEFAULT_MAX_POLLS,
     pollIntervalMs: DEFAULT_POLL_INTERVAL_MS,
@@ -102,6 +110,9 @@ export function parsePostmanArgs(args: string[]): RunnerOptions {
       case "--base-url":
         defaults.baseUrl = requireFlagValue(flag, value);
         break;
+      case "--data-profile":
+        defaults.dataProfile = getDataProfileFromEnv(value);
+        break;
       case "--download-dir":
         defaults.downloadDir = requireFlagValue(flag, value);
         break;
@@ -121,6 +132,7 @@ export function parsePostmanArgs(args: string[]): RunnerOptions {
     mode: defaults.mode,
     baseUrl: defaults.baseUrl ||
       (defaults.mode === "local" ? LOCAL_BASE_URL : PROD_BASE_URL),
+    dataProfile: defaults.dataProfile,
     downloadDir: defaults.downloadDir,
     maxPolls: defaults.maxPolls,
     pollIntervalMs: defaults.pollIntervalMs,
@@ -129,6 +141,14 @@ export function parsePostmanArgs(args: string[]): RunnerOptions {
 
 export function buildLocalServerCommand(): string[] {
   return ["deno", "task", "start"];
+}
+
+export function buildLocalServerEnv(
+  dataProfile: DataProfile,
+): Record<string, string> {
+  return dataProfile === DEFAULT_DATA_PROFILE
+    ? {}
+    : { DATA_PROFILE: dataProfile };
 }
 
 export function assertLocalModeDatabaseEnv(
@@ -229,7 +249,7 @@ export async function runPostmanWorkflow(
         POSTGRES_URL: Deno.env.get("POSTGRES_URL"),
       });
 
-      childProcess = startServer();
+      childProcess = startServer(options.dataProfile);
       await waitForServerReady(
         `${stripTrailingSlash(options.baseUrl)}/metadata`,
         fetchImpl,
@@ -626,11 +646,12 @@ function resolveDownloadDirectory(downloadDir: string): string {
   return trimmed || DEFAULT_DOWNLOAD_DIR;
 }
 
-function startLocalServer(): Deno.ChildProcess {
+function startLocalServer(dataProfile: DataProfile): Deno.ChildProcess {
   const [command, ...args] = buildLocalServerCommand();
 
   return new Deno.Command(command, {
     args,
+    env: buildLocalServerEnv(dataProfile),
     stdout: "inherit",
     stderr: "inherit",
     stdin: "null",

@@ -1,42 +1,39 @@
 import { newDb } from "pg-mem";
 import { PostgresExportArtifactStore } from "../../server/adapters/postgres-export-artifact-store.ts";
 import { PostgresExportJobRepository } from "../../server/adapters/postgres-export-job-repository.ts";
+import {
+  type DataProfile,
+  DEFAULT_DATA_PROFILE,
+  loadSourceDocuments,
+} from "../../server/bootstrap/data-profile.ts";
 import { createApp } from "../../server/app.ts";
 import { AtrResolver } from "../../server/lib/atr-resolver.ts";
 import { createRawDomainStoreFromDocuments } from "../../server/lib/raw-domain-store.ts";
-import claimsAttributionSource from "../../data/sources/claims-attribution-service.json" with {
-  type: "json",
-};
-import memberCoverageSource from "../../data/sources/member-coverage-service.json" with {
-  type: "json",
-};
-import providerDirectorySource from "../../data/sources/provider-directory-service.json" with {
-  type: "json",
-};
-import type {
-  ClaimsAttributionSourceDocument,
-  MemberCoverageSourceDocument,
-  ProviderDirectorySourceDocument,
-} from "../../server/lib/raw-domain-types.ts";
 import { createTestSqlClient } from "./test-sql-client.ts";
 import { applyPendingMigrations } from "../../server/lib/migrations.ts";
 
+type CreateTestServerOptions = {
+  authMode?: "none" | "smart-backend";
+  dataProfile?: DataProfile;
+};
+
 export const createTestServer = async (
-  authMode: "none" | "smart-backend" = "none",
+  options: CreateTestServerOptions | "none" | "smart-backend" = "none",
 ) => {
+  const authMode = typeof options === "string" ? options : options.authMode ||
+    "none";
+  const dataProfile = typeof options === "string"
+    ? DEFAULT_DATA_PROFILE
+    : options.dataProfile || DEFAULT_DATA_PROFILE;
   const db = newDb();
   const { Pool } = db.adapters.createPg();
   const pool = new Pool();
   const sql = createTestSqlClient(pool);
   await applyPendingMigrations(sql);
 
-  const rawDomainStore = createRawDomainStoreFromDocuments({
-    memberCoverage: memberCoverageSource as MemberCoverageSourceDocument,
-    providerDirectory:
-      providerDirectorySource as ProviderDirectorySourceDocument,
-    claimsAttribution:
-      claimsAttributionSource as ClaimsAttributionSourceDocument,
-  });
+  const rawDomainStore = createRawDomainStoreFromDocuments(
+    loadSourceDocuments(dataProfile),
+  );
   const jobRepository = new PostgresExportJobRepository(sql);
   const artifactStore = new PostgresExportArtifactStore(sql);
   const app = createApp({

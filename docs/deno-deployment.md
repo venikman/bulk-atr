@@ -15,6 +15,8 @@ Optional:
 
 - `AUTH_MODE` Defaults to `none`. Set `smart-backend` to require bearer tokens
   on protected routes.
+- `DATA_PROFILE` Defaults to `default`. Supported values are `default` and
+  `large-200`.
 - `PORT` Used for local `deno task start` runs. Defaults to `3001`.
 
 ## Local workflow
@@ -24,6 +26,7 @@ deno task db:migrate
 deno task test
 deno task check
 deno task start
+DATA_PROFILE=large-200 deno task start
 ```
 
 ## Production notes
@@ -37,3 +40,5 @@ deno task start
 - Bulk export jobs are accepted on kickoff and completed from
   `/fhir/bulk-status/:jobId` through claim-based processing in Postgres.
 - The deployed app preserves the current `/fhir/*` contract.
+- `large-200` is intended for local scale verification; the default runtime
+  profile remains `default` unless `DATA_PROFILE` is set explicitly.

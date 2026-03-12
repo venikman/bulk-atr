@@ -11,6 +11,7 @@ deno task check
 deno task start
 deno task dev
 deno task db:migrate
+deno task data:generate:large-200
 deno task postman -- full
 deno task postman:prod
 deno task postman:local
@@ -20,6 +21,8 @@ deno task postman:local
 
 - `data/sources/`: canonical seed data for member coverage, provider directory,
   and claims attribution
+- `data/profiles/large-200/`: optional larger checked-in fixture profile for
+  scale-oriented local runs and tests
 - `server/`: live ATR server, mapping logic, and runtime adapters
 - `docs/architecture.md`: mapping rules, repo shape, and generated-artifact
   guidance
@@ -35,8 +38,12 @@ deno task postman:local
 - `/fhir/*` remains the runtime contract.
 - Seed data remains split into three files because the runtime and tests both
   model three upstream domains.
+- `DATA_PROFILE` selects the checked-in fixture set. Supported values are
+  `default` and `large-200`; the default runtime profile is `default`.
 - `deno task start` runs the Deno runtime locally against the same
   Postgres-backed runtime shape as production.
+- `DATA_PROFILE=large-200 deno task start` runs the same server against the
+  larger 200-member fixture without changing the default golden dataset.
 - `deno task db:migrate` applies the raw SQL migrations in `db/migrations/`.
 - Deno Deploy with Prisma Postgres is the only supported production runtime in
   this repo.
@@ -58,6 +65,8 @@ deno task postman:local
 - `deno task postman:local` auto-starts `deno task start`, waits for
   `http://127.0.0.1:3001/fhir/metadata`, then tears the local server down when
   the collection finishes.
+- `deno task postman -- full --mode=local --data-profile=large-200` runs the
+  same smoke flow against the larger local fixture profile.
 - Local mode requires `DATABASE_URL` or `POSTGRES_URL`, and you should run
   `deno task db:migrate` first so the local runtime can boot cleanly.
 - The runner is fully Deno-native. It does not shell out to Newman, `npx`, or

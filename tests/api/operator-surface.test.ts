@@ -26,6 +26,9 @@ describe("operator surface", () => {
       start: expect.stringContaining("deno run"),
       test: expect.stringContaining("deno test"),
       check: expect.stringContaining("deno fmt"),
+      "data:generate:large-200": expect.stringContaining(
+        "scripts/generate-data-profile.ts",
+      ),
       "db:migrate": expect.stringContaining("scripts/migrate.ts"),
       postman: expect.stringContaining("scripts/postman.ts"),
       "postman:prod": expect.stringContaining("deno task postman"),
@@ -34,6 +37,18 @@ describe("operator surface", () => {
     expect(denoConfig.tasks?.postman).not.toContain("npx");
     expect(postmanRunnerSource).not.toContain("newman");
     expect(postmanRunnerSource).not.toContain("npx");
+  });
+
+  it("documents DATA_PROFILE and the supported fixture profiles", async () => {
+    const readme = await Deno.readTextFile(new URL("README.md", repoRoot));
+    const deploymentDoc = await Deno.readTextFile(
+      new URL("docs/deno-deployment.md", repoRoot),
+    );
+
+    expect(readme).toContain("DATA_PROFILE");
+    expect(readme).toContain("large-200");
+    expect(deploymentDoc).toContain("DATA_PROFILE");
+    expect(deploymentDoc).toContain("large-200");
   });
 
   it("removes Node/Vercel project config files from the tracked operator surface", async () => {
