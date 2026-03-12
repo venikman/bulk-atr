@@ -87,9 +87,9 @@ export type RawCoverage = {
   memberId: string;
   beneficiaryPatientSourceId: string;
   policyHolderSourceId: string;
-  policyHolderType: 'Patient' | 'RelatedPerson';
+  policyHolderType: "Patient" | "RelatedPerson";
   subscriberSourceId: string;
-  subscriberType: 'Patient' | 'RelatedPerson';
+  subscriberType: "Patient" | "RelatedPerson";
   subscriberId: string;
   memberNumber: string;
   dependentNumber: string;

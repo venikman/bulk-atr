@@ -6,29 +6,35 @@ export type FhirResource = JsonObject & {
 };
 
 export type SupportedResourceType =
-  | 'Group'
-  | 'Patient'
-  | 'Coverage'
-  | 'RelatedPerson'
-  | 'Practitioner'
-  | 'PractitionerRole'
-  | 'Organization'
-  | 'Location';
+  | "Group"
+  | "Patient"
+  | "Coverage"
+  | "RelatedPerson"
+  | "Practitioner"
+  | "PractitionerRole"
+  | "Organization"
+  | "Location";
 
 export const supportedResourceTypes: SupportedResourceType[] = [
-  'Group',
-  'Patient',
-  'Coverage',
-  'RelatedPerson',
-  'Practitioner',
-  'PractitionerRole',
-  'Organization',
-  'Location',
+  "Group",
+  "Patient",
+  "Coverage",
+  "RelatedPerson",
+  "Practitioner",
+  "PractitionerRole",
+  "Organization",
+  "Location",
 ];
 
 export type ResourceCollection = Record<SupportedResourceType, FhirResource[]>;
 
-export type BulkStatus = 'accepted' | 'running' | 'completed' | 'failed' | 'cancelled' | 'expired';
+export type BulkStatus =
+  | "accepted"
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "expired";
 
 export type ExportFileRecord = {
   type: SupportedResourceType;

@@ -1,53 +1,63 @@
-import { randomUUID } from 'node:crypto';
-import { Hono } from 'hono';
-import type { AtrResolver } from '../lib/atr-resolver.js';
+import { Hono } from "hono";
+import type { AtrResolver } from "../lib/atr-resolver.ts";
 import {
   type AppEnv,
   type AuthMode,
   createAuthMiddleware,
   getCallerId,
   requiresAccessToken,
-} from '../lib/auth.js';
-import type { BackgroundTaskRunner } from '../lib/background-task-runner.js';
-import type { ExportArtifactStore } from '../lib/export-artifact-store.js';
-import type { ExportJobRepository } from '../lib/export-job-repository.js';
-import { fhirOperationOutcome } from '../lib/operation-outcome.js';
+} from "../lib/auth.ts";
+import type { ExportArtifactStore } from "../lib/export-artifact-store.ts";
+import type {
+  ClaimedExportJob,
+  ExportJobRepository,
+} from "../lib/export-job-repository.ts";
+import { fhirOperationOutcome } from "../lib/operation-outcome.ts";
 import {
   type StoredManifest,
   type SupportedResourceType,
   supportedResourceTypes,
-} from '../lib/types.js';
+} from "../lib/types.ts";
 
-const minimumResourceTypes: SupportedResourceType[] = ['Group', 'Patient', 'Coverage'];
+const minimumResourceTypes: SupportedResourceType[] = [
+  "Group",
+  "Patient",
+  "Coverage",
+];
 const canonicalResourceTypeOrder = supportedResourceTypes;
-const exportTypeValue = 'hl7.fhir.us.davinci-atr';
-const unsupportedParameters = ['_since', '_until', '_typeFilter', 'patient'] as const;
+const exportTypeValue = "hl7.fhir.us.davinci-atr";
+const unsupportedParameters = [
+  "_since",
+  "_until",
+  "_typeFilter",
+  "patient",
+] as const;
 
 type NormalizedTypeParameter =
   | {
-      normalized: SupportedResourceType[];
-    }
+    normalized: SupportedResourceType[];
+  }
   | {
-      error: string;
-    }
+    error: string;
+  }
   | null;
 
 type BulkRoutesOptions = {
   resolver: AtrResolver;
   jobRepository: ExportJobRepository;
   artifactStore: ExportArtifactStore;
-  backgroundTaskRunner: BackgroundTaskRunner;
   authMode: AuthMode;
-  jobDelayMs?: number;
 };
 
-const normalizeTypeParameter = (value: string | undefined | null): NormalizedTypeParameter => {
+const normalizeTypeParameter = (
+  value: string | undefined | null,
+): NormalizedTypeParameter => {
   if (!value) {
     return null;
   }
 
   const values = value
-    .split(',')
+    .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
 
@@ -57,14 +67,19 @@ const normalizeTypeParameter = (value: string | undefined | null): NormalizedTyp
 
   const requested = new Set(values);
   const invalid = values.filter(
-    (resourceType) => !canonicalResourceTypeOrder.includes(resourceType as SupportedResourceType),
+    (resourceType) =>
+      !canonicalResourceTypeOrder.includes(
+        resourceType as SupportedResourceType,
+      ),
   );
 
   if (invalid.length > 0) {
-    return { error: `Unsupported _type resource(s): ${invalid.join(', ')}.` };
+    return { error: `Unsupported _type resource(s): ${invalid.join(", ")}.` };
   }
 
-  const normalized = canonicalResourceTypeOrder.filter((type) => requested.has(type));
+  const normalized = canonicalResourceTypeOrder.filter((type) =>
+    requested.has(type)
+  );
   return { normalized };
 };
 
@@ -74,9 +89,9 @@ const buildCanonicalRequestUrl = (
   exportType: string,
 ) => {
   const url = new URL(requestUrl);
-  url.search = '';
-  url.searchParams.set('exportType', exportType);
-  url.searchParams.set('_type', normalizedTypes.join(','));
+  url.search = "";
+  url.searchParams.set("exportType", exportType);
+  url.searchParams.set("_type", normalizedTypes.join(","));
   return url.toString();
 };
 
@@ -96,7 +111,11 @@ const buildStoredManifest = (
   error: [],
 });
 
-const buildPublicManifest = (origin: string, jobId: string, manifest: StoredManifest) => ({
+const buildPublicManifest = (
+  origin: string,
+  jobId: string,
+  manifest: StoredManifest,
+) => ({
   ...manifest,
   output: manifest.output.map((entry) => ({
     type: entry.type,
@@ -104,30 +123,34 @@ const buildPublicManifest = (origin: string, jobId: string, manifest: StoredMani
   })),
 });
 
-const scheduleExportJob = async (
-  jobId: string,
-  groupId: string,
-  transactionTime: string,
-  requestUrl: string,
-  normalizedTypes: SupportedResourceType[],
+const processClaimedJob = async (
+  claimedJob: ClaimedExportJob,
   authMode: AuthMode,
   jobRepository: ExportJobRepository,
   artifactStore: ExportArtifactStore,
   resolver: AtrResolver,
 ) => {
-  const exportResources = resolver.buildExportResources(groupId, normalizedTypes);
+  const { claimToken, job } = claimedJob;
+  const exportResources = resolver.buildExportResources(
+    job.groupId,
+    job.normalizedTypes,
+  );
   if (!exportResources) {
-    await jobRepository.markFailed(jobId, ['Group snapshot could not be resolved for export.']);
+    await jobRepository.markFailedWithClaim(claimedJob.job.jobId, claimToken, [
+      "Group snapshot could not be resolved for export.",
+    ]);
     return;
   }
 
-  await jobRepository.markRunning(jobId, 'writing ndjson files');
-
   const files = [];
-  for (const type of normalizedTypes) {
+  for (const type of job.normalizedTypes) {
     const resources = exportResources[type] || [];
     const fileName = `${type}-1.ndjson`;
-    const artifactKey = await artifactStore.writeNdjson(jobId, fileName, resources);
+    const artifactKey = await artifactStore.writeNdjson(
+      job.jobId,
+      fileName,
+      resources,
+    );
     files.push({
       type,
       fileName,
@@ -135,37 +158,50 @@ const scheduleExportJob = async (
     });
   }
 
-  const manifest = buildStoredManifest(transactionTime, requestUrl, normalizedTypes, authMode);
-  const manifestKey = await artifactStore.writeManifest(jobId, manifest);
-  await jobRepository.markCompleted(jobId, manifestKey, files);
+  const manifest = buildStoredManifest(
+    job.transactionTime,
+    job.requestUrl,
+    job.normalizedTypes,
+    authMode,
+  );
+  const manifestKey = await artifactStore.writeManifest(job.jobId, manifest);
+  await jobRepository.markCompletedWithClaim(
+    job.jobId,
+    claimToken,
+    manifestKey,
+    files,
+  );
 };
 
 export const createBulkRoutes = ({
   resolver,
   jobRepository,
   artifactStore,
-  backgroundTaskRunner,
   authMode,
-  jobDelayMs = 50,
 }: BulkRoutesOptions) => {
   const app = new Hono<AppEnv>();
-  app.use('/Group/:id/$davinci-data-export', createAuthMiddleware(authMode));
-  app.use('/bulk-status/:jobId', createAuthMiddleware(authMode));
-  app.use('/bulk-files/:jobId/:fileName', createAuthMiddleware(authMode));
+  app.use("/Group/:id/$davinci-data-export", createAuthMiddleware(authMode));
+  app.use("/bulk-status/:jobId", createAuthMiddleware(authMode));
+  app.use("/bulk-files/:jobId/:fileName", createAuthMiddleware(authMode));
 
-  app.get('/Group/:id/$davinci-data-export', async (context) => {
-    const groupId = context.req.param('id');
+  app.get("/Group/:id/$davinci-data-export", async (context) => {
+    const groupId = context.req.param("id");
     const group = resolver.getGroupById(groupId);
     if (!group) {
-      return fhirOperationOutcome(context, 404, 'not-found', 'Group was not found.');
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Group was not found.",
+      );
     }
 
-    const exportType = context.req.query('exportType');
+    const exportType = context.req.query("exportType");
     if (exportType !== exportTypeValue) {
       return fhirOperationOutcome(
         context,
         400,
-        'invalid',
+        "invalid",
         `exportType must equal ${exportTypeValue}.`,
       );
     }
@@ -175,44 +211,59 @@ export const createBulkRoutes = ({
         return fhirOperationOutcome(
           context,
           400,
-          'not-supported',
+          "not-supported",
           `${parameter} is not supported in phase 1.`,
         );
       }
     }
 
-    const normalizedFromType = normalizeTypeParameter(context.req.query('_type'));
-    const normalizedFromAlias = normalizeTypeParameter(context.req.query('resourceTypes'));
+    const normalizedFromType = normalizeTypeParameter(
+      context.req.query("_type"),
+    );
+    const normalizedFromAlias = normalizeTypeParameter(
+      context.req.query("resourceTypes"),
+    );
 
-    if (normalizedFromType && 'error' in normalizedFromType) {
-      return fhirOperationOutcome(context, 400, 'invalid', normalizedFromType.error);
+    if (normalizedFromType && "error" in normalizedFromType) {
+      return fhirOperationOutcome(
+        context,
+        400,
+        "invalid",
+        normalizedFromType.error,
+      );
     }
-    if (normalizedFromAlias && 'error' in normalizedFromAlias) {
-      return fhirOperationOutcome(context, 400, 'invalid', normalizedFromAlias.error);
+    if (normalizedFromAlias && "error" in normalizedFromAlias) {
+      return fhirOperationOutcome(
+        context,
+        400,
+        "invalid",
+        normalizedFromAlias.error,
+      );
     }
 
-    const normalizedTypes =
-      normalizedFromType?.normalized || normalizedFromAlias?.normalized || null;
+    const normalizedTypes = normalizedFromType?.normalized ||
+      normalizedFromAlias?.normalized || null;
 
     if (!normalizedTypes) {
       return fhirOperationOutcome(
         context,
         400,
-        'invalid',
-        '_type is required and must include at least Group,Patient,Coverage.',
+        "invalid",
+        "_type is required and must include at least Group,Patient,Coverage.",
       );
     }
 
     if (
       normalizedFromType?.normalized &&
       normalizedFromAlias?.normalized &&
-      normalizedFromType.normalized.join(',') !== normalizedFromAlias.normalized.join(',')
+      normalizedFromType.normalized.join(",") !==
+        normalizedFromAlias.normalized.join(",")
     ) {
       return fhirOperationOutcome(
         context,
         400,
-        'invalid',
-        'resourceTypes alias must match the canonical _type parameter when both are provided.',
+        "invalid",
+        "resourceTypes alias must match the canonical _type parameter when both are provided.",
       );
     }
 
@@ -223,14 +274,18 @@ export const createBulkRoutes = ({
       return fhirOperationOutcome(
         context,
         400,
-        'invalid',
-        `Missing required _type values: ${missingMinimumTypes.join(', ')}.`,
+        "invalid",
+        `Missing required _type values: ${missingMinimumTypes.join(", ")}.`,
       );
     }
 
     const transactionTime = new Date().toISOString();
-    const jobId = randomUUID();
-    const requestUrl = buildCanonicalRequestUrl(context.req.url, normalizedTypes, exportTypeValue);
+    const jobId = crypto.randomUUID();
+    const requestUrl = buildCanonicalRequestUrl(
+      context.req.url,
+      normalizedTypes,
+      exportTypeValue,
+    );
     await jobRepository.createJob({
       jobId,
       groupId,
@@ -240,102 +295,143 @@ export const createBulkRoutes = ({
       exportType: exportTypeValue,
     });
 
-    backgroundTaskRunner.run(
-      () =>
-        scheduleExportJob(
-          jobId,
-          groupId,
-          transactionTime,
-          requestUrl,
-          normalizedTypes,
-          authMode,
-          jobRepository,
-          artifactStore,
-          resolver,
-        ).catch(async (error: unknown) => {
-          const diagnostics =
-            error instanceof Error ? error.message : 'Unexpected export generation failure.';
-          await jobRepository.markFailed(jobId, [diagnostics]);
-        }),
-      jobDelayMs,
-    );
-
-    const contentLocation = `${new URL(context.req.url).origin}/fhir/bulk-status/${jobId}`;
-    context.header('content-location', contentLocation);
-    context.header('retry-after', '1');
+    const contentLocation = `${
+      new URL(context.req.url).origin
+    }/fhir/bulk-status/${jobId}`;
+    context.header("content-location", contentLocation);
+    context.header("retry-after", "1");
     return context.body(null, 202);
   });
 
-  app.get('/bulk-status/:jobId', async (context) => {
-    const auth = context.get('auth');
+  app.get("/bulk-status/:jobId", async (context) => {
+    const auth = context.get("auth");
     const callerId = getCallerId(auth);
-    const jobId = context.req.param('jobId');
+    const jobId = context.req.param("jobId");
     const job = await jobRepository.getJob(jobId);
 
-    if (!job || job.status === 'expired') {
-      return fhirOperationOutcome(context, 404, 'not-found', 'Bulk export job was not found.');
+    if (!job || job.status === "expired") {
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Bulk export job was not found.",
+      );
     }
 
     if (!(await jobRepository.canPoll(jobId, callerId))) {
-      context.header('retry-after', '1');
+      context.header("retry-after", "1");
       return fhirOperationOutcome(
         context,
         429,
-        'throttled',
-        'Polling too frequently. Retry after one second.',
+        "throttled",
+        "Polling too frequently. Retry after one second.",
       );
     }
 
-    if (job.status === 'accepted' || job.status === 'running') {
-      context.header('x-progress', job.progress);
-      context.header('retry-after', '1');
+    let currentJob: Awaited<ReturnType<ExportJobRepository["getJob"]>> = job;
+
+    if (currentJob.status === "accepted" || currentJob.status === "running") {
+      const claimedJob = await jobRepository.claimJob(jobId, callerId);
+      if (claimedJob) {
+        try {
+          await processClaimedJob(
+            claimedJob,
+            authMode,
+            jobRepository,
+            artifactStore,
+            resolver,
+          );
+        } catch (error: unknown) {
+          const diagnostics = error instanceof Error
+            ? error.message
+            : "Unexpected export generation failure.";
+          await jobRepository.markFailedWithClaim(
+            jobId,
+            claimedJob.claimToken,
+            [diagnostics],
+          );
+        }
+      }
+
+      currentJob = await jobRepository.getJob(jobId);
+    }
+
+    if (!currentJob || currentJob.status === "expired") {
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Bulk export job was not found.",
+      );
+    }
+
+    if (currentJob.status === "accepted" || currentJob.status === "running") {
+      context.header("x-progress", currentJob.progress);
+      context.header("retry-after", "1");
       return context.body(null, 202);
     }
 
-    if (job.status === 'failed') {
+    if (currentJob.status === "failed") {
       return fhirOperationOutcome(
         context,
         500,
-        'exception',
-        job.error.join(' ') || 'Bulk export job failed.',
+        "exception",
+        currentJob.error.join(" ") || "Bulk export job failed.",
       );
     }
 
-    if (!job.manifestKey) {
+    if (!currentJob.manifestKey) {
       return fhirOperationOutcome(
         context,
         500,
-        'exception',
-        'Bulk export job completed without a manifest key.',
+        "exception",
+        "Bulk export job completed without a manifest key.",
       );
     }
 
-    const manifest = await artifactStore.readManifest(job.manifestKey);
-    context.header('expires', job.expiresAt);
-    context.header('content-type', 'application/json; charset=utf-8');
-    return context.json(buildPublicManifest(new URL(context.req.url).origin, jobId, manifest));
+    const manifest = await artifactStore.readManifest(currentJob.manifestKey);
+    context.header("expires", currentJob.expiresAt);
+    context.header("content-type", "application/json; charset=utf-8");
+    return context.json(
+      buildPublicManifest(new URL(context.req.url).origin, jobId, manifest),
+    );
   });
 
-  app.get('/bulk-files/:jobId/:fileName', async (context) => {
-    const jobId = context.req.param('jobId');
-    const fileName = context.req.param('fileName');
+  app.get("/bulk-files/:jobId/:fileName", async (context) => {
+    const jobId = context.req.param("jobId");
+    const fileName = context.req.param("fileName");
     const job = await jobRepository.getJob(jobId);
 
-    if (!job || job.status === 'expired') {
-      return fhirOperationOutcome(context, 404, 'not-found', 'Bulk export job was not found.');
+    if (!job || job.status === "expired") {
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Bulk export job was not found.",
+      );
     }
 
     const file = job.files.find((entry) => entry.fileName === fileName);
     if (!file) {
-      return fhirOperationOutcome(context, 404, 'not-found', 'Bulk export file was not found.');
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Bulk export file was not found.",
+      );
     }
 
     try {
       const content = await artifactStore.readNdjson(file.artifactKey);
-      context.header('content-type', 'application/fhir+ndjson; charset=utf-8');
+      context.header("content-type", "application/fhir+ndjson; charset=utf-8");
       return context.body(content, 200);
     } catch {
-      return fhirOperationOutcome(context, 404, 'not-found', 'Bulk export file was not found.');
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Bulk export file was not found.",
+      );
     }
   });
 

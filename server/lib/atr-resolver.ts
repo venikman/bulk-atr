@@ -1,11 +1,11 @@
-import { AtrMapper } from './atr-mapper.js';
-import type { RawDomainStore } from './raw-domain-store.js';
+import { AtrMapper } from "./atr-mapper.ts";
+import type { RawDomainStore } from "./raw-domain-store.ts";
 import type {
   FhirResource,
   JsonObject,
   ResourceCollection,
   SupportedResourceType,
-} from './types.js';
+} from "./types.ts";
 
 const referencePattern = /^([A-Za-z]+)\/([^/]+)$/;
 
@@ -17,12 +17,15 @@ const collectReferences = (value: unknown, refs: Set<string>) => {
     return;
   }
 
-  if (!value || typeof value !== 'object') {
+  if (!value || typeof value !== "object") {
     return;
   }
 
   for (const [key, nested] of Object.entries(value)) {
-    if (key === 'reference' && typeof nested === 'string' && referencePattern.test(nested)) {
+    if (
+      key === "reference" && typeof nested === "string" &&
+      referencePattern.test(nested)
+    ) {
       refs.add(nested);
       continue;
     }
@@ -43,43 +46,67 @@ const parseReference = (reference: string) => {
 const buildResourceOrder = (store: RawDomainStore) =>
   ({
     Group: new Map(
-      store.claimsAttribution.functions.listAttributionLists.items.map((raw, index) => [
+      store.claimsAttribution.functions.listAttributionLists.items.map((
+        raw,
+        index,
+      ) => [
         raw.fhirId,
         index,
       ]),
     ),
     Patient: new Map(
-      store.memberCoverage.functions.listPatients.items.map((raw, index) => [raw.fhirId, index]),
+      store.memberCoverage.functions.listPatients.items.map((
+        raw,
+        index,
+      ) => [raw.fhirId, index]),
     ),
     Coverage: new Map(
-      store.memberCoverage.functions.listCoverages.items.map((raw, index) => [raw.fhirId, index]),
+      store.memberCoverage.functions.listCoverages.items.map((
+        raw,
+        index,
+      ) => [raw.fhirId, index]),
     ),
     RelatedPerson: new Map(
-      store.memberCoverage.functions.listRelatedPersons.items.map((raw, index) => [
+      store.memberCoverage.functions.listRelatedPersons.items.map((
+        raw,
+        index,
+      ) => [
         raw.fhirId,
         index,
       ]),
     ),
     Practitioner: new Map(
-      store.providerDirectory.functions.listPractitioners.items.map((raw, index) => [
+      store.providerDirectory.functions.listPractitioners.items.map((
+        raw,
+        index,
+      ) => [
         raw.fhirId,
         index,
       ]),
     ),
     PractitionerRole: new Map(
-      store.providerDirectory.functions.listPractitionerRoles.items.map((raw, index) => [
+      store.providerDirectory.functions.listPractitionerRoles.items.map((
+        raw,
+        index,
+      ) => [
         raw.fhirId,
         index,
       ]),
     ),
     Organization: new Map(
-      store.providerDirectory.functions.listOrganizations.items.map((raw, index) => [
+      store.providerDirectory.functions.listOrganizations.items.map((
+        raw,
+        index,
+      ) => [
         raw.fhirId,
         index,
       ]),
     ),
     Location: new Map(
-      store.providerDirectory.functions.listLocations.items.map((raw, index) => [
+      store.providerDirectory.functions.listLocations.items.map((
+        raw,
+        index,
+      ) => [
         raw.fhirId,
         index,
       ]),
@@ -122,22 +149,30 @@ export class AtrResolver {
   }
 
   findGroupsByIdentifier(identifier: string) {
-    return (this.store.indexes.attributionListsByIdentifier.get(identifier) || []).map((raw) =>
-      this.getGroupById(raw.fhirId),
-    ) as FhirResource[];
+    return (this.store.indexes.attributionListsByIdentifier.get(identifier) ||
+      []).map((raw) => this.getGroupById(raw.fhirId)) as FhirResource[];
   }
 
   findGroupsByName(name: string) {
     const lowered = name.toLowerCase();
     const exact = this.store.indexes.attributionListsByName.get(lowered);
     if (exact) {
-      return exact.map((raw) => this.getGroupById(raw.fhirId)) as FhirResource[];
+      return exact.map((raw) =>
+        this.getGroupById(raw.fhirId)
+      ) as FhirResource[];
     }
 
     const matches: FhirResource[] = [];
-    for (const [candidate, groups] of this.store.indexes.attributionListsByName.entries()) {
+    for (
+      const [candidate, groups] of this.store.indexes.attributionListsByName
+        .entries()
+    ) {
       if (candidate.includes(lowered)) {
-        matches.push(...(groups.map((raw) => this.getGroupById(raw.fhirId)) as FhirResource[]));
+        matches.push(
+          ...(groups.map((raw) =>
+            this.getGroupById(raw.fhirId)
+          ) as FhirResource[]),
+        );
       }
     }
 
@@ -147,35 +182,35 @@ export class AtrResolver {
   getResource(resourceType: string, id: string) {
     return this.mapCached(`${resourceType}/${id}`, () => {
       switch (resourceType) {
-        case 'Group': {
+        case "Group": {
           const raw = this.store.indexes.attributionListsByGroupId.get(id);
           return raw ? this.mapper.mapGroup(raw) : null;
         }
-        case 'Patient': {
+        case "Patient": {
           const raw = this.store.indexes.patientsByFhirId.get(id);
           return raw ? this.mapper.mapPatient(raw) : null;
         }
-        case 'Coverage': {
+        case "Coverage": {
           const raw = this.store.indexes.coveragesByFhirId.get(id);
           return raw ? this.mapper.mapCoverage(raw) : null;
         }
-        case 'RelatedPerson': {
+        case "RelatedPerson": {
           const raw = this.store.indexes.relatedPersonsByFhirId.get(id);
           return raw ? this.mapper.mapRelatedPerson(raw) : null;
         }
-        case 'Practitioner': {
+        case "Practitioner": {
           const raw = this.store.indexes.practitionersByFhirId.get(id);
           return raw ? this.mapper.mapPractitioner(raw) : null;
         }
-        case 'PractitionerRole': {
+        case "PractitionerRole": {
           const raw = this.store.indexes.rolesByFhirId.get(id);
           return raw ? this.mapper.mapPractitionerRole(raw) : null;
         }
-        case 'Organization': {
+        case "Organization": {
           const raw = this.store.indexes.orgsByFhirId.get(id);
           return raw ? this.mapper.mapOrganization(raw) : null;
         }
-        case 'Location': {
+        case "Location": {
           const raw = this.store.indexes.locationsByFhirId.get(id);
           return raw ? this.mapper.mapLocation(raw) : null;
         }
@@ -187,23 +222,28 @@ export class AtrResolver {
 
   buildSearchBundle(resources: FhirResource[], requestUrl: string) {
     return {
-      resourceType: 'Bundle',
-      type: 'searchset',
+      resourceType: "Bundle",
+      type: "searchset",
       total: resources.length,
       link: [
         {
-          relation: 'self',
+          relation: "self",
           url: requestUrl,
         },
       ],
       entry: resources.map((resource) => ({
-        fullUrl: `${new URL(requestUrl).origin}/fhir/${resource.resourceType}/${resource.id}`,
+        fullUrl: `${
+          new URL(requestUrl).origin
+        }/fhir/${resource.resourceType}/${resource.id}`,
         resource,
       })),
     } satisfies JsonObject;
   }
 
-  buildExportResources(groupId: string, requestedTypes: SupportedResourceType[]) {
+  buildExportResources(
+    groupId: string,
+    requestedTypes: SupportedResourceType[],
+  ) {
     const group = this.getGroupById(groupId);
     if (!group) {
       return null;
@@ -213,7 +253,10 @@ export class AtrResolver {
     const visitedKeys = new Set<string>([`Group/${group.id}`]);
     const queue: FhirResource[] = [group];
     let queueIndex = 0;
-    const selectedResources = new Map<SupportedResourceType, Map<string, FhirResource>>();
+    const selectedResources = new Map<
+      SupportedResourceType,
+      Map<string, FhirResource>
+    >();
 
     for (const type of requestedTypes) {
       selectedResources.set(type, new Map());
@@ -253,7 +296,9 @@ export class AtrResolver {
 
     return Object.fromEntries(
       requestedTypes.map((type) => {
-        const resources = Array.from(selectedResources.get(type)?.values() || []);
+        const resources = Array.from(
+          selectedResources.get(type)?.values() || [],
+        );
         const order = this.resourceOrder[type];
         resources.sort(
           (left, right) =>

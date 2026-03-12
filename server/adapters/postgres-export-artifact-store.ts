@@ -1,12 +1,6 @@
-import type { ExportArtifactStore } from '../lib/export-artifact-store.js';
-import type { FhirResource, StoredManifest } from '../lib/types.js';
-
-type Queryable = {
-  query<T extends { [column: string]: unknown } = Record<string, unknown>>(
-    text: string,
-    values?: unknown[],
-  ): Promise<{ rows: T[] }>;
-};
+import type { ExportArtifactStore } from "../lib/export-artifact-store.ts";
+import type { SqlQueryable } from "../lib/sql-client.ts";
+import type { FhirResource, StoredManifest } from "../lib/types.ts";
 
 type ManifestRow = {
   manifest_json: StoredManifest | string;
@@ -17,12 +11,13 @@ type FileRow = {
 };
 
 const buildManifestKey = (jobId: string) => `manifests/${jobId}.json`;
-const buildArtifactKey = (jobId: string, fileName: string) => `files/${jobId}/${fileName}`;
+const buildArtifactKey = (jobId: string, fileName: string) =>
+  `files/${jobId}/${fileName}`;
 
 const parseStoredJson = <T>(value: T | string) =>
-  typeof value === 'string' ? (JSON.parse(value) as T) : value;
+  typeof value === "string" ? (JSON.parse(value) as T) : value;
 
-export const ensureExportArtifactSchema = async (queryable: Queryable) => {
+export const ensureExportArtifactSchema = async (queryable: SqlQueryable) => {
   await queryable.query(`
     create table if not exists export_manifests (
       manifest_key text primary key,
@@ -47,9 +42,9 @@ export const ensureExportArtifactSchema = async (queryable: Queryable) => {
 };
 
 export class PostgresExportArtifactStore implements ExportArtifactStore {
-  readonly queryable: Queryable;
+  readonly queryable: SqlQueryable;
 
-  constructor(queryable: Queryable) {
+  constructor(queryable: SqlQueryable) {
     this.queryable = queryable;
   }
 
@@ -69,10 +64,16 @@ export class PostgresExportArtifactStore implements ExportArtifactStore {
     return manifestKey;
   }
 
-  async writeNdjson(jobId: string, fileName: string, resources: FhirResource[]) {
+  async writeNdjson(
+    jobId: string,
+    fileName: string,
+    resources: FhirResource[],
+  ) {
     const artifactKey = buildArtifactKey(jobId, fileName);
-    const payload = resources.map((resource) => JSON.stringify(resource)).join('\n');
-    const ndjsonPayload = payload + (payload ? '\n' : '');
+    const payload = resources.map((resource) => JSON.stringify(resource)).join(
+      "\n",
+    );
+    const ndjsonPayload = payload + (payload ? "\n" : "");
 
     await this.queryable.query(
       `
@@ -89,12 +90,12 @@ export class PostgresExportArtifactStore implements ExportArtifactStore {
 
   async readManifest(manifestKey: string) {
     const result = await this.queryable.query<ManifestRow>(
-      'select manifest_json from export_manifests where manifest_key = $1',
+      "select manifest_json from export_manifests where manifest_key = $1",
       [manifestKey],
     );
     const row = result.rows[0];
     if (!row) {
-      throw new Error('Postgres artifact was not found.');
+      throw new Error("Postgres artifact was not found.");
     }
 
     return parseStoredJson<StoredManifest>(row.manifest_json);
@@ -102,12 +103,12 @@ export class PostgresExportArtifactStore implements ExportArtifactStore {
 
   async readNdjson(artifactKey: string) {
     const result = await this.queryable.query<FileRow>(
-      'select ndjson_payload from export_files where artifact_key = $1',
+      "select ndjson_payload from export_files where artifact_key = $1",
       [artifactKey],
     );
     const row = result.rows[0];
     if (!row) {
-      throw new Error('Postgres artifact was not found.');
+      throw new Error("Postgres artifact was not found.");
     }
 
     return row.ndjson_payload;

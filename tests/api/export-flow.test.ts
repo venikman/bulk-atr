@@ -1,7 +1,8 @@
-import { createTestServer } from './test-helpers.js';
+import { describe, expect, it } from "../test-deps.ts";
+import { createTestServer } from "./test-helpers.ts";
 
 const minimumTypes =
-  'Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location';
+  "Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location";
 
 type ManifestPayload = {
   transactionTime: string;
@@ -37,20 +38,19 @@ const waitForCompletedManifest = async (
       };
     }
 
-    const retryAfterSeconds = Number(response.headers.get('retry-after'));
-    const delayMs =
-      Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
-        ? retryAfterSeconds * 1000
-        : response.status === 202 || response.status === 429
-          ? 1000
-          : 150;
+    const retryAfterSeconds = Number(response.headers.get("retry-after"));
+    const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1000
+      : response.status === 202 || response.status === 429
+      ? 1000
+      : 150;
 
     await sleep(delayMs);
   }
 
   throw new Error(
     `Bulk export did not complete within ${timeoutMs}ms for ${contentLocation}. Last status: ${
-      lastStatus ?? 'none'
+      lastStatus ?? "none"
     }.`,
   );
 };
@@ -63,12 +63,15 @@ const collectReferences = (value: unknown, refs: Set<string>) => {
     return;
   }
 
-  if (!value || typeof value !== 'object') {
+  if (!value || typeof value !== "object") {
     return;
   }
 
   for (const [key, nested] of Object.entries(value)) {
-    if (key === 'reference' && typeof nested === 'string' && /^[A-Za-z]+\/[^/]+$/.test(nested)) {
+    if (
+      key === "reference" && typeof nested === "string" &&
+      /^[A-Za-z]+\/[^/]+$/.test(nested)
+    ) {
       refs.add(nested);
       continue;
     }
@@ -77,20 +80,20 @@ const collectReferences = (value: unknown, refs: Set<string>) => {
   }
 };
 
-describe('bulk export flow', () => {
-  test('waits for Retry-After before polling again', async () => {
+describe("bulk export flow", () => {
+  it("waits for Retry-After before polling again", async () => {
     const firstPollStartedAt = { current: 0 };
     let retriedTooSoon = false;
 
     const fakeServer = {
-      request: async () => {
+      request: () => {
         const now = Date.now();
         if (!firstPollStartedAt.current) {
           firstPollStartedAt.current = now;
           return new Response(null, {
             status: 202,
             headers: {
-              'retry-after': '1',
+              "retry-after": "1",
             },
           });
         }
@@ -103,21 +106,23 @@ describe('bulk export flow', () => {
           return new Response(null, {
             status: 429,
             headers: {
-              'retry-after': '5',
+              "retry-after": "5",
             },
           });
         }
 
         return new Response(
-          JSON.stringify({
-            transactionTime: '2026-01-01T00:00:00.000Z',
-            requiresAccessToken: false,
-            output: [],
-          } satisfies ManifestPayload),
+          JSON.stringify(
+            {
+              transactionTime: "2026-01-01T00:00:00.000Z",
+              requiresAccessToken: false,
+              output: [],
+            } satisfies ManifestPayload,
+          ),
           {
             status: 200,
             headers: {
-              'content-type': 'application/json',
+              "content-type": "application/json",
             },
           },
         );
@@ -126,7 +131,7 @@ describe('bulk export flow', () => {
 
     const { manifest } = await waitForCompletedManifest(
       fakeServer,
-      '/fhir/bulk-status/fake',
+      "/fhir/bulk-status/fake",
       undefined,
       1600,
     );
@@ -135,7 +140,7 @@ describe('bulk export flow', () => {
     expect(manifest.output).toEqual([]);
   });
 
-  test('kicks off export, completes asynchronously, and serves ndjson files', async () => {
+  it("kicks off export, completes on the first successful status poll, and serves ndjson files", async () => {
     const server = await createTestServer();
 
     try {
@@ -144,40 +149,39 @@ describe('bulk export flow', () => {
       );
 
       expect(kickoff.status).toBe(202);
-      const contentLocation = kickoff.headers.get('content-location');
-      expect(contentLocation).toContain('/fhir/bulk-status/');
-      const jobId = contentLocation?.split('/').at(-1);
+      const contentLocation = kickoff.headers.get("content-location");
+      expect(contentLocation).toContain("/fhir/bulk-status/");
+      const jobId = contentLocation?.split("/").at(-1);
       expect(jobId).toBeTruthy();
       if (!jobId) {
-        throw new Error('Expected job id in content-location.');
+        throw new Error("Expected job id in content-location.");
       }
       const createdJob = await server.jobRepository.getJob(jobId);
       expect(createdJob).toBeTruthy();
 
-      const initialStatus = await server.request(contentLocation || '');
-      expect(initialStatus.status).toBe(202);
-      expect(initialStatus.headers.get('retry-after')).toBe('1');
-
-      const { response: completedStatus, manifest } = await waitForCompletedManifest(
-        server,
-        contentLocation || '',
-      );
+      const { response: completedStatus, manifest } =
+        await waitForCompletedManifest(
+          server,
+          contentLocation || "",
+          undefined,
+          1500,
+        );
 
       expect(completedStatus.status).toBe(200);
       expect(manifest.transactionTime).toBe(
-        new Date(createdJob?.transactionTime || '').toISOString(),
+        new Date(createdJob?.transactionTime || "").toISOString(),
       );
       expect(manifest.requiresAccessToken).toBe(false);
       expect(manifest.output).toHaveLength(8);
 
       const patientFile = manifest.output.find(
-        (entry: { type: string }) => entry.type === 'Patient',
+        (entry: { type: string }) => entry.type === "Patient",
       );
       expect(patientFile).toBeDefined();
       if (!patientFile) {
-        throw new Error('Expected Patient NDJSON file in manifest output.');
+        throw new Error("Expected Patient NDJSON file in manifest output.");
       }
-      expect(patientFile.url).toContain('/fhir/bulk-files/');
+      expect(patientFile.url).toContain("/fhir/bulk-files/");
 
       const downloadedResources: Array<
         Record<string, unknown> & { resourceType: string; id: string }
@@ -185,10 +189,12 @@ describe('bulk export flow', () => {
       for (const entry of manifest.output) {
         const fileResponse = await server.request(new URL(entry.url).pathname);
         const ndjson = await fileResponse.text();
-        const lines = ndjson.trim().split('\n').filter(Boolean);
+        const lines = ndjson.trim().split("\n").filter(Boolean);
 
         expect(fileResponse.status).toBe(200);
-        expect(fileResponse.headers.get('content-type')).toContain('application/fhir+ndjson');
+        expect(fileResponse.headers.get("content-type")).toContain(
+          "application/fhir+ndjson",
+        );
         expect(lines.length).toBeGreaterThan(0);
 
         for (const line of lines) {
@@ -202,11 +208,13 @@ describe('bulk export flow', () => {
       }
 
       const index = new Set(
-        downloadedResources.map((resource) => `${resource.resourceType}/${resource.id}`),
+        downloadedResources.map((resource) =>
+          `${resource.resourceType}/${resource.id}`
+        ),
       );
-      expect(index.has('Group/group-2026-northwind-atr-001')).toBe(true);
-      expect(index.has('Patient/patient-0001')).toBe(true);
-      expect(index.has('Coverage/coverage-0001')).toBe(true);
+      expect(index.has("Group/group-2026-northwind-atr-001")).toBe(true);
+      expect(index.has("Patient/patient-0001")).toBe(true);
+      expect(index.has("Coverage/coverage-0001")).toBe(true);
 
       for (const resource of downloadedResources) {
         const references = new Set<string>();
@@ -215,53 +223,134 @@ describe('bulk export flow', () => {
           expect(index.has(reference)).toBe(true);
         }
       }
+
+      const secondPoll = await server.request(contentLocation || "");
+      expect(secondPoll.status).toBe(429);
+      expect(((await secondPoll.json()) as OutcomePayload).resourceType).toBe(
+        "OperationOutcome",
+      );
     } finally {
       await server.cleanup();
     }
   });
 
-  test('returns OperationOutcome errors for invalid export requests and polling', async () => {
+  it("completes on the first status poll without waiting for a background worker", async () => {
+    const server = await createTestServer();
+
+    try {
+      const kickoff = await server.request(
+        `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
+      );
+
+      expect(kickoff.status).toBe(202);
+
+      const firstPoll = await server.request(
+        kickoff.headers.get("content-location") || "",
+      );
+      expect(firstPoll.status).toBe(200);
+
+      const manifest = (await firstPoll.json()) as ManifestPayload;
+      expect(manifest.output).toHaveLength(8);
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  it("returns 202 while another worker holds the claim and completes after lease expiry", async () => {
+    const server = await createTestServer();
+
+    try {
+      const kickoff = await server.request(
+        `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
+      );
+      const contentLocation = kickoff.headers.get("content-location") || "";
+      const jobId = contentLocation.split("/").at(-1);
+
+      expect(jobId).toBeTruthy();
+      await expect(server.jobRepository.claimJob(jobId || "", "worker-blocker"))
+        .resolves.toMatchObject({
+          job: {
+            status: "running",
+          },
+        });
+
+      const blockedPoll = await server.request(contentLocation, {
+        headers: {
+          "x-forwarded-for": "198.51.100.10",
+        },
+      });
+      expect(blockedPoll.status).toBe(202);
+      expect(blockedPoll.headers.get("retry-after")).toBe("1");
+
+      await server.sql.query(
+        `
+          update export_jobs
+          set lease_expires_at = now() - interval '1 second'
+          where job_id = $1
+        `,
+        [jobId],
+      );
+
+      const recoveredPoll = await server.request(contentLocation, {
+        headers: {
+          "x-forwarded-for": "198.51.100.11",
+        },
+      });
+      expect(recoveredPoll.status).toBe(200);
+      expect(((await recoveredPoll.json()) as ManifestPayload).output)
+        .toHaveLength(8);
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  it("returns OperationOutcome errors for invalid export requests and polling", async () => {
     const server = await createTestServer();
 
     try {
       const badExportType = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=wrong&_type=Group,Patient,Coverage',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=wrong&_type=Group,Patient,Coverage",
       );
       expect(badExportType.status).toBe(400);
-      expect(((await badExportType.json()) as OutcomePayload).resourceType).toBe(
-        'OperationOutcome',
-      );
+      expect(((await badExportType.json()) as OutcomePayload).resourceType)
+        .toBe(
+          "OperationOutcome",
+        );
 
       const missingMinimum = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient",
       );
       expect(missingMinimum.status).toBe(400);
 
       const unsupported = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage&_since=2026-01-01',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage&_since=2026-01-01",
       );
       expect(unsupported.status).toBe(400);
 
       const kickoff = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage",
       );
-      const contentLocation = kickoff.headers.get('content-location') || '';
+      const contentLocation = kickoff.headers.get("content-location") || "";
 
       const firstPoll = await server.request(contentLocation);
-      expect(firstPoll.status).toBe(202);
+      expect(firstPoll.status).toBe(200);
 
       const secondPoll = await server.request(contentLocation);
       expect(secondPoll.status).toBe(429);
-      expect(((await secondPoll.json()) as OutcomePayload).resourceType).toBe('OperationOutcome');
+      expect(((await secondPoll.json()) as OutcomePayload).resourceType).toBe(
+        "OperationOutcome",
+      );
 
-      const missingFile = await server.request('/fhir/bulk-files/not-a-job/Patient-1.ndjson');
+      const missingFile = await server.request(
+        "/fhir/bulk-files/not-a-job/Patient-1.ndjson",
+      );
       expect(missingFile.status).toBe(404);
 
-      const missingStatus = await server.request('/fhir/bulk-status/not-a-job');
+      const missingStatus = await server.request("/fhir/bulk-status/not-a-job");
       expect(missingStatus.status).toBe(404);
 
       const aliasKickoff = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&resourceTypes=Group,Patient,Coverage',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&resourceTypes=Group,Patient,Coverage",
       );
       expect(aliasKickoff.status).toBe(202);
     } finally {
@@ -269,11 +358,11 @@ describe('bulk export flow', () => {
     }
   });
 
-  test('traverses through PractitionerRole even when that type is not requested', async () => {
+  it("traverses through PractitionerRole even when that type is not requested", async () => {
     const server = await createTestServer();
 
     try {
-      const requestedTypes = 'Group,Patient,Coverage,Practitioner,Organization';
+      const requestedTypes = "Group,Patient,Coverage,Practitioner,Organization";
       const kickoff = await server.request(
         `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${requestedTypes}`,
       );
@@ -281,66 +370,73 @@ describe('bulk export flow', () => {
 
       const { response: status, manifest } = await waitForCompletedManifest(
         server,
-        kickoff.headers.get('content-location') || '',
+        kickoff.headers.get("content-location") || "",
       );
 
       expect(status.status).toBe(200);
       expect(manifest.output.map((entry) => entry.type)).toEqual([
-        'Group',
-        'Patient',
-        'Coverage',
-        'Practitioner',
-        'Organization',
+        "Group",
+        "Patient",
+        "Coverage",
+        "Practitioner",
+        "Organization",
       ]);
 
-      const resourcesByType = new Map<string, Array<{ resourceType: string; id: string }>>();
+      const resourcesByType = new Map<
+        string,
+        Array<{ resourceType: string; id: string }>
+      >();
       for (const entry of manifest.output) {
         const fileResponse = await server.request(new URL(entry.url).pathname);
         const ndjson = await fileResponse.text();
-        const lines = ndjson.trim().split('\n').filter(Boolean);
+        const lines = ndjson.trim().split("\n").filter(Boolean);
         resourcesByType.set(
           entry.type,
-          lines.map((line) => JSON.parse(line) as { resourceType: string; id: string }),
+          lines.map((line) =>
+            JSON.parse(line) as { resourceType: string; id: string }
+          ),
         );
       }
 
-      expect(resourcesByType.get('Practitioner')?.length).toBeGreaterThan(0);
-      expect(resourcesByType.get('Organization')?.length).toBeGreaterThan(0);
-      expect(resourcesByType.has('PractitionerRole')).toBe(false);
+      expect(resourcesByType.get("Practitioner")?.length).toBeGreaterThan(0);
+      expect(resourcesByType.get("Organization")?.length).toBeGreaterThan(0);
+      expect(resourcesByType.has("PractitionerRole")).toBe(false);
     } finally {
       await server.cleanup();
     }
   });
 
-  test('requires bearer auth in smart-backend mode and marks manifest accordingly', async () => {
-    const server = await createTestServer('smart-backend');
+  it("requires bearer auth in smart-backend mode and marks manifest accordingly", async () => {
+    const server = await createTestServer("smart-backend");
 
     try {
       const unauthorizedKickoff = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage",
       );
       expect(unauthorizedKickoff.status).toBe(401);
 
       const authorizedKickoff = await server.request(
-        '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage',
+        "/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage",
         {
           headers: {
-            authorization: 'Bearer dev-token',
+            authorization: "Bearer dev-token",
           },
         },
       );
       expect(authorizedKickoff.status).toBe(202);
 
-      const contentLocation = authorizedKickoff.headers.get('content-location') || '';
-      const { response: manifestResponse, manifest } = await waitForCompletedManifest(
-        server,
-        contentLocation,
-        {
-          headers: {
-            authorization: 'Bearer dev-token',
+      const contentLocation =
+        authorizedKickoff.headers.get("content-location") || "";
+      const { response: manifestResponse, manifest } =
+        await waitForCompletedManifest(
+          server,
+          contentLocation,
+          {
+            headers: {
+              authorization: "Bearer dev-token",
+            },
           },
-        },
-      );
+        );
 
       expect(manifestResponse.status).toBe(200);
       expect(manifest.requiresAccessToken).toBe(true);

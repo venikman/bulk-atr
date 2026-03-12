@@ -2,7 +2,8 @@
 
 This repo exposes a runtime API under `/fhir/*`.
 
-Use the seed-data `functions` sections to understand upstream contracts, then read the live API to access mapped FHIR resources.
+Use the seed-data `functions` sections to understand upstream contracts, then
+read the live API to access mapped FHIR resources.
 
 ## Interface Overview
 
@@ -65,7 +66,8 @@ Kick off the export:
 curl -i 'https://your-deployment.example/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location'
 ```
 
-Poll the returned `content-location` until it returns `200`, then download the NDJSON URLs from the manifest response.
+Poll the returned `content-location` until it returns `200`, then download the
+NDJSON URLs from the manifest response.
 
 ### 3. Use the live API directly
 
@@ -151,7 +153,8 @@ Mapped FHIR output:
 
 ### `listPractitionerRoles`
 
-Returns provider-role assignments linking practitioner, organization, and location.
+Returns provider-role assignments linking practitioner, organization, and
+location.
 
 Mapped FHIR output:
 
@@ -169,8 +172,10 @@ Mapped FHIR output:
 
 There are two different source-side `listLocations` functions:
 
-- member-coverage-service `listLocations()` returns member-side home location source data only
-- provider-directory-service `listLocations()` returns provider-side service-site location data
+- member-coverage-service `listLocations()` returns member-side home location
+  source data only
+- provider-directory-service `listLocations()` returns provider-side
+  service-site location data
 
 Mapped FHIR output:
 
@@ -225,7 +230,7 @@ Mapped FHIR output:
 If you need:
 
 - live capability and route behavior: `/fhir/*`
-- async export semantics and persistence model: `docs/vercel-deployment.md`
+- async export semantics and persistence model: `docs/deno-deployment.md`
 - mapping rules and invariants: `docs/architecture.md`
 - upstream source contracts: `data/sources/*.json`
 
@@ -234,4 +239,6 @@ If you need:
 - Upstream `sourceId` values are not FHIR ids.
 - Final FHIR ids are the `fhirId` values from the source contracts.
 - Claims stay source-only and are intentionally excluded from the ATR outputs.
-- `Group.member` is the main entry point for member-level ATR relationships because it links Patient, Coverage, attributed PractitionerRole, attribution period, and change type.
+- `Group.member` is the main entry point for member-level ATR relationships
+  because it links Patient, Coverage, attributed PractitionerRole, attribution
+  period, and change type.

@@ -1,49 +1,51 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from "../test-deps.ts";
 
-const testsDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(testsDir, '../..');
+const repoRoot = new URL("../../", import.meta.url);
 
-describe('operator surface', () => {
-  test('keeps a repo-local just binary and removes package script workflows', () => {
-    const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as {
-      devDependencies?: Record<string, string>;
-      engines?: Record<string, string>;
-      scripts?: Record<string, string>;
+describe("operator surface", () => {
+  it("uses deno.json as the only tracked runtime/tooling config", async () => {
+    const denoConfig = JSON.parse(
+      await Deno.readTextFile(new URL("deno.json", repoRoot)),
+    ) as {
+      imports?: Record<string, string>;
+      tasks?: Record<string, string>;
+      nodeModulesDir?: string;
     };
+    const postmanRunnerSource = await Deno.readTextFile(
+      new URL("scripts/postman.ts", repoRoot),
+    );
 
-    expect(packageJson.devDependencies?.['just-install']).toBeDefined();
-    expect(packageJson.engines?.node).toBe('24.x');
-    expect(Object.keys(packageJson.scripts ?? {})).toHaveLength(0);
+    expect(denoConfig.nodeModulesDir).toBeUndefined();
+    expect(denoConfig.imports).toMatchObject({
+      hono: expect.stringContaining("@hono/hono"),
+      postgres: expect.stringContaining("npm:postgres"),
+      "pg-mem": expect.stringContaining("npm:pg-mem"),
+    });
+    expect(denoConfig.tasks).toMatchObject({
+      dev: expect.stringContaining("deno run"),
+      start: expect.stringContaining("deno run"),
+      test: expect.stringContaining("deno test"),
+      check: expect.stringContaining("deno fmt"),
+      "db:migrate": expect.stringContaining("scripts/migrate.ts"),
+      postman: expect.stringContaining("scripts/postman.ts"),
+      "postman:prod": expect.stringContaining("deno task postman"),
+      "postman:local": expect.stringContaining("deno task postman"),
+    });
+    expect(denoConfig.tasks?.postman).not.toContain("npx");
+    expect(postmanRunnerSource).not.toContain("newman");
+    expect(postmanRunnerSource).not.toContain("npx");
   });
 
-  test('defines the preferred just command surface', () => {
-    const justfilePath = join(repoRoot, 'justfile');
-
-    expect(existsSync(justfilePath)).toBe(true);
-
-    const justfile = readFileSync(justfilePath, 'utf8');
-
-    for (const recipe of ['build:', 'test:', 'check:', 'start:', 'deploy-prod:']) {
-      expect(justfile).toContain(recipe);
-    }
-
-    for (const recipe of ['deploy:', 'dev-prod:', 'vercel-build:']) {
-      expect(justfile).not.toContain(recipe);
-    }
-
-    expect(justfile).not.toContain('npm run');
-    expect(justfile).toContain('npx tsc --project tsconfig.server.json');
-    expect(justfile).toContain('npx rstest --project api');
-    expect(justfile).toContain(
-      'npx biome check . && npx tsc --noEmit && npx tsc --project tsconfig.server.json --noEmit',
-    );
-    expect(justfile).toMatch(
-      /start:\n(?: {2}.+\n)* {2}vercel pull --yes --environment=production\n(?: {2}.+\n)* {2}sh -ac 'set -a; \. \.vercel\/\.env\.production\.local; set \+a; exec vercel dev --yes'/,
-    );
-    expect(justfile).toMatch(
-      /deploy-prod:\n(?: {2}.+\n)* {2}just test\n(?: {2}.+\n)* {2}vercel pull --yes --environment=production\n(?: {2}.+\n)* {2}vercel build --prod\n(?: {2}.+\n)* {2}vercel deploy --prebuilt --prod -y/,
-    );
+  it("removes Node/Vercel project config files from the tracked operator surface", async () => {
+    await expect(Deno.stat(new URL("package.json", repoRoot))).rejects
+      .toThrow();
+    await expect(Deno.stat(new URL("package-lock.json", repoRoot))).rejects
+      .toThrow();
+    await expect(Deno.stat(new URL("tsconfig.json", repoRoot))).rejects
+      .toThrow();
+    await expect(Deno.stat(new URL("tsconfig.server.json", repoRoot))).rejects
+      .toThrow();
+    await expect(Deno.stat(new URL("vercel.json", repoRoot))).rejects.toThrow();
+    await expect(Deno.stat(new URL("justfile", repoRoot))).rejects.toThrow();
   });
 });

@@ -1,76 +1,61 @@
-import { setTimeout as delay } from 'node:timers/promises';
-import { newDb } from 'pg-mem';
-import {
-  ensureExportArtifactSchema,
-  PostgresExportArtifactStore,
-} from '../../server/adapters/postgres-export-artifact-store.js';
-import {
-  ensureExportJobSchema,
-  PostgresExportJobRepository,
-} from '../../server/adapters/postgres-export-job-repository.js';
-import { createApp } from '../../server/app.js';
-import { AtrResolver } from '../../server/lib/atr-resolver.js';
-import type { BackgroundTaskRunner } from '../../server/lib/background-task-runner.js';
-import { loadRawDomainStore } from '../../server/lib/raw-domain-store.js';
+import { newDb } from "pg-mem";
+import { PostgresExportArtifactStore } from "../../server/adapters/postgres-export-artifact-store.ts";
+import { PostgresExportJobRepository } from "../../server/adapters/postgres-export-job-repository.ts";
+import { createApp } from "../../server/app.ts";
+import { AtrResolver } from "../../server/lib/atr-resolver.ts";
+import { createRawDomainStoreFromDocuments } from "../../server/lib/raw-domain-store.ts";
+import claimsAttributionSource from "../../data/sources/claims-attribution-service.json" with {
+  type: "json",
+};
+import memberCoverageSource from "../../data/sources/member-coverage-service.json" with {
+  type: "json",
+};
+import providerDirectorySource from "../../data/sources/provider-directory-service.json" with {
+  type: "json",
+};
+import type {
+  ClaimsAttributionSourceDocument,
+  MemberCoverageSourceDocument,
+  ProviderDirectorySourceDocument,
+} from "../../server/lib/raw-domain-types.ts";
+import { createTestSqlClient } from "./test-sql-client.ts";
+import { applyPendingMigrations } from "../../server/lib/migrations.ts";
 
-class TestBackgroundTaskRunner implements BackgroundTaskRunner {
-  readonly tasks = new Set<Promise<void>>();
-
-  run(task: () => Promise<void>, delayMs = 0) {
-    const scheduled = (async () => {
-      if (delayMs > 0) {
-        await delay(delayMs);
-      }
-
-      await task();
-    })();
-
-    this.tasks.add(scheduled);
-    void scheduled.finally(() => {
-      this.tasks.delete(scheduled);
-    });
-  }
-
-  async waitForIdle() {
-    await Promise.allSettled([...this.tasks]);
-  }
-}
-
-export const createTestServer = async (authMode: 'none' | 'smart-backend' = 'none') => {
+export const createTestServer = async (
+  authMode: "none" | "smart-backend" = "none",
+) => {
   const db = newDb();
   const { Pool } = db.adapters.createPg();
   const pool = new Pool();
-  await ensureExportJobSchema(pool);
-  await ensureExportArtifactSchema(pool);
+  const sql = createTestSqlClient(pool);
+  await applyPendingMigrations(sql);
 
-  const rawDomainStore = await loadRawDomainStore({
-    memberCoveragePath: 'data/sources/member-coverage-service.json',
-    providerDirectoryPath: 'data/sources/provider-directory-service.json',
-    claimsAttributionPath: 'data/sources/claims-attribution-service.json',
+  const rawDomainStore = createRawDomainStoreFromDocuments({
+    memberCoverage: memberCoverageSource as MemberCoverageSourceDocument,
+    providerDirectory:
+      providerDirectorySource as ProviderDirectorySourceDocument,
+    claimsAttribution:
+      claimsAttributionSource as ClaimsAttributionSourceDocument,
   });
-  const backgroundTaskRunner = new TestBackgroundTaskRunner();
-  const jobRepository = new PostgresExportJobRepository(pool);
-  const artifactStore = new PostgresExportArtifactStore(pool);
+  const jobRepository = new PostgresExportJobRepository(sql);
+  const artifactStore = new PostgresExportArtifactStore(sql);
   const app = createApp({
     authMode,
     resolver: new AtrResolver(rawDomainStore),
     artifactStore,
     jobRepository,
-    backgroundTaskRunner,
   });
 
   const request = (path: string, init?: RequestInit) => {
-    const url =
-      path.startsWith('http://') || path.startsWith('https://')
-        ? path
-        : `http://example.test${path}`;
+    const url = path.startsWith("http://") || path.startsWith("https://")
+      ? path
+      : `http://example.test${path}`;
     return app.request(new Request(url, init));
   };
 
   const cleanup = async () => {
-    await backgroundTaskRunner.waitForIdle();
-    await pool.end();
+    await sql.close();
   };
 
-  return { app, request, cleanup, pool, jobRepository, artifactStore };
+  return { app, request, cleanup, sql, jobRepository, artifactStore };
 };

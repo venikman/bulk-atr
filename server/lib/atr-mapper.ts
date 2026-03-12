@@ -1,5 +1,5 @@
-import { getGroupIdentifierTokens } from './group-identifiers.js';
-import type { RawDomainStore } from './raw-domain-store.js';
+import { getGroupIdentifierTokens } from "./group-identifiers.ts";
+import type { RawDomainStore } from "./raw-domain-store.ts";
 import type {
   RawAddress,
   RawAttributionList,
@@ -10,17 +10,17 @@ import type {
   RawPractitioner,
   RawPractitionerRole,
   RawRelatedPerson,
-} from './raw-domain-types.js';
-import type { FhirResource } from './types.js';
+} from "./raw-domain-types.ts";
+import type { FhirResource } from "./types.ts";
 
 const compact = <T>(values: Array<T | null | undefined | false>): T[] =>
   values.filter(Boolean) as T[];
 
 const titleCase = (value: string) =>
   value
-    .split('-')
+    .split("-")
     .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
-    .join(' ');
+    .join(" ");
 
 const toAddress = (address: RawAddress, defaultUse?: string) => ({
   use: address.use || defaultUse,
@@ -32,15 +32,18 @@ const toAddress = (address: RawAddress, defaultUse?: string) => ({
   country: address.country,
   ...(address.periodStart || address.periodEnd
     ? {
-        period: {
-          ...(address.periodStart ? { start: address.periodStart } : {}),
-          ...(address.periodEnd ? { end: address.periodEnd } : {}),
-        },
-      }
+      period: {
+        ...(address.periodStart ? { start: address.periodStart } : {}),
+        ...(address.periodEnd ? { end: address.periodEnd } : {}),
+      },
+    }
     : {}),
 });
 
-const toPatientName = (name: RawPatient['name']['official'], use: 'official' | 'usual') => ({
+const toPatientName = (
+  name: RawPatient["name"]["official"],
+  use: "official" | "usual",
+) => ({
   use,
   ...(name.prefix ? { prefix: name.prefix } : {}),
   given: name.given,
@@ -48,32 +51,43 @@ const toPatientName = (name: RawPatient['name']['official'], use: 'official' | '
   ...(name.suffix ? { suffix: name.suffix } : {}),
 });
 
-const toTelecom = (entries: Array<{ system: string; value?: string | null; use: string }>) =>
+const toTelecom = (
+  entries: Array<{ system: string; value?: string | null; use: string }>,
+) =>
   compact(
     entries.map((entry) =>
       entry.value
         ? {
-            system: entry.system,
-            value: entry.value,
-            use: entry.use,
-          }
-        : null,
+          system: entry.system,
+          value: entry.value,
+          use: entry.use,
+        }
+        : null
     ),
   );
 
-const US_CORE_RACE_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race';
-const US_CORE_ETHNICITY_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity';
-const US_CORE_BIRTHSEX_URL = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex';
+const US_CORE_RACE_URL =
+  "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race";
+const US_CORE_ETHNICITY_URL =
+  "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
+const US_CORE_BIRTHSEX_URL =
+  "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
 
 const PROFILE_URLS = {
-  Organization: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-organization',
-  Location: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-location',
-  Practitioner: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-practitioner',
-  PractitionerRole: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-practitionerrole',
-  Patient: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-patient',
-  RelatedPerson: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-relatedperson',
-  Coverage: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-coverage',
-  Group: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-group',
+  Organization:
+    "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-organization",
+  Location:
+    "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-location",
+  Practitioner:
+    "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-practitioner",
+  PractitionerRole:
+    "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-practitionerrole",
+  Patient: "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-patient",
+  RelatedPerson:
+    "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-relatedperson",
+  Coverage:
+    "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-coverage",
+  Group: "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/atr-group",
 } as const;
 
 const getProfile = (resourceType: keyof typeof PROFILE_URLS) => ({
@@ -88,32 +102,46 @@ export class AtrMapper {
   }
 
   private getOrganizationBySourceId(sourceId?: string | null) {
-    return sourceId ? this.store.indexes.orgsBySourceId.get(sourceId) || null : null;
+    return sourceId
+      ? this.store.indexes.orgsBySourceId.get(sourceId) || null
+      : null;
   }
 
   private getPatientBySourceId(sourceId?: string | null) {
-    return sourceId ? this.store.indexes.patientsBySourceId.get(sourceId) || null : null;
+    return sourceId
+      ? this.store.indexes.patientsBySourceId.get(sourceId) || null
+      : null;
   }
 
   private getRelatedPersonBySourceId(sourceId?: string | null) {
-    return sourceId ? this.store.indexes.relatedPersonsBySourceId.get(sourceId) || null : null;
+    return sourceId
+      ? this.store.indexes.relatedPersonsBySourceId.get(sourceId) || null
+      : null;
   }
 
   private getPractitionerBySourceId(sourceId?: string | null) {
-    return sourceId ? this.store.indexes.practitionersBySourceId.get(sourceId) || null : null;
+    return sourceId
+      ? this.store.indexes.practitionersBySourceId.get(sourceId) || null
+      : null;
   }
 
   private getRoleBySourceId(sourceId?: string | null) {
-    return sourceId ? this.store.indexes.rolesBySourceId.get(sourceId) || null : null;
+    return sourceId
+      ? this.store.indexes.rolesBySourceId.get(sourceId) || null
+      : null;
   }
 
   private getLocationBySourceId(sourceId?: string | null) {
-    return sourceId ? this.store.indexes.locationsBySourceId.get(sourceId) || null : null;
+    return sourceId
+      ? this.store.indexes.locationsBySourceId.get(sourceId) || null
+      : null;
   }
 
   private toOrganizationReference(sourceId?: string | null) {
     const organization = this.getOrganizationBySourceId(sourceId);
-    return organization ? { reference: `Organization/${organization.fhirId}` } : undefined;
+    return organization
+      ? { reference: `Organization/${organization.fhirId}` }
+      : undefined;
   }
 
   private toPatientReference(sourceId?: string | null) {
@@ -123,12 +151,16 @@ export class AtrMapper {
 
   private toRelatedPersonReference(sourceId?: string | null) {
     const relatedPerson = this.getRelatedPersonBySourceId(sourceId);
-    return relatedPerson ? { reference: `RelatedPerson/${relatedPerson.fhirId}` } : undefined;
+    return relatedPerson
+      ? { reference: `RelatedPerson/${relatedPerson.fhirId}` }
+      : undefined;
   }
 
   private toPractitionerReference(sourceId?: string | null) {
     const practitioner = this.getPractitionerBySourceId(sourceId);
-    return practitioner ? { reference: `Practitioner/${practitioner.fhirId}` } : undefined;
+    return practitioner
+      ? { reference: `Practitioner/${practitioner.fhirId}` }
+      : undefined;
   }
 
   private toRoleReference(sourceId?: string | null) {
@@ -138,31 +170,31 @@ export class AtrMapper {
 
   mapOrganization(raw: RawOrganization): FhirResource {
     return {
-      resourceType: 'Organization',
+      resourceType: "Organization",
       id: raw.fhirId,
-      meta: getProfile('Organization'),
+      meta: getProfile("Organization"),
       identifier: compact([
         {
-          system: 'http://example.org/organization-id',
+          system: "http://example.org/organization-id",
           value: raw.organizationId,
         },
         raw.payerCode
           ? {
-              system: 'http://example.org/payer-codes',
-              value: raw.payerCode,
-            }
+            system: "http://example.org/payer-codes",
+            value: raw.payerCode,
+          }
           : null,
         raw.npi
           ? {
-              system: 'http://hl7.org/fhir/sid/us-npi',
-              value: raw.npi,
-            }
+            system: "http://hl7.org/fhir/sid/us-npi",
+            value: raw.npi,
+          }
           : null,
         raw.tin
           ? {
-              system: 'urn:oid:2.16.840.1.113883.4.4',
-              value: raw.tin,
-            }
+            system: "urn:oid:2.16.840.1.113883.4.4",
+            value: raw.tin,
+          }
           : null,
       ]),
       active: true,
@@ -170,7 +202,7 @@ export class AtrMapper {
         {
           coding: [
             {
-              system: 'http://example.org/fhir/CodeSystem/organization-kind',
+              system: "http://example.org/fhir/CodeSystem/organization-kind",
               code: raw.kind,
               display: titleCase(raw.kind),
             },
@@ -180,118 +212,131 @@ export class AtrMapper {
       ],
       name: raw.name,
       telecom: toTelecom([
-        { system: 'phone', value: raw.phone, use: 'work' },
-        { system: 'email', value: raw.email, use: 'work' },
+        { system: "phone", value: raw.phone, use: "work" },
+        { system: "email", value: raw.email, use: "work" },
       ]),
-      address: [toAddress(raw.address, 'work')],
+      address: [toAddress(raw.address, "work")],
     };
   }
 
   mapLocation(raw: RawLocation): FhirResource {
     return {
-      resourceType: 'Location',
+      resourceType: "Location",
       id: raw.fhirId,
-      meta: getProfile('Location'),
+      meta: getProfile("Location"),
       status: raw.status,
       name: raw.name,
-      telecom: toTelecom([{ system: 'phone', value: raw.phone, use: 'work' }]),
-      address: toAddress(raw.address, 'work'),
-      managingOrganization: this.toOrganizationReference(raw.organizationSourceId),
+      telecom: toTelecom([{ system: "phone", value: raw.phone, use: "work" }]),
+      address: toAddress(raw.address, "work"),
+      managingOrganization: this.toOrganizationReference(
+        raw.organizationSourceId,
+      ),
     };
   }
 
   mapPractitioner(raw: RawPractitioner): FhirResource {
     return {
-      resourceType: 'Practitioner',
+      resourceType: "Practitioner",
       id: raw.fhirId,
-      meta: getProfile('Practitioner'),
+      meta: getProfile("Practitioner"),
       identifier: compact([
         raw.npi
           ? {
-              system: 'http://hl7.org/fhir/sid/us-npi',
-              value: raw.npi,
-            }
+            system: "http://hl7.org/fhir/sid/us-npi",
+            value: raw.npi,
+          }
           : null,
         raw.internalProviderId
           ? {
-              system: 'http://example.org/provider-id',
-              value: raw.internalProviderId,
-            }
+            system: "http://example.org/provider-id",
+            value: raw.internalProviderId,
+          }
           : null,
         raw.stateLicenseNumber
           ? {
-              system: 'http://example.org/provider-license',
-              value: raw.stateLicenseNumber,
-            }
+            system: "http://example.org/provider-license",
+            value: raw.stateLicenseNumber,
+          }
           : null,
       ]),
       active: raw.active,
       name: [
         {
-          use: 'official',
+          use: "official",
           text: raw.name.display,
-          ...(raw.name.official.prefix ? { prefix: raw.name.official.prefix } : {}),
+          ...(raw.name.official.prefix
+            ? { prefix: raw.name.official.prefix }
+            : {}),
           given: raw.name.official.given,
           family: raw.name.official.family,
-          ...(raw.name.official.suffix ? { suffix: raw.name.official.suffix } : {}),
+          ...(raw.name.official.suffix
+            ? { suffix: raw.name.official.suffix }
+            : {}),
         },
       ],
       telecom: toTelecom([
-        { system: 'phone', value: raw.telecom?.workPhone, use: 'work' },
-        { system: 'fax', value: raw.telecom?.fax, use: 'work' },
-        { system: 'email', value: raw.telecom?.email, use: 'work' },
+        { system: "phone", value: raw.telecom?.workPhone, use: "work" },
+        { system: "fax", value: raw.telecom?.fax, use: "work" },
+        { system: "email", value: raw.telecom?.email, use: "work" },
       ]),
       ...(raw.address ? { address: [toAddress(raw.address)] } : {}),
       ...(raw.gender ? { gender: raw.gender } : {}),
       ...(raw.birthDate ? { birthDate: raw.birthDate } : {}),
       ...(raw.qualification?.length
         ? {
-            qualification: raw.qualification.map((qualification) => ({
-              identifier: [
+          qualification: raw.qualification.map((qualification) => ({
+            identifier: [
+              {
+                system: "http://example.org/qualification-id",
+                value: qualification.qualificationId,
+              },
+            ],
+            code: {
+              text: qualification.display,
+              coding: [
                 {
-                  system: 'http://example.org/qualification-id',
-                  value: qualification.qualificationId,
+                  system:
+                    "http://example.org/fhir/CodeSystem/provider-qualification",
+                  code: qualification.code,
+                  display: qualification.display,
                 },
               ],
-              code: {
-                text: qualification.display,
-                coding: [
-                  {
-                    system: 'http://example.org/fhir/CodeSystem/provider-qualification',
-                    code: qualification.code,
-                    display: qualification.display,
-                  },
-                ],
-              },
-              ...(qualification.periodStart || qualification.periodEnd
-                ? {
-                    period: {
-                      ...(qualification.periodStart ? { start: qualification.periodStart } : {}),
-                      ...(qualification.periodEnd ? { end: qualification.periodEnd } : {}),
-                    },
-                  }
-                : {}),
-              ...(qualification.issuerOrganizationSourceId
-                ? {
-                    issuer: this.toOrganizationReference(qualification.issuerOrganizationSourceId),
-                  }
-                : {}),
-            })),
-          }
+            },
+            ...(qualification.periodStart || qualification.periodEnd
+              ? {
+                period: {
+                  ...(qualification.periodStart
+                    ? { start: qualification.periodStart }
+                    : {}),
+                  ...(qualification.periodEnd
+                    ? { end: qualification.periodEnd }
+                    : {}),
+                },
+              }
+              : {}),
+            ...(qualification.issuerOrganizationSourceId
+              ? {
+                issuer: this.toOrganizationReference(
+                  qualification.issuerOrganizationSourceId,
+                ),
+              }
+              : {}),
+          })),
+        }
         : {}),
       ...(raw.communication?.length
         ? {
-            communication: raw.communication.map((entry) => ({
-              coding: [
-                {
-                  system: 'urn:ietf:bcp:47',
-                  code: entry.code,
-                  display: entry.display,
-                },
-              ],
-              text: entry.display,
-            })),
-          }
+          communication: raw.communication.map((entry) => ({
+            coding: [
+              {
+                system: "urn:ietf:bcp:47",
+                code: entry.code,
+                display: entry.display,
+              },
+            ],
+            text: entry.display,
+          })),
+        }
         : {}),
     };
   }
@@ -305,17 +350,17 @@ export class AtrMapper {
     }
 
     return {
-      resourceType: 'PractitionerRole',
+      resourceType: "PractitionerRole",
       id: raw.fhirId,
-      meta: getProfile('PractitionerRole'),
+      meta: getProfile("PractitionerRole"),
       active: raw.active,
       ...(raw.periodStart || raw.periodEnd
         ? {
-            period: {
-              ...(raw.periodStart ? { start: raw.periodStart } : {}),
-              ...(raw.periodEnd ? { end: raw.periodEnd } : {}),
-            },
-          }
+          period: {
+            ...(raw.periodStart ? { start: raw.periodStart } : {}),
+            ...(raw.periodEnd ? { end: raw.periodEnd } : {}),
+          },
+        }
         : {}),
       practitioner,
       organization: this.toOrganizationReference(raw.organizationSourceId),
@@ -330,7 +375,7 @@ export class AtrMapper {
         {
           coding: [
             {
-              system: 'http://nucc.org/provider-taxonomy',
+              system: "http://nucc.org/provider-taxonomy",
               code: raw.specialty.code,
               display: raw.specialty.display,
             },
@@ -339,191 +384,200 @@ export class AtrMapper {
         },
       ],
       telecom: toTelecom([
-        { system: 'phone', value: raw.phone, use: 'work' },
-        { system: 'email', value: raw.email, use: 'work' },
+        { system: "phone", value: raw.phone, use: "work" },
+        { system: "email", value: raw.email, use: "work" },
       ]),
     };
   }
 
   mapPatient(raw: RawPatient): FhirResource {
-    const generalPractitioner = this.toRoleReference(raw.generalPractitionerRoleSourceId);
+    const generalPractitioner = this.toRoleReference(
+      raw.generalPractitionerRoleSourceId,
+    );
 
     return {
-      resourceType: 'Patient',
+      resourceType: "Patient",
       id: raw.fhirId,
-      meta: getProfile('Patient'),
+      meta: getProfile("Patient"),
       extension: compact([
         raw.race
           ? {
-              url: US_CORE_RACE_URL,
-              extension: [
-                {
-                  url: 'ombCategory',
-                  valueCoding: {
-                    system: 'urn:oid:2.16.840.1.113883.6.238',
-                    code: raw.race.code,
-                    display: raw.race.display,
-                  },
+            url: US_CORE_RACE_URL,
+            extension: [
+              {
+                url: "ombCategory",
+                valueCoding: {
+                  system: "urn:oid:2.16.840.1.113883.6.238",
+                  code: raw.race.code,
+                  display: raw.race.display,
                 },
-                {
-                  url: 'text',
-                  valueString: raw.race.text,
-                },
-              ],
-            }
+              },
+              {
+                url: "text",
+                valueString: raw.race.text,
+              },
+            ],
+          }
           : null,
         raw.ethnicity
           ? {
-              url: US_CORE_ETHNICITY_URL,
-              extension: [
-                {
-                  url: 'ombCategory',
-                  valueCoding: {
-                    system: 'urn:oid:2.16.840.1.113883.6.238',
-                    code: raw.ethnicity.code,
-                    display: raw.ethnicity.display,
-                  },
+            url: US_CORE_ETHNICITY_URL,
+            extension: [
+              {
+                url: "ombCategory",
+                valueCoding: {
+                  system: "urn:oid:2.16.840.1.113883.6.238",
+                  code: raw.ethnicity.code,
+                  display: raw.ethnicity.display,
                 },
-                {
-                  url: 'text',
-                  valueString: raw.ethnicity.text,
-                },
-              ],
-            }
+              },
+              {
+                url: "text",
+                valueString: raw.ethnicity.text,
+              },
+            ],
+          }
           : null,
         raw.birthSex
           ? {
-              url: US_CORE_BIRTHSEX_URL,
-              valueCode: raw.birthSex,
-            }
+            url: US_CORE_BIRTHSEX_URL,
+            valueCode: raw.birthSex,
+          }
           : null,
       ]),
       identifier: compact([
         {
-          system: 'http://example.org/member-coverage-service/mrn',
+          system: "http://example.org/member-coverage-service/mrn",
           value: raw.identifiers.mrn,
         },
         {
-          system: 'http://example.org/member-coverage-service/member-id',
+          system: "http://example.org/member-coverage-service/member-id",
           value: raw.memberId,
         },
         {
-          system: 'http://example.org/member-coverage-service/member-number',
+          system: "http://example.org/member-coverage-service/member-number",
           value: raw.identifiers.memberNumber,
         },
         raw.identifiers.medicareBeneficiaryId
           ? {
-              system: 'http://hl7.org/fhir/sid/us-mbi',
-              value: raw.identifiers.medicareBeneficiaryId,
-            }
+            system: "http://hl7.org/fhir/sid/us-mbi",
+            value: raw.identifiers.medicareBeneficiaryId,
+          }
           : null,
         raw.identifiers.medicaidId
           ? {
-              system: 'http://example.org/member-coverage-service/medicaid-id',
-              value: raw.identifiers.medicaidId,
-            }
+            system: "http://example.org/member-coverage-service/medicaid-id",
+            value: raw.identifiers.medicaidId,
+          }
           : null,
       ]),
       active: true,
       name: [
-        toPatientName(raw.name.official, 'official'),
+        toPatientName(raw.name.official, "official"),
         {
-          use: 'usual',
+          use: "usual",
           given: raw.name.usual.given,
           family: raw.name.usual.family,
         },
       ],
       telecom: toTelecom([
-        { system: 'phone', value: raw.telecom.homePhone, use: 'home' },
-        { system: 'phone', value: raw.telecom.mobilePhone, use: 'mobile' },
-        { system: 'email', value: raw.telecom.email, use: 'home' },
+        { system: "phone", value: raw.telecom.homePhone, use: "home" },
+        { system: "phone", value: raw.telecom.mobilePhone, use: "mobile" },
+        { system: "email", value: raw.telecom.email, use: "home" },
       ]),
       gender: raw.administrativeGender,
       birthDate: raw.birthDate,
       ...(raw.maritalStatus
         ? {
-            maritalStatus: {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus',
-                  code: raw.maritalStatus.code,
-                  display: raw.maritalStatus.display,
-                },
-              ],
-              text: raw.maritalStatus.display,
-            },
-          }
+          maritalStatus: {
+            coding: [
+              {
+                system:
+                  "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+                code: raw.maritalStatus.code,
+                display: raw.maritalStatus.display,
+              },
+            ],
+            text: raw.maritalStatus.display,
+          },
+        }
         : {}),
       address: [toAddress(raw.address)],
       ...(raw.communication
         ? {
-            communication: [
-              {
-                language: {
-                  coding: [
-                    {
-                      system: 'urn:ietf:bcp:47',
-                      code: raw.communication.languageCode,
-                      display: raw.communication.languageDisplay,
-                    },
-                  ],
-                  text: raw.communication.languageDisplay,
-                },
-                preferred: raw.communication.preferred,
+          communication: [
+            {
+              language: {
+                coding: [
+                  {
+                    system: "urn:ietf:bcp:47",
+                    code: raw.communication.languageCode,
+                    display: raw.communication.languageDisplay,
+                  },
+                ],
+                text: raw.communication.languageDisplay,
               },
-            ],
-          }
+              preferred: raw.communication.preferred,
+            },
+          ],
+        }
         : {}),
       ...(raw.contact
         ? {
-            contact: [
-              {
-                relationship: [{ text: raw.contact.relationshipDisplay }],
-                name: {
-                  given: raw.contact.name.given,
-                  family: raw.contact.name.family,
-                },
-                telecom: toTelecom([{ system: 'phone', value: raw.contact.phone, use: 'mobile' }]),
-                ...(raw.contact.addressSameAsPatient
-                  ? {
-                      address: toAddress(raw.address),
-                    }
-                  : {}),
+          contact: [
+            {
+              relationship: [{ text: raw.contact.relationshipDisplay }],
+              name: {
+                given: raw.contact.name.given,
+                family: raw.contact.name.family,
               },
-            ],
-          }
+              telecom: toTelecom([{
+                system: "phone",
+                value: raw.contact.phone,
+                use: "mobile",
+              }]),
+              ...(raw.contact.addressSameAsPatient
+                ? {
+                  address: toAddress(raw.address),
+                }
+                : {}),
+            },
+          ],
+        }
         : {}),
       ...(generalPractitioner
         ? {
-            generalPractitioner: [generalPractitioner],
-          }
+          generalPractitioner: [generalPractitioner],
+        }
         : {}),
       ...(raw.managingOrganizationSourceId
         ? {
-            managingOrganization: this.toOrganizationReference(raw.managingOrganizationSourceId),
-          }
+          managingOrganization: this.toOrganizationReference(
+            raw.managingOrganizationSourceId,
+          ),
+        }
         : {}),
     };
   }
 
   mapRelatedPerson(raw: RawRelatedPerson): FhirResource {
     return {
-      resourceType: 'RelatedPerson',
+      resourceType: "RelatedPerson",
       id: raw.fhirId,
-      meta: getProfile('RelatedPerson'),
+      meta: getProfile("RelatedPerson"),
       patient: this.toPatientReference(raw.patientSourceId),
       relationship: [{ text: raw.relationship.display }],
       name: [
         {
-          use: 'official',
+          use: "official",
           given: raw.name.official.given,
           family: raw.name.official.family,
         },
       ],
       telecom: toTelecom([
-        { system: 'phone', value: raw.telecom.homePhone, use: 'home' },
-        { system: 'phone', value: raw.telecom.mobilePhone, use: 'mobile' },
-        { system: 'email', value: raw.telecom.email, use: 'home' },
+        { system: "phone", value: raw.telecom.homePhone, use: "home" },
+        { system: "phone", value: raw.telecom.mobilePhone, use: "mobile" },
+        { system: "email", value: raw.telecom.email, use: "home" },
       ]),
       gender: raw.gender,
       birthDate: raw.birthDate,
@@ -535,16 +589,18 @@ export class AtrMapper {
     const payor = this.toOrganizationReference(raw.payorOrganizationSourceId);
 
     return {
-      resourceType: 'Coverage',
+      resourceType: "Coverage",
       id: raw.fhirId,
-      meta: getProfile('Coverage'),
+      meta: getProfile("Coverage"),
       extension: [
         {
-          url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-insuranceProductType',
+          url:
+            "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-insuranceProductType",
           valueCodeableConcept: {
             coding: [
               {
-                system: 'http://example.org/fhir/CodeSystem/insurance-product-type',
+                system:
+                  "http://example.org/fhir/CodeSystem/insurance-product-type",
                 code: raw.planCode,
                 display: raw.planDisplay,
               },
@@ -555,26 +611,25 @@ export class AtrMapper {
       ],
       identifier: [
         {
-          system: 'http://example.org/member-coverage-service/member-number',
+          system: "http://example.org/member-coverage-service/member-number",
           value: raw.memberNumber,
         },
       ],
-      status: 'active',
-      policyHolder:
-        raw.policyHolderType === 'RelatedPerson'
-          ? this.toRelatedPersonReference(raw.policyHolderSourceId)
-          : this.toPatientReference(raw.policyHolderSourceId),
-      subscriber:
-        raw.subscriberType === 'RelatedPerson'
-          ? this.toRelatedPersonReference(raw.subscriberSourceId)
-          : this.toPatientReference(raw.subscriberSourceId),
+      status: "active",
+      policyHolder: raw.policyHolderType === "RelatedPerson"
+        ? this.toRelatedPersonReference(raw.policyHolderSourceId)
+        : this.toPatientReference(raw.policyHolderSourceId),
+      subscriber: raw.subscriberType === "RelatedPerson"
+        ? this.toRelatedPersonReference(raw.subscriberSourceId)
+        : this.toPatientReference(raw.subscriberSourceId),
       subscriberId: raw.subscriberId,
       beneficiary: this.toPatientReference(raw.beneficiaryPatientSourceId),
       dependent: raw.dependentNumber,
       relationship: {
         coding: [
           {
-            system: 'http://terminology.hl7.org/CodeSystem/subscriber-relationship',
+            system:
+              "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
             code: raw.relationshipCode,
             display: raw.relationshipDisplay,
           },
@@ -587,20 +642,20 @@ export class AtrMapper {
       },
       ...(payor
         ? {
-            payor: [payor],
-          }
+          payor: [payor],
+        }
         : {}),
       class: [
         {
           type: {
             coding: [
               {
-                system: 'http://terminology.hl7.org/CodeSystem/coverage-class',
-                code: 'plan',
-                display: 'Plan',
+                system: "http://terminology.hl7.org/CodeSystem/coverage-class",
+                code: "plan",
+                display: "Plan",
               },
             ],
-            text: 'Plan',
+            text: "Plan",
           },
           value: raw.planId,
           name: raw.planDisplay,
@@ -610,56 +665,67 @@ export class AtrMapper {
   }
 
   mapGroup(raw: RawAttributionList): FhirResource {
-    const providerOrganization = this.getOrganizationBySourceId(raw.providerOrganizationSourceId);
+    const providerOrganization = this.getOrganizationBySourceId(
+      raw.providerOrganizationSourceId,
+    );
 
     return {
-      resourceType: 'Group',
+      resourceType: "Group",
       id: raw.fhirId,
-      meta: getProfile('Group'),
+      meta: getProfile("Group"),
       extension: [
         {
-          url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-contractValidityPeriod',
+          url:
+            "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-contractValidityPeriod",
           valuePeriod: {
             start: raw.contractStart,
             end: raw.contractEnd,
           },
         },
         {
-          url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributionListStatus',
+          url:
+            "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributionListStatus",
           valueCode: raw.status,
         },
       ],
       identifier: getGroupIdentifierTokens(raw, providerOrganization),
       active: true,
-      type: 'person',
+      type: "person",
       actual: true,
       name: raw.displayName,
       quantity: raw.members.length,
       member: raw.members.map((member) => {
-        const coverage = this.store.indexes.coveragesBySourceId.get(member.coverageSourceId);
-        const role = this.store.indexes.rolesBySourceId.get(member.practitionerRoleSourceId);
+        const coverage = this.store.indexes.coveragesBySourceId.get(
+          member.coverageSourceId,
+        );
+        const role = this.store.indexes.rolesBySourceId.get(
+          member.practitionerRoleSourceId,
+        );
 
         return {
           extension: compact([
             {
-              url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-changeType',
+              url:
+                "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-changeType",
               valueCode: member.changeType,
             },
             coverage
               ? {
-                  url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-coverageReference',
-                  valueReference: {
-                    reference: `Coverage/${coverage.fhirId}`,
-                  },
-                }
+                url:
+                  "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-coverageReference",
+                valueReference: {
+                  reference: `Coverage/${coverage.fhirId}`,
+                },
+              }
               : null,
             role
               ? {
-                  url: 'http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributedProvider',
-                  valueReference: {
-                    reference: `PractitionerRole/${role.fhirId}`,
-                  },
-                }
+                url:
+                  "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributedProvider",
+                valueReference: {
+                  reference: `PractitionerRole/${role.fhirId}`,
+                },
+              }
               : null,
           ]),
           entity: this.toPatientReference(member.patientSourceId),

@@ -1,6 +1,6 @@
-import type { MiddlewareHandler } from 'hono';
+import type { MiddlewareHandler } from "hono";
 
-export type AuthMode = 'none' | 'smart-backend';
+export type AuthMode = "none" | "smart-backend";
 
 export type AuthContext = {
   callerId: string;
@@ -13,28 +13,37 @@ export type AppEnv = {
   };
 };
 
-export const normalizeAuthMode = (value: string | null | undefined): AuthMode => {
+export const normalizeAuthMode = (
+  value: string | null | undefined,
+): AuthMode => {
   const normalized = value?.trim();
-  return normalized === 'smart-backend' ? 'smart-backend' : 'none';
+  return normalized === "smart-backend" ? "smart-backend" : "none";
 };
 
-const buildCallerId = (forwarded: string | undefined, fallback = 'anonymous') => {
+const buildCallerId = (
+  forwarded: string | undefined,
+  fallback = "anonymous",
+) => {
   if (!forwarded) {
     return fallback;
   }
 
-  return forwarded.split(',')[0]?.trim() || fallback;
+  return forwarded.split(",")[0]?.trim() || fallback;
 };
 
-export const requiresAccessToken = (authMode: AuthMode) => authMode === 'smart-backend';
+export const requiresAccessToken = (authMode: AuthMode) =>
+  authMode === "smart-backend";
 
-export const createAuthMiddleware = (authMode: AuthMode): MiddlewareHandler<AppEnv> => {
+export const createAuthMiddleware = (
+  authMode: AuthMode,
+): MiddlewareHandler<AppEnv> => {
   return async (context, next) => {
-    const forwarded = context.req.header('x-forwarded-for') || context.req.header('x-real-ip');
-    const authorization = context.req.header('authorization');
+    const forwarded = context.req.header("x-forwarded-for") ||
+      context.req.header("x-real-ip");
+    const authorization = context.req.header("authorization");
 
-    if (authMode === 'none') {
-      context.set('auth', {
+    if (authMode === "none") {
+      context.set("auth", {
         callerId: buildCallerId(forwarded),
         bearerToken: null,
       });
@@ -42,35 +51,36 @@ export const createAuthMiddleware = (authMode: AuthMode): MiddlewareHandler<AppE
       return;
     }
 
-    if (!authorization?.startsWith('Bearer ')) {
-      context.header('www-authenticate', 'Bearer');
-      context.header('content-type', 'application/fhir+json; charset=utf-8');
+    if (!authorization?.startsWith("Bearer ")) {
+      context.header("www-authenticate", "Bearer");
+      context.header("content-type", "application/fhir+json; charset=utf-8");
       context.status(401);
       context.res = Response.json(
         {
-          resourceType: 'OperationOutcome',
+          resourceType: "OperationOutcome",
           issue: [
             {
-              severity: 'error',
-              code: 'login',
-              diagnostics: 'Bearer token is required for this route in smart-backend mode.',
+              severity: "error",
+              code: "login",
+              diagnostics:
+                "Bearer token is required for this route in smart-backend mode.",
             },
           ],
         },
         {
           status: 401,
           headers: {
-            'content-type': 'application/fhir+json; charset=utf-8',
-            'www-authenticate': 'Bearer',
+            "content-type": "application/fhir+json; charset=utf-8",
+            "www-authenticate": "Bearer",
           },
         },
       );
       return;
     }
 
-    const bearerToken = authorization.slice('Bearer '.length).trim();
-    context.set('auth', {
-      callerId: bearerToken || buildCallerId(forwarded, 'authenticated'),
+    const bearerToken = authorization.slice("Bearer ".length).trim();
+    context.set("auth", {
+      callerId: bearerToken || buildCallerId(forwarded, "authenticated"),
       bearerToken,
     });
 
@@ -78,4 +88,5 @@ export const createAuthMiddleware = (authMode: AuthMode): MiddlewareHandler<AppE
   };
 };
 
-export const getCallerId = (auth: AuthContext | undefined) => auth?.callerId || 'anonymous';
+export const getCallerId = (auth: AuthContext | undefined) =>
+  auth?.callerId || "anonymous";

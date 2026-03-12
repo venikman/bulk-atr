@@ -1,22 +1,16 @@
-import type { Pool } from 'pg';
-import { LocalBackgroundTaskRunner } from '../adapters/local-background-task-runner.js';
-import { type AuthMode, normalizeAuthMode } from '../lib/auth.js';
-import { createRuntimeApp, createRuntimePool } from './runtime.js';
+import type { AuthMode } from "../lib/auth.ts";
+import type { SqlClient } from "../lib/sql-client.ts";
+import { createRuntimeApp } from "./runtime.ts";
 
 export type CreateLocalAppOptions = {
-  authMode?: AuthMode;
-  jobDelayMs?: number;
-  pool?: Pool;
+  authMode: AuthMode;
+  sql: SqlClient;
 };
 
-export const createLocalApp = async ({
-  authMode = normalizeAuthMode(process.env.AUTH_MODE),
-  jobDelayMs = 50,
-  pool,
-}: CreateLocalAppOptions = {}) =>
+export const createLocalApp = (
+  { authMode, sql }: CreateLocalAppOptions,
+) =>
   createRuntimeApp({
     authMode,
-    backgroundTaskRunner: new LocalBackgroundTaskRunner(),
-    jobDelayMs,
-    pool: pool ?? createRuntimePool(),
+    sql,
   });

@@ -1,22 +1,22 @@
-import type { Context } from 'hono';
-import type { JsonObject } from './types.js';
+import type { Context } from "hono";
+import type { JsonObject } from "./types.ts";
 
 export type IssueCode =
-  | 'invalid'
-  | 'not-supported'
-  | 'not-found'
-  | 'exception'
-  | 'login'
-  | 'throttled';
+  | "invalid"
+  | "not-supported"
+  | "not-found"
+  | "exception"
+  | "login"
+  | "throttled";
 
 type FhirStatus = 200 | 400 | 401 | 404 | 429 | 500;
 
 export const buildOperationOutcome = (
   code: IssueCode,
   diagnostics: string,
-  severity: 'error' | 'fatal' = 'error',
+  severity: "error" | "fatal" = "error",
 ): JsonObject => ({
-  resourceType: 'OperationOutcome',
+  resourceType: "OperationOutcome",
   issue: [
     {
       severity,
@@ -26,8 +26,12 @@ export const buildOperationOutcome = (
   ],
 });
 
-export const fhirJson = (context: Context, payload: JsonObject, status: FhirStatus = 200) => {
-  context.header('content-type', 'application/fhir+json; charset=utf-8');
+export const fhirJson = (
+  context: Context,
+  payload: JsonObject,
+  status: FhirStatus = 200,
+) => {
+  context.header("content-type", "application/fhir+json; charset=utf-8");
   context.status(status);
   return context.json(payload);
 };

@@ -1,5 +1,5 @@
-import type { AuthMode } from './auth.js';
-import type { JsonObject } from './types.js';
+import type { AuthMode } from "./auth.ts";
+import type { JsonObject } from "./types.ts";
 
 const buildResource = (
   type: string,
@@ -23,53 +23,55 @@ const buildResource = (
   return resource;
 };
 
-export const createCapabilityStatement = (baseUrl: string, authMode: AuthMode): JsonObject => ({
-  resourceType: 'CapabilityStatement',
-  status: 'active',
+export const createCapabilityStatement = (
+  baseUrl: string,
+  authMode: AuthMode,
+): JsonObject => ({
+  resourceType: "CapabilityStatement",
+  status: "active",
   date: new Date().toISOString(),
-  kind: 'instance',
-  fhirVersion: '4.0.1',
-  format: ['json'],
+  kind: "instance",
+  fhirVersion: "4.0.1",
+  format: ["json"],
   software: {
-    name: 'bulk-atr export-first producer',
-    version: '0.1.0',
+    name: "bulk-atr export-first producer",
+    version: "0.1.0",
   },
   implementation: {
     description:
-      'Truthful producer-lite ATR server with Group discovery, linked reads, and group-level asynchronous bulk export.',
+      "Truthful producer-lite ATR server with Group discovery, linked reads, and group-level asynchronous bulk export.",
     url: baseUrl,
   },
   rest: [
     {
-      mode: 'server',
+      mode: "server",
       security: {
         cors: false,
-        description:
-          authMode === 'smart-backend'
-            ? 'Protected read and export routes using a SMART-backend-ready bearer seam.'
-            : 'Development-open profile with no auth enforcement on read and export routes.',
+        description: authMode === "smart-backend"
+          ? "Protected read and export routes using a SMART-backend-ready bearer seam."
+          : "Development-open profile with no auth enforcement on read and export routes.",
       },
       resource: [
         buildResource(
-          'Group',
-          ['read', 'search-type'],
+          "Group",
+          ["read", "search-type"],
           [
-            { name: 'identifier', type: 'token' },
-            { name: 'name', type: 'string' },
+            { name: "identifier", type: "token" },
+            { name: "name", type: "string" },
           ],
           {
-            name: 'davinci-data-export',
+            name: "davinci-data-export",
             definition:
-              'http://hl7.org/fhir/us/davinci-atr/OperationDefinition/atr-group-davinci-data-export',
+              "http://hl7.org/fhir/us/davinci-atr/OperationDefinition/atr-group-davinci-data-export",
           },
         ),
-        buildResource('Patient', ['read']),
-        buildResource('Coverage', ['read']),
-        buildResource('RelatedPerson', ['read']),
-        buildResource('Practitioner', ['read']),
-        buildResource('PractitionerRole', ['read']),
-        buildResource('Organization', ['read']),
-        buildResource('Location', ['read']),
+        buildResource("Patient", ["read"]),
+        buildResource("Coverage", ["read"]),
+        buildResource("RelatedPerson", ["read"]),
+        buildResource("Practitioner", ["read"]),
+        buildResource("PractitionerRole", ["read"]),
+        buildResource("Organization", ["read"]),
+        buildResource("Location", ["read"]),
       ],
     },
   ],

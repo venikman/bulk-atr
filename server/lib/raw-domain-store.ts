@@ -1,7 +1,4 @@
-import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { getGroupIdentifierTokens } from './group-identifiers.js';
+import { getGroupIdentifierTokens } from "./group-identifiers.ts";
 import type {
   ClaimsAttributionSourceDocument,
   MemberCoverageSourceDocument,
@@ -16,36 +13,7 @@ import type {
   RawPractitioner,
   RawPractitionerRole,
   RawRelatedPerson,
-} from './raw-domain-types.js';
-
-const stableSerialize = (value: unknown): string => {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => stableSerialize(item)).join(',')}]`;
-  }
-
-  if (!value || typeof value !== 'object') {
-    return JSON.stringify(value);
-  }
-
-  const entries = Object.entries(value as Record<string, unknown>).sort(([left], [right]) =>
-    left.localeCompare(right),
-  );
-
-  return `{${entries
-    .map(([key, nested]) => `${JSON.stringify(key)}:${stableSerialize(nested)}`)
-    .join(',')}}`;
-};
-
-const readJsonFile = async <T>(path: string) => {
-  const absolute = resolve(path);
-  const content = await readFile(absolute, 'utf-8');
-  try {
-    return JSON.parse(content) as T;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse JSON source file ${absolute}: ${message}`, { cause: error });
-  }
-};
+} from "./raw-domain-types.ts";
 
 const requireItems = <T>(label: string, value: unknown): T[] => {
   if (!Array.isArray(value)) {
@@ -146,7 +114,7 @@ const validateCoverageReferenceType = ({
   field: string;
   value: string;
 }) => {
-  if (value === 'Patient' || value === 'RelatedPerson') {
+  if (value === "Patient" || value === "RelatedPerson") {
     return;
   }
 
@@ -189,26 +157,26 @@ const validateSourceLinks = ({
 
   for (const patient of patients) {
     validateOptionalLink({
-      collection: 'Patient',
+      collection: "Patient",
       sourceId: patient.sourceId,
-      field: 'generalPractitionerRoleSourceId',
-      targetType: 'PractitionerRole',
+      field: "generalPractitionerRoleSourceId",
+      targetType: "PractitionerRole",
       targetSourceId: patient.generalPractitionerRoleSourceId,
       targetIndex: roleIds,
     });
     validateOptionalLink({
-      collection: 'Patient',
+      collection: "Patient",
       sourceId: patient.sourceId,
-      field: 'managingOrganizationSourceId',
-      targetType: 'Organization',
+      field: "managingOrganizationSourceId",
+      targetType: "Organization",
       targetSourceId: patient.managingOrganizationSourceId,
       targetIndex: organizationIds,
     });
     validateOptionalLink({
-      collection: 'Patient',
+      collection: "Patient",
       sourceId: patient.sourceId,
-      field: 'homeLocationSourceId',
-      targetType: 'MemberLocation',
+      field: "homeLocationSourceId",
+      targetType: "MemberLocation",
       targetSourceId: patient.homeLocationSourceId,
       targetIndex: memberLocationIds,
     });
@@ -217,43 +185,47 @@ const validateSourceLinks = ({
   for (const coverage of coverages) {
     validateCoverageReferenceType({
       sourceId: coverage.sourceId,
-      field: 'policyHolderType',
+      field: "policyHolderType",
       value: coverage.policyHolderType,
     });
     validateCoverageReferenceType({
       sourceId: coverage.sourceId,
-      field: 'subscriberType',
+      field: "subscriberType",
       value: coverage.subscriberType,
     });
     validateRequiredLink({
-      collection: 'Coverage',
+      collection: "Coverage",
       sourceId: coverage.sourceId,
-      field: 'beneficiaryPatientSourceId',
-      targetType: 'Patient',
+      field: "beneficiaryPatientSourceId",
+      targetType: "Patient",
       targetSourceId: coverage.beneficiaryPatientSourceId,
       targetIndex: patientIds,
     });
     validateRequiredLink({
-      collection: 'Coverage',
+      collection: "Coverage",
       sourceId: coverage.sourceId,
-      field: 'policyHolderSourceId',
+      field: "policyHolderSourceId",
       targetType: coverage.policyHolderType,
       targetSourceId: coverage.policyHolderSourceId,
-      targetIndex: coverage.policyHolderType === 'RelatedPerson' ? relatedPersonIds : patientIds,
+      targetIndex: coverage.policyHolderType === "RelatedPerson"
+        ? relatedPersonIds
+        : patientIds,
     });
     validateRequiredLink({
-      collection: 'Coverage',
+      collection: "Coverage",
       sourceId: coverage.sourceId,
-      field: 'subscriberSourceId',
+      field: "subscriberSourceId",
       targetType: coverage.subscriberType,
       targetSourceId: coverage.subscriberSourceId,
-      targetIndex: coverage.subscriberType === 'RelatedPerson' ? relatedPersonIds : patientIds,
+      targetIndex: coverage.subscriberType === "RelatedPerson"
+        ? relatedPersonIds
+        : patientIds,
     });
     validateRequiredLink({
-      collection: 'Coverage',
+      collection: "Coverage",
       sourceId: coverage.sourceId,
-      field: 'payorOrganizationSourceId',
-      targetType: 'Organization',
+      field: "payorOrganizationSourceId",
+      targetType: "Organization",
       targetSourceId: coverage.payorOrganizationSourceId,
       targetIndex: organizationIds,
     });
@@ -261,10 +233,10 @@ const validateSourceLinks = ({
 
   for (const relatedPerson of relatedPersons) {
     validateRequiredLink({
-      collection: 'RelatedPerson',
+      collection: "RelatedPerson",
       sourceId: relatedPerson.sourceId,
-      field: 'patientSourceId',
-      targetType: 'Patient',
+      field: "patientSourceId",
+      targetType: "Patient",
       targetSourceId: relatedPerson.patientSourceId,
       targetIndex: patientIds,
     });
@@ -272,27 +244,27 @@ const validateSourceLinks = ({
 
   for (const role of roles) {
     validateRequiredLink({
-      collection: 'PractitionerRole',
+      collection: "PractitionerRole",
       sourceId: role.sourceId,
-      field: 'practitionerSourceId',
-      targetType: 'Practitioner',
+      field: "practitionerSourceId",
+      targetType: "Practitioner",
       targetSourceId: role.practitionerSourceId,
       targetIndex: practitionerIds,
     });
     validateRequiredLink({
-      collection: 'PractitionerRole',
+      collection: "PractitionerRole",
       sourceId: role.sourceId,
-      field: 'organizationSourceId',
-      targetType: 'Organization',
+      field: "organizationSourceId",
+      targetType: "Organization",
       targetSourceId: role.organizationSourceId,
       targetIndex: organizationIds,
     });
     for (const [index, locationSourceId] of role.locationSourceIds.entries()) {
       validateRequiredLink({
-        collection: 'PractitionerRole',
+        collection: "PractitionerRole",
         sourceId: role.sourceId,
         field: `locationSourceIds[${index}]`,
-        targetType: 'Location',
+        targetType: "Location",
         targetSourceId: locationSourceId,
         targetIndex: locationIds,
       });
@@ -302,10 +274,10 @@ const validateSourceLinks = ({
   for (const practitioner of practitioners) {
     practitioner.qualification?.forEach((qualification, index) => {
       validateOptionalLink({
-        collection: 'Practitioner',
+        collection: "Practitioner",
         sourceId: practitioner.sourceId,
         field: `qualification[${index}].issuerOrganizationSourceId`,
-        targetType: 'Organization',
+        targetType: "Organization",
         targetSourceId: qualification.issuerOrganizationSourceId,
         targetIndex: organizationIds,
       });
@@ -314,10 +286,10 @@ const validateSourceLinks = ({
 
   for (const location of locations) {
     validateRequiredLink({
-      collection: 'Location',
+      collection: "Location",
       sourceId: location.sourceId,
-      field: 'organizationSourceId',
-      targetType: 'Organization',
+      field: "organizationSourceId",
+      targetType: "Organization",
       targetSourceId: location.organizationSourceId,
       targetIndex: organizationIds,
     });
@@ -325,43 +297,43 @@ const validateSourceLinks = ({
 
   for (const attributionList of attributionLists) {
     validateRequiredLink({
-      collection: 'AttributionList',
+      collection: "AttributionList",
       sourceId: attributionList.sourceId,
-      field: 'payerOrganizationSourceId',
-      targetType: 'Organization',
+      field: "payerOrganizationSourceId",
+      targetType: "Organization",
       targetSourceId: attributionList.payerOrganizationSourceId,
       targetIndex: organizationIds,
     });
     validateRequiredLink({
-      collection: 'AttributionList',
+      collection: "AttributionList",
       sourceId: attributionList.sourceId,
-      field: 'providerOrganizationSourceId',
-      targetType: 'Organization',
+      field: "providerOrganizationSourceId",
+      targetType: "Organization",
       targetSourceId: attributionList.providerOrganizationSourceId,
       targetIndex: organizationIds,
     });
     attributionList.members.forEach((member, index) => {
       validateRequiredLink({
-        collection: 'AttributionList',
+        collection: "AttributionList",
         sourceId: attributionList.sourceId,
         field: `members[${index}].patientSourceId`,
-        targetType: 'Patient',
+        targetType: "Patient",
         targetSourceId: member.patientSourceId,
         targetIndex: patientIds,
       });
       validateRequiredLink({
-        collection: 'AttributionList',
+        collection: "AttributionList",
         sourceId: attributionList.sourceId,
         field: `members[${index}].coverageSourceId`,
-        targetType: 'Coverage',
+        targetType: "Coverage",
         targetSourceId: member.coverageSourceId,
         targetIndex: coverageIds,
       });
       validateRequiredLink({
-        collection: 'AttributionList',
+        collection: "AttributionList",
         sourceId: attributionList.sourceId,
         field: `members[${index}].practitionerRoleSourceId`,
-        targetType: 'PractitionerRole',
+        targetType: "PractitionerRole",
         targetSourceId: member.practitionerRoleSourceId,
         targetIndex: roleIds,
       });
@@ -370,42 +342,42 @@ const validateSourceLinks = ({
 
   for (const claim of claims) {
     validateRequiredLink({
-      collection: 'Claim',
+      collection: "Claim",
       sourceId: claim.sourceId,
-      field: 'patientSourceId',
-      targetType: 'Patient',
+      field: "patientSourceId",
+      targetType: "Patient",
       targetSourceId: claim.patientSourceId,
       targetIndex: patientIds,
     });
     validateRequiredLink({
-      collection: 'Claim',
+      collection: "Claim",
       sourceId: claim.sourceId,
-      field: 'coverageSourceId',
-      targetType: 'Coverage',
+      field: "coverageSourceId",
+      targetType: "Coverage",
       targetSourceId: claim.coverageSourceId,
       targetIndex: coverageIds,
     });
     validateRequiredLink({
-      collection: 'Claim',
+      collection: "Claim",
       sourceId: claim.sourceId,
-      field: 'renderingPractitionerRoleSourceId',
-      targetType: 'PractitionerRole',
+      field: "renderingPractitionerRoleSourceId",
+      targetType: "PractitionerRole",
       targetSourceId: claim.renderingPractitionerRoleSourceId,
       targetIndex: roleIds,
     });
     validateRequiredLink({
-      collection: 'Claim',
+      collection: "Claim",
       sourceId: claim.sourceId,
-      field: 'serviceOrganizationSourceId',
-      targetType: 'Organization',
+      field: "serviceOrganizationSourceId",
+      targetType: "Organization",
       targetSourceId: claim.serviceOrganizationSourceId,
       targetIndex: organizationIds,
     });
     validateRequiredLink({
-      collection: 'Claim',
+      collection: "Claim",
       sourceId: claim.sourceId,
-      field: 'serviceLocationSourceId',
-      targetType: 'Location',
+      field: "serviceLocationSourceId",
+      targetType: "Location",
       targetSourceId: claim.serviceLocationSourceId,
       targetIndex: locationIds,
     });
@@ -416,7 +388,6 @@ export type RawDomainStore = {
   memberCoverage: MemberCoverageSourceDocument;
   providerDirectory: ProviderDirectorySourceDocument;
   claimsAttribution: ClaimsAttributionSourceDocument;
-  sourceHash: string;
   indexes: {
     patientsBySourceId: Map<string, RawPatient>;
     patientsByFhirId: Map<string, RawPatient>;
@@ -450,45 +421,45 @@ export const createRawDomainStoreFromDocuments = ({
   claimsAttribution: ClaimsAttributionSourceDocument;
 }): RawDomainStore => {
   const patients = requireItems<RawPatient>(
-    'memberCoverage.functions.listPatients.items',
+    "memberCoverage.functions.listPatients.items",
     memberCoverage.functions?.listPatients?.items,
   );
   const coverages = requireItems<RawCoverage>(
-    'memberCoverage.functions.listCoverages.items',
+    "memberCoverage.functions.listCoverages.items",
     memberCoverage.functions?.listCoverages?.items,
   );
   const relatedPersons = requireItems<RawRelatedPerson>(
-    'memberCoverage.functions.listRelatedPersons.items',
+    "memberCoverage.functions.listRelatedPersons.items",
     memberCoverage.functions?.listRelatedPersons?.items,
   );
   const memberLocations = requireItems<RawMemberLocation>(
-    'memberCoverage.functions.listLocations.items',
+    "memberCoverage.functions.listLocations.items",
     memberCoverage.functions?.listLocations?.items,
   );
 
   const practitioners = requireItems<RawPractitioner>(
-    'providerDirectory.functions.listPractitioners.items',
+    "providerDirectory.functions.listPractitioners.items",
     providerDirectory.functions?.listPractitioners?.items,
   );
   const roles = requireItems<RawPractitionerRole>(
-    'providerDirectory.functions.listPractitionerRoles.items',
+    "providerDirectory.functions.listPractitionerRoles.items",
     providerDirectory.functions?.listPractitionerRoles?.items,
   );
   const orgs = requireItems<RawOrganization>(
-    'providerDirectory.functions.listOrganizations.items',
+    "providerDirectory.functions.listOrganizations.items",
     providerDirectory.functions?.listOrganizations?.items,
   );
   const locations = requireItems<RawLocation>(
-    'providerDirectory.functions.listLocations.items',
+    "providerDirectory.functions.listLocations.items",
     providerDirectory.functions?.listLocations?.items,
   );
 
   const claims = requireItems<RawClaim>(
-    'claimsAttribution.functions.listClaims.items',
+    "claimsAttribution.functions.listClaims.items",
     claimsAttribution.functions?.listClaims?.items,
   );
   const attributionLists = requireItems<RawAttributionList>(
-    'claimsAttribution.functions.listAttributionLists.items',
+    "claimsAttribution.functions.listAttributionLists.items",
     claimsAttribution.functions?.listAttributionLists?.items,
   );
 
@@ -505,21 +476,10 @@ export const createRawDomainStoreFromDocuments = ({
     attributionLists,
   });
 
-  const sourceHash = createHash('sha256')
-    .update(
-      stableSerialize({
-        memberCoverage,
-        providerDirectory,
-        claimsAttribution,
-      }),
-    )
-    .digest('hex');
-
   const store: RawDomainStore = {
     memberCoverage,
     providerDirectory,
     claimsAttribution,
-    sourceHash,
     indexes: {
       patientsBySourceId: new Map(),
       patientsByFhirId: new Map(),
@@ -548,15 +508,15 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.patientsBySourceId,
       patient.sourceId,
       patient,
-      'Patient',
-      'source id',
+      "Patient",
+      "source id",
     );
     setUniqueIndexValue(
       store.indexes.patientsByFhirId,
       patient.fhirId,
       patient,
-      'Patient',
-      'FHIR id',
+      "Patient",
+      "FHIR id",
     );
   }
 
@@ -565,15 +525,15 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.coveragesBySourceId,
       coverage.sourceId,
       coverage,
-      'Coverage',
-      'source id',
+      "Coverage",
+      "source id",
     );
     setUniqueIndexValue(
       store.indexes.coveragesByFhirId,
       coverage.fhirId,
       coverage,
-      'Coverage',
-      'FHIR id',
+      "Coverage",
+      "FHIR id",
     );
   }
 
@@ -582,15 +542,15 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.relatedPersonsBySourceId,
       relatedPerson.sourceId,
       relatedPerson,
-      'RelatedPerson',
-      'source id',
+      "RelatedPerson",
+      "source id",
     );
     setUniqueIndexValue(
       store.indexes.relatedPersonsByFhirId,
       relatedPerson.fhirId,
       relatedPerson,
-      'RelatedPerson',
-      'FHIR id',
+      "RelatedPerson",
+      "FHIR id",
     );
     pushIndexValue(
       store.indexes.relatedPersonsByPatientSourceId,
@@ -604,15 +564,15 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.practitionersBySourceId,
       practitioner.sourceId,
       practitioner,
-      'Practitioner',
-      'source id',
+      "Practitioner",
+      "source id",
     );
     setUniqueIndexValue(
       store.indexes.practitionersByFhirId,
       practitioner.fhirId,
       practitioner,
-      'Practitioner',
-      'FHIR id',
+      "Practitioner",
+      "FHIR id",
     );
   }
 
@@ -621,15 +581,15 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.rolesBySourceId,
       role.sourceId,
       role,
-      'PractitionerRole',
-      'source id',
+      "PractitionerRole",
+      "source id",
     );
     setUniqueIndexValue(
       store.indexes.rolesByFhirId,
       role.fhirId,
       role,
-      'PractitionerRole',
-      'FHIR id',
+      "PractitionerRole",
+      "FHIR id",
     );
   }
 
@@ -638,10 +598,16 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.orgsBySourceId,
       org.sourceId,
       org,
-      'Organization',
-      'source id',
+      "Organization",
+      "source id",
     );
-    setUniqueIndexValue(store.indexes.orgsByFhirId, org.fhirId, org, 'Organization', 'FHIR id');
+    setUniqueIndexValue(
+      store.indexes.orgsByFhirId,
+      org.fhirId,
+      org,
+      "Organization",
+      "FHIR id",
+    );
   }
 
   for (const location of locations) {
@@ -649,43 +615,58 @@ export const createRawDomainStoreFromDocuments = ({
       store.indexes.locationsBySourceId,
       location.sourceId,
       location,
-      'Location',
-      'source id',
+      "Location",
+      "source id",
     );
     setUniqueIndexValue(
       store.indexes.locationsByFhirId,
       location.fhirId,
       location,
-      'Location',
-      'FHIR id',
+      "Location",
+      "FHIR id",
     );
   }
 
   for (const attributionList of attributionLists) {
     if (!attributionList.fhirId) {
-      throw new Error(`Attribution list ${attributionList.sourceId} is missing fhirId.`);
+      throw new Error(
+        `Attribution list ${attributionList.sourceId} is missing fhirId.`,
+      );
     }
     if (!attributionList.displayName) {
-      throw new Error(`Attribution list ${attributionList.sourceId} is missing displayName.`);
+      throw new Error(
+        `Attribution list ${attributionList.sourceId} is missing displayName.`,
+      );
     }
 
     setUniqueIndexValue(
       store.indexes.attributionListsBySourceId,
       attributionList.sourceId,
       attributionList,
-      'Attribution list',
-      'source id',
+      "Attribution list",
+      "source id",
     );
-    const existingGroup = store.indexes.attributionListsByGroupId.get(attributionList.fhirId);
+    const existingGroup = store.indexes.attributionListsByGroupId.get(
+      attributionList.fhirId,
+    );
     if (existingGroup) {
       throw new Error(
         `Duplicate attribution list Group id ${attributionList.fhirId} for ${attributionList.sourceId}; already used by ${existingGroup.sourceId}.`,
       );
     }
-    store.indexes.attributionListsByGroupId.set(attributionList.fhirId, attributionList);
-    const providerOrganization =
-      store.indexes.orgsBySourceId.get(attributionList.providerOrganizationSourceId) || null;
-    for (const identifier of getGroupIdentifierTokens(attributionList, providerOrganization)) {
+    store.indexes.attributionListsByGroupId.set(
+      attributionList.fhirId,
+      attributionList,
+    );
+    const providerOrganization = store.indexes.orgsBySourceId.get(
+      attributionList.providerOrganizationSourceId,
+    ) || null;
+    for (
+      const identifier of getGroupIdentifierTokens(
+        attributionList,
+        providerOrganization,
+      )
+    ) {
       pushIndexValue(
         store.indexes.attributionListsByIdentifier,
         `${identifier.system}|${identifier.value}`,
@@ -700,26 +681,4 @@ export const createRawDomainStoreFromDocuments = ({
   }
 
   return store;
-};
-
-export const loadRawDomainStore = async ({
-  memberCoveragePath,
-  providerDirectoryPath,
-  claimsAttributionPath,
-}: {
-  memberCoveragePath: string;
-  providerDirectoryPath: string;
-  claimsAttributionPath: string;
-}) => {
-  const [memberCoverage, providerDirectory, claimsAttribution] = await Promise.all([
-    readJsonFile<MemberCoverageSourceDocument>(memberCoveragePath),
-    readJsonFile<ProviderDirectorySourceDocument>(providerDirectoryPath),
-    readJsonFile<ClaimsAttributionSourceDocument>(claimsAttributionPath),
-  ]);
-
-  return createRawDomainStoreFromDocuments({
-    memberCoverage,
-    providerDirectory,
-    claimsAttribution,
-  });
 };

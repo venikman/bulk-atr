@@ -29,7 +29,20 @@
               ]
             },
             "description": "Reads the server CapabilityStatement."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CapabilityStatement read succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -107,12 +120,25 @@
               ]
             },
             "description": "Reads the ATR attribution group using the current groupId variable."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Group read succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "Bulk Export",
+      "name": "Bulk Kickoff",
       "item": [
         {
           "name": "Kick off ATR bulk export",
@@ -175,7 +201,12 @@
             },
             "description": "Starts the ATR bulk export and stores the returned status URL and job id."
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "Bulk Poll",
+      "item": [
         {
           "name": "Poll bulk export job status",
           "event": [
@@ -222,7 +253,12 @@
             },
             "description": "Polls the current bulk status URL and stores manifest file URLs once the export is complete."
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "Bulk Downloads",
+      "item": [
         {
           "name": "Download Group NDJSON",
           "request": {
@@ -239,7 +275,20 @@
                 "{{groupFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download Patient NDJSON",
@@ -257,7 +306,20 @@
                 "{{patientFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download Coverage NDJSON",
@@ -275,7 +337,20 @@
                 "{{coverageFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download RelatedPerson NDJSON",
@@ -293,7 +368,20 @@
                 "{{relatedPersonFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download Practitioner NDJSON",
@@ -311,7 +399,20 @@
                 "{{practitionerFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download PractitionerRole NDJSON",
@@ -329,7 +430,20 @@
                 "{{practitionerRoleFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download Organization NDJSON",
@@ -347,7 +461,20 @@
                 "{{organizationFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Download Location NDJSON",
@@ -365,7 +492,20 @@
                 "{{locationFileUrl}}"
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('File download succeeds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

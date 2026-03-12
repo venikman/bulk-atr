@@ -1,27 +1,22 @@
-import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
-import type { CreateExportJobInput, ExportJobRepository } from '../lib/export-job-repository.js';
-import type { ExportFileRecord, ExportJobRecord } from '../lib/types.js';
+import type {
+  ClaimedExportJob,
+  CreateExportJobInput,
+  ExportJobRepository,
+} from "../lib/export-job-repository.ts";
+import type { SqlClient, SqlQueryable, SqlRow } from "../lib/sql-client.ts";
+import type { ExportFileRecord, ExportJobRecord } from "../lib/types.ts";
 
 const STATUS_POLL_WINDOW_MS = 1000;
 const COMPLETED_JOB_TTL_MS = 60 * 60 * 1000;
 const ACTIVE_JOB_TTL_MS = 15 * 60 * 1000;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const JOB_LEASE_MS = 30 * 1000;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type Queryable = {
-  query<T extends QueryResultRow = QueryResultRow>(
-    text: string,
-    values?: unknown[],
-  ): Promise<QueryResult<T>>;
-};
-
-type PoolLike = Queryable & {
-  connect(): Promise<PoolClient>;
-};
-
-type ExportJobRow = {
+type ExportJobRow = SqlRow & {
   job_id: string;
   group_id: string;
-  status: ExportJobRecord['status'];
+  status: ExportJobRecord["status"];
   transaction_time: string;
   request_url: string;
   normalized_types: string[];
@@ -33,9 +28,13 @@ type ExportJobRow = {
   manifest_blob_key: string | null;
   files_json: ExportFileRecord[] | string;
   errors_json: string[] | string;
+  lease_owner: string | null;
+  lease_token: string | null;
+  lease_expires_at: string | null;
 };
 
-const addMs = (iso: string, ms: number) => new Date(new Date(iso).getTime() + ms).toISOString();
+const addMs = (iso: string, ms: number) =>
+  new Date(new Date(iso).getTime() + ms).toISOString();
 const isUuid = (value: string) => UUID_PATTERN.test(value);
 
 const parseJsonArray = <T>(value: T[] | string | null | undefined) => {
@@ -43,7 +42,7 @@ const parseJsonArray = <T>(value: T[] | string | null | undefined) => {
     return [] as T[];
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return JSON.parse(value) as T[];
   }
 
@@ -56,7 +55,7 @@ const mapRowToJob = (row: ExportJobRow): ExportJobRecord => ({
   status: row.status,
   transactionTime: row.transaction_time,
   requestUrl: row.request_url,
-  normalizedTypes: row.normalized_types as ExportJobRecord['normalizedTypes'],
+  normalizedTypes: row.normalized_types as ExportJobRecord["normalizedTypes"],
   exportType: row.export_type,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -67,7 +66,7 @@ const mapRowToJob = (row: ExportJobRow): ExportJobRecord => ({
   error: parseJsonArray<string>(row.errors_json),
 });
 
-export const ensureExportJobSchema = async (queryable: Queryable) => {
+export const ensureExportJobSchema = async (queryable: SqlQueryable) => {
   await queryable.query(`
     create table if not exists export_jobs (
       job_id uuid primary key,
@@ -83,8 +82,24 @@ export const ensureExportJobSchema = async (queryable: Queryable) => {
       progress text not null,
       manifest_blob_key text,
       files_json jsonb not null default '[]'::jsonb,
-      errors_json jsonb not null default '[]'::jsonb
+      errors_json jsonb not null default '[]'::jsonb,
+      lease_owner text,
+      lease_token text,
+      lease_expires_at timestamptz
     );
+  `);
+
+  await queryable.query(`
+    alter table export_jobs
+    add column if not exists lease_owner text;
+  `);
+  await queryable.query(`
+    alter table export_jobs
+    add column if not exists lease_token text;
+  `);
+  await queryable.query(`
+    alter table export_jobs
+    add column if not exists lease_expires_at timestamptz;
   `);
 
   await queryable.query(`
@@ -98,21 +113,23 @@ export const ensureExportJobSchema = async (queryable: Queryable) => {
 };
 
 export class PostgresExportJobRepository implements ExportJobRepository {
-  readonly pool: PoolLike;
+  readonly sql: SqlClient;
 
-  constructor(pool: PoolLike) {
-    this.pool = pool;
+  constructor(sql: SqlClient) {
+    this.sql = sql;
   }
 
   private async deleteExpired(jobId: string) {
-    await this.pool.query('delete from export_poll_windows where job_id = $1', [jobId]);
-    await this.pool.query('delete from export_jobs where job_id = $1', [jobId]);
+    await this.sql.query("delete from export_poll_windows where job_id = $1", [
+      jobId,
+    ]);
+    await this.sql.query("delete from export_jobs where job_id = $1", [jobId]);
   }
 
   async createJob(input: CreateExportJobInput) {
     const now = new Date().toISOString();
     const expiresAt = addMs(now, ACTIVE_JOB_TTL_MS);
-    const result = await this.pool.query<ExportJobRow>(
+    const result = await this.sql.query<ExportJobRow>(
       `
         insert into export_jobs (
           job_id,
@@ -153,8 +170,8 @@ export class PostgresExportJobRepository implements ExportJobRepository {
       return null;
     }
 
-    const result = await this.pool.query<ExportJobRow>(
-      'select * from export_jobs where job_id = $1',
+    const result = await this.sql.query<ExportJobRow>(
+      "select * from export_jobs where job_id = $1",
       [jobId],
     );
     const row = result.rows[0];
@@ -172,7 +189,7 @@ export class PostgresExportJobRepository implements ExportJobRepository {
 
   async markRunning(jobId: string, progress: string) {
     const now = new Date().toISOString();
-    const result = await this.pool.query<ExportJobRow>(
+    const result = await this.sql.query<ExportJobRow>(
       `
         update export_jobs
         set status = 'running',
@@ -188,9 +205,61 @@ export class PostgresExportJobRepository implements ExportJobRepository {
     return result.rows[0] ? mapRowToJob(result.rows[0]) : null;
   }
 
-  async markCompleted(jobId: string, manifestKey: string, files: ExportFileRecord[]) {
+  async claimJob(
+    jobId: string,
+    workerId: string,
+  ): Promise<ClaimedExportJob | null> {
+    if (!isUuid(jobId)) {
+      return null;
+    }
+
     const now = new Date().toISOString();
-    const result = await this.pool.query<ExportJobRow>(
+    const leaseToken = crypto.randomUUID();
+    const result = await this.sql.query<ExportJobRow>(
+      `
+        update export_jobs
+        set status = 'running',
+            progress = 'writing ndjson files',
+            updated_at = $2,
+            expires_at = $3,
+            lease_owner = $4,
+            lease_token = $5,
+            lease_expires_at = $6
+        where job_id = $1
+          and (
+            status = 'accepted'
+            or (status = 'running' and (lease_expires_at is null or lease_expires_at <= $2))
+          )
+        returning *
+      `,
+      [
+        jobId,
+        now,
+        addMs(now, ACTIVE_JOB_TTL_MS),
+        workerId,
+        leaseToken,
+        addMs(now, JOB_LEASE_MS),
+      ],
+    );
+    const row = result.rows[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      claimToken: leaseToken,
+      job: mapRowToJob(row),
+    };
+  }
+
+  async markCompleted(
+    jobId: string,
+    manifestKey: string,
+    files: ExportFileRecord[],
+  ) {
+    const now = new Date().toISOString();
+    const result = await this.sql.query<ExportJobRow>(
       `
         update export_jobs
         set status = 'completed',
@@ -198,11 +267,55 @@ export class PostgresExportJobRepository implements ExportJobRepository {
             manifest_blob_key = $2,
             files_json = $3::jsonb,
             updated_at = $4,
-            expires_at = $5
+            expires_at = $5,
+            lease_owner = null,
+            lease_token = null,
+            lease_expires_at = null
         where job_id = $1
         returning *
       `,
-      [jobId, manifestKey, JSON.stringify(files), now, addMs(now, COMPLETED_JOB_TTL_MS)],
+      [
+        jobId,
+        manifestKey,
+        JSON.stringify(files),
+        now,
+        addMs(now, COMPLETED_JOB_TTL_MS),
+      ],
+    );
+
+    return result.rows[0] ? mapRowToJob(result.rows[0]) : null;
+  }
+
+  async markCompletedWithClaim(
+    jobId: string,
+    claimToken: string,
+    manifestKey: string,
+    files: ExportFileRecord[],
+  ) {
+    const now = new Date().toISOString();
+    const result = await this.sql.query<ExportJobRow>(
+      `
+        update export_jobs
+        set status = 'completed',
+            progress = 'completed',
+            manifest_blob_key = $3,
+            files_json = $4::jsonb,
+            updated_at = $5,
+            expires_at = $6,
+            lease_owner = null,
+            lease_token = null,
+            lease_expires_at = null
+        where job_id = $1 and lease_token = $2
+        returning *
+      `,
+      [
+        jobId,
+        claimToken,
+        manifestKey,
+        JSON.stringify(files),
+        now,
+        addMs(now, COMPLETED_JOB_TTL_MS),
+      ],
     );
 
     return result.rows[0] ? mapRowToJob(result.rows[0]) : null;
@@ -210,30 +323,66 @@ export class PostgresExportJobRepository implements ExportJobRepository {
 
   async markFailed(jobId: string, diagnostics: string[]) {
     const now = new Date().toISOString();
-    const result = await this.pool.query<ExportJobRow>(
+    const result = await this.sql.query<ExportJobRow>(
       `
         update export_jobs
         set status = 'failed',
             progress = 'failed',
             errors_json = $2::jsonb,
             updated_at = $3,
-            expires_at = $4
+            expires_at = $4,
+            lease_owner = null,
+            lease_token = null,
+            lease_expires_at = null
         where job_id = $1
         returning *
       `,
-      [jobId, JSON.stringify(diagnostics), now, addMs(now, COMPLETED_JOB_TTL_MS)],
+      [
+        jobId,
+        JSON.stringify(diagnostics),
+        now,
+        addMs(now, COMPLETED_JOB_TTL_MS),
+      ],
     );
 
     return result.rows[0] ? mapRowToJob(result.rows[0]) : null;
   }
 
-  async canPoll(jobId: string, callerId: string) {
-    const client = await this.pool.connect();
+  async markFailedWithClaim(
+    jobId: string,
+    claimToken: string,
+    diagnostics: string[],
+  ) {
+    const now = new Date().toISOString();
+    const result = await this.sql.query<ExportJobRow>(
+      `
+        update export_jobs
+        set status = 'failed',
+            progress = 'failed',
+            errors_json = $3::jsonb,
+            updated_at = $4,
+            expires_at = $5,
+            lease_owner = null,
+            lease_token = null,
+            lease_expires_at = null
+        where job_id = $1 and lease_token = $2
+        returning *
+      `,
+      [
+        jobId,
+        claimToken,
+        JSON.stringify(diagnostics),
+        now,
+        addMs(now, COMPLETED_JOB_TTL_MS),
+      ],
+    );
 
-    try {
-      await client.query('begin');
+    return result.rows[0] ? mapRowToJob(result.rows[0]) : null;
+  }
 
-      const current = await client.query<{ last_polled_at: string }>(
+  canPoll(jobId: string, callerId: string) {
+    return this.sql.transaction(async (transaction) => {
+      const current = await transaction.query<{ last_polled_at: string }>(
         `
           select last_polled_at
           from export_poll_windows
@@ -245,12 +394,14 @@ export class PostgresExportJobRepository implements ExportJobRepository {
 
       const now = new Date();
       const lastPoll = current.rows[0]?.last_polled_at;
-      if (lastPoll && now.getTime() - new Date(lastPoll).getTime() < STATUS_POLL_WINDOW_MS) {
-        await client.query('rollback');
+      if (
+        lastPoll &&
+        now.getTime() - new Date(lastPoll).getTime() < STATUS_POLL_WINDOW_MS
+      ) {
         return false;
       }
 
-      await client.query(
+      await transaction.query(
         `
           insert into export_poll_windows (job_id, caller_id, last_polled_at)
           values ($1, $2, $3)
@@ -260,13 +411,7 @@ export class PostgresExportJobRepository implements ExportJobRepository {
         [jobId, callerId, now.toISOString()],
       );
 
-      await client.query('commit');
       return true;
-    } catch (error) {
-      await client.query('rollback');
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 }
