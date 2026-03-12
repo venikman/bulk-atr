@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "index.ts"
+    },
+    {
       "src": "/fhir",
       "dest": "index.ts"
     },

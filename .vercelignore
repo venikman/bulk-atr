@@ -1,9 +1,0 @@
-.git
-.runtime
-.tmp
-build
-coverage
-docs
-node_modules
-postman
-tests

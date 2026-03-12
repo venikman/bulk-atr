@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "de3572cc-dfef-4af3-ae18-8f4406144ca2",
-    "name": "ATR Producer Local",
-    "description": "Postman collection for the local ATR producer. Import this together with the matching environment to run the discovery and bulk export flow without manual copy/paste.",
+    "name": "ATR Producer",
+    "description": "Postman collection for the deployed ATR producer. Import this together with the matching environment to run the discovery and bulk export flow without manual copy/paste.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

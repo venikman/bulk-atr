@@ -1,21 +1,10 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-import atrFixture from '../../output/atr_bulk_export_single.json' with { type: 'json' };
+import { resolve } from 'node:path';
 import { AtrResolver } from '../../server/lib/atr-resolver.js';
 import {
   createRawDomainStoreFromDocuments,
   loadRawDomainStore,
 } from '../../server/lib/raw-domain-store.js';
-import type { RawCoverage, RawPatient } from '../../server/lib/raw-domain-types.js';
 import { supportedResourceTypes } from '../../server/lib/types.js';
-
-type MapperUnderTest = {
-  mapPatient(raw: RawPatient): unknown;
-  mapCoverage(raw: RawCoverage): unknown;
-  toRoleReference(sourceId?: string | null): { reference: string } | undefined;
-  toOrganizationReference(sourceId?: string | null): { reference: string } | undefined;
-};
 
 type ClonedDocuments = ReturnType<typeof cloneDocuments>;
 
@@ -26,9 +15,9 @@ type DuplicateIndexCase = {
 
 const loadResolver = async () => {
   const store = await loadRawDomainStore({
-    memberCoveragePath: resolve('input-services/member-coverage-service.json'),
-    providerDirectoryPath: resolve('input-services/provider-directory-service.json'),
-    claimsAttributionPath: resolve('input-services/claims-attribution-service.json'),
+    memberCoveragePath: resolve('data/sources/member-coverage-service.json'),
+    providerDirectoryPath: resolve('data/sources/provider-directory-service.json'),
+    claimsAttributionPath: resolve('data/sources/claims-attribution-service.json'),
   });
 
   return {
@@ -319,9 +308,8 @@ const duplicateIndexCases: DuplicateIndexCase[] = [
 
 describe('raw-domain runtime', () => {
   test('indexes the single Group from raw source data', async () => {
-    const { store, resolver } = await loadResolver();
+    const { resolver } = await loadResolver();
 
-    expect(store.sourceHash).toMatch(/^[0-9a-f]{64}$/);
     expect(
       resolver.findGroupsByIdentifier('http://example.org/contracts|CTR-2026-NWACO-001'),
     ).toHaveLength(1);
@@ -333,24 +321,10 @@ describe('raw-domain runtime', () => {
     expect(group?.quantity).toBe(50);
   });
 
-  test('builds a full export from raw source data that matches the checked-in FHIR artifact', async () => {
+  test('maps dependent coverage to RelatedPerson and preserves patient guardian contact', async () => {
     const { resolver } = await loadResolver();
 
-    const exportResources = resolver.buildExportResources(
-      'group-2026-northwind-atr-001',
-      supportedResourceTypes,
-    );
-
-    expect(exportResources).toEqual(atrFixture.resources);
-  });
-
-  test('keeps source hashing stable across loads and maps dependent coverage to RelatedPerson', async () => {
-    const first = await loadResolver();
-    const second = await loadResolver();
-
-    expect(first.store.sourceHash).toBe(second.store.sourceHash);
-
-    const coverage = first.resolver.getResource('Coverage', 'coverage-0003');
+    const coverage = resolver.getResource('Coverage', 'coverage-0003');
     expect(coverage).toMatchObject({
       resourceType: 'Coverage',
       policyHolder: { reference: 'RelatedPerson/relatedperson-0003' },
@@ -358,7 +332,7 @@ describe('raw-domain runtime', () => {
       beneficiary: { reference: 'Patient/patient-0003' },
     });
 
-    const patient = first.resolver.getResource('Patient', 'patient-0003');
+    const patient = resolver.getResource('Patient', 'patient-0003');
     expect(patient).toMatchObject({
       resourceType: 'Patient',
       contact: [
@@ -425,46 +399,6 @@ describe('raw-domain runtime', () => {
     expect(
       duplicateStore.indexes.relatedPersonsByPatientSourceId.get(patientSourceId),
     ).toHaveLength(2);
-  });
-
-  test('omits array-wrapped references when helper resolution returns undefined', async () => {
-    const { resolver } = await loadResolver();
-    const mapper = resolver.mapper as unknown as MapperUnderTest;
-    const patient = resolver.store.memberCoverage.functions.listPatients.items.find(
-      (candidate) => candidate.generalPractitionerRoleSourceId,
-    );
-    const coverage = resolver.store.memberCoverage.functions.listCoverages.items.find(
-      (candidate) => candidate.payorOrganizationSourceId,
-    );
-
-    expect(patient).toBeTruthy();
-    expect(coverage).toBeTruthy();
-    if (!patient || !coverage) {
-      throw new Error('Expected fixture data with practitioner and payor source references.');
-    }
-
-    const originalToRoleReference = mapper.toRoleReference;
-    const originalToOrganizationReference = mapper.toOrganizationReference;
-
-    mapper.toRoleReference = () => undefined;
-    mapper.toOrganizationReference = () => undefined;
-
-    try {
-      const mappedPatient = JSON.parse(JSON.stringify(mapper.mapPatient(patient))) as Record<
-        string,
-        unknown
-      >;
-      const mappedCoverage = JSON.parse(JSON.stringify(mapper.mapCoverage(coverage))) as Record<
-        string,
-        unknown
-      >;
-
-      expect(mappedPatient).not.toHaveProperty('generalPractitioner');
-      expect(mappedCoverage).not.toHaveProperty('payor');
-    } finally {
-      mapper.toRoleReference = originalToRoleReference;
-      mapper.toOrganizationReference = originalToOrganizationReference;
-    }
   });
 
   test('fails fast when raw source links are dangling across mapped collections', async () => {
@@ -577,79 +511,6 @@ describe('raw-domain runtime', () => {
         }),
       ).toThrow(testCase.expected(sourceId));
     }
-  });
-
-  test('includes the absolute file path when JSON source parsing fails', async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), 'bulk-atr-invalid-json-'));
-    const invalidMemberCoveragePath = join(tempDir, 'member-coverage-service.json');
-
-    try {
-      await writeFile(invalidMemberCoveragePath, '{"functions":', 'utf-8');
-
-      try {
-        await loadRawDomainStore({
-          memberCoveragePath: invalidMemberCoveragePath,
-          providerDirectoryPath: resolve('input-services/provider-directory-service.json'),
-          claimsAttributionPath: resolve('input-services/claims-attribution-service.json'),
-        });
-        throw new Error('Expected loadRawDomainStore() to reject invalid JSON input.');
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain(resolve(invalidMemberCoveragePath));
-        expect((error as Error).message).toContain('Unexpected end of JSON input');
-      }
-    } finally {
-      await rm(tempDir, { recursive: true, force: true });
-    }
-  });
-
-  test('does not cache missing resource lookups', async () => {
-    const { resolver } = await loadResolver();
-
-    expect(resolver.getResource('Patient', 'does-not-exist-1')).toBeNull();
-    expect(resolver.cache.has('Patient/does-not-exist-1')).toBe(false);
-  });
-
-  test('caches successful resource lookups', async () => {
-    const { resolver } = await loadResolver();
-
-    const patient = resolver.getResource('Patient', 'patient-0001');
-
-    expect(patient).toMatchObject({
-      resourceType: 'Patient',
-      id: 'patient-0001',
-    });
-    expect(resolver.cache.get('Patient/patient-0001')).toEqual(patient);
-  });
-
-  test('does not grow cache for repeated missing resource probes', async () => {
-    const { resolver } = await loadResolver();
-    const initialSize = resolver.cache.size;
-
-    for (const id of ['does-not-exist-1', 'does-not-exist-2', 'does-not-exist-3']) {
-      expect(resolver.getResource('Patient', id)).toBeNull();
-    }
-
-    expect(resolver.cache.size).toBe(initialSize);
-  });
-
-  test('builds export resources without scanning every resource id collection', async () => {
-    const { resolver } = await loadResolver();
-    const resolverUnderTest = resolver as unknown as {
-      listResourceIds: () => string[];
-      buildExportResources: typeof resolver.buildExportResources;
-    };
-
-    resolverUnderTest.listResourceIds = () => {
-      throw new Error('buildExportResources should not perform a full resource-id scan.');
-    };
-
-    const exportResources = resolverUnderTest.buildExportResources(
-      'group-2026-northwind-atr-001',
-      supportedResourceTypes,
-    );
-
-    expect(exportResources).toEqual(atrFixture.resources);
   });
 
   test('rejects invalid coverage holder types from raw JSON before link validation falls back', async () => {

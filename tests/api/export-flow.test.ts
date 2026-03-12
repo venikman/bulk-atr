@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { createTestServer } from './test-helpers.js';
 
 const minimumTypes =
@@ -150,10 +148,11 @@ describe('bulk export flow', () => {
       expect(contentLocation).toContain('/fhir/bulk-status/');
       const jobId = contentLocation?.split('/').at(-1);
       expect(jobId).toBeTruthy();
-      const jobPath = join(server.runtimeDir, 'jobs', `${jobId}.json`);
-      const createdJob = JSON.parse(await readFile(jobPath, 'utf-8')) as {
-        transactionTime: string;
-      };
+      if (!jobId) {
+        throw new Error('Expected job id in content-location.');
+      }
+      const createdJob = await server.jobRepository.getJob(jobId);
+      expect(createdJob).toBeTruthy();
 
       const initialStatus = await server.request(contentLocation || '');
       expect(initialStatus.status).toBe(202);
@@ -165,7 +164,9 @@ describe('bulk export flow', () => {
       );
 
       expect(completedStatus.status).toBe(200);
-      expect(manifest.transactionTime).toBe(createdJob.transactionTime);
+      expect(manifest.transactionTime).toBe(
+        new Date(createdJob?.transactionTime || '').toISOString(),
+      );
       expect(manifest.requiresAccessToken).toBe(false);
       expect(manifest.output).toHaveLength(8);
 

@@ -1,92 +1,41 @@
 # FHIR Data Interface
 
-This package exposes a file-based interface, not a runtime API.
+This repo exposes a runtime API under `/fhir/*`.
 
-Use the source-service `functions` sections to understand the upstream contracts, then use the mapped ATR outputs in `output/` to read final FHIR resources.
+Use the seed-data `functions` sections to understand upstream contracts, then read the live API to access mapped FHIR resources.
 
 ## Interface Overview
 
 ### Source-side functions
 
-`input-services/member-coverage-service.json`
+`data/sources/member-coverage-service.json`
 
 - `listPatients() -> PatientSource[]`
 - `listCoverages() -> CoverageSource[]`
 - `listRelatedPersons() -> RelatedPersonSource[]`
 - `listLocations() -> MemberLocationSource[]`
 
-`input-services/provider-directory-service.json`
+`data/sources/provider-directory-service.json`
 
 - `listPractitioners() -> PractitionerSource[]`
 - `listPractitionerRoles() -> PractitionerRoleSource[]`
 - `listOrganizations() -> OrganizationSource[]`
 - `listLocations() -> ProviderLocationSource[]`
 
-`input-services/claims-attribution-service.json`
+`data/sources/claims-attribution-service.json`
 
 - `listClaims() -> ClaimSource[]`
 - `listAttributionLists() -> AttributionListSource[]`
 
-### Mapper function
-
-`system/atr-producer-mapper.json`
-
-- `buildBulkExport(memberCoverageFile, providerDirectoryFile, claimsAttributionFile) -> AtrBulkExportArtifacts`
-
-Logical output of `buildBulkExport`:
-
-- `output/atr_bulk_export_single.json`
-- `output/bulk_status_response.json`
-- `output/ndjson/Group.ndjson`
-- `output/ndjson/Patient.ndjson`
-- `output/ndjson/Coverage.ndjson`
-- `output/ndjson/RelatedPerson.ndjson`
-- `output/ndjson/Practitioner.ndjson`
-- `output/ndjson/PractitionerRole.ndjson`
-- `output/ndjson/Organization.ndjson`
-- `output/ndjson/Location.ndjson`
-
 ## How To Get FHIR Data
 
-### 1. Read the full consolidated export
-
-Use this when you want all mapped FHIR resources in one JSON document.
-
-```bash
-jq '.resources' output/atr_bulk_export_single.json
-```
-
-Examples:
-
-```bash
-jq '.resources.Group[0]' output/atr_bulk_export_single.json
-jq '.resources.Patient[0]' output/atr_bulk_export_single.json
-jq '.resources.Coverage[0]' output/atr_bulk_export_single.json
-```
-
-### 2. Read one FHIR resource type as NDJSON
-
-Use this when you want bulk-export style output.
-
-```bash
-head -n 1 output/ndjson/Patient.ndjson | jq
-head -n 1 output/ndjson/Coverage.ndjson | jq
-head -n 1 output/ndjson/PractitionerRole.ndjson | jq
-```
-
-Read all lines:
-
-```bash
-cat output/ndjson/Patient.ndjson | jq -c
-```
-
-### 3. Find a member in the attribution roster, then resolve its FHIR resources
+### 1. Find a member in the attribution roster, then resolve its FHIR resources
 
 Find the member row in the source attribution list:
 
 ```bash
 jq '.functions.listAttributionLists.items[0].members[] | select(.memberId == "MBR000001")' \
-  input-services/claims-attribution-service.json
+  data/sources/claims-attribution-service.json
 ```
 
 That row gives you:
@@ -96,33 +45,35 @@ That row gives you:
 - `practitionerRoleSourceId`
 - `changeType`
 
-Resolve the same member in final FHIR output:
+Resolve the same member in the live Patient read/search surface:
 
 ```bash
-jq '.resources.Patient[] | select(.identifier[]?.value == "MBR000001")' \
-  output/atr_bulk_export_single.json
+curl https://your-deployment.example/fhir/Patient/patient-0001 | jq
 ```
 
-Resolve the matching Coverage:
+Resolve the attribution Group:
 
 ```bash
-jq '.resources.Coverage[] | select(.identifier[]?.value == "MBN000001")' \
-  output/atr_bulk_export_single.json
+curl 'https://your-deployment.example/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true' | jq
 ```
 
-Resolve the attributed provider from the Group entry:
+### 2. Run the live bulk export flow
+
+Kick off the export:
 
 ```bash
-jq '.resources.Group[0].member[] | select(.entity.reference == "Patient/patient-0001")' \
-  output/atr_bulk_export_single.json
+curl -i 'https://your-deployment.example/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location'
 ```
 
-### 4. Read the bulk manifest first
+Poll the returned `content-location` until it returns `200`, then download the NDJSON URLs from the manifest response.
 
-Use this when you want the file list exactly like a bulk export consumer would.
+### 3. Use the live API directly
+
+Use:
 
 ```bash
-jq '.output' output/bulk_status_response.json
+curl https://your-deployment.example/fhir/metadata | jq
+curl 'https://your-deployment.example/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true' | jq
 ```
 
 ## Function Contracts
@@ -163,11 +114,14 @@ Returns source coverage records with:
 - `memberId`
 - `beneficiaryPatientSourceId`
 - `policyHolderSourceId`
+- `policyHolderType`
 - `subscriberSourceId`
+- `subscriberType`
 - `subscriberId`
 - `memberNumber`
 - `dependentNumber`
 - `relationshipCode`
+- `relationshipDisplay`
 - `payorOrganizationSourceId`
 - `planCode`
 - `planDisplay`
@@ -229,7 +183,7 @@ Returns source-only attribution evidence.
 Important:
 
 - these records help explain attribution
-- these records do not become FHIR `Claim` resources in `output/`
+- these records do not become FHIR `Claim` resources in exported artifacts
 
 ### `listAttributionLists`
 
@@ -249,6 +203,18 @@ Fields include:
 - `contractEnd`
 - `members`
 
+Each member row includes:
+
+- `memberId`
+- `patientSourceId`
+- `coverageSourceId`
+- `practitionerRoleSourceId`
+- `attributionStart`
+- `attributionEnd`
+- `changeType`
+- `status`
+- `inactive`
+
 Mapped FHIR output:
 
 - one `Group`
@@ -258,11 +224,10 @@ Mapped FHIR output:
 
 If you need:
 
-- final FHIR resources in one file: `output/atr_bulk_export_single.json`
-- final FHIR resources by type: `output/ndjson/*.ndjson`
-- file manifest: `output/bulk_status_response.json`
-- mapping rules: `system/atr-producer-mapper.json`
-- upstream source contracts: `input-services/*.json`
+- live capability and route behavior: `/fhir/*`
+- async export semantics and persistence model: `docs/vercel-deployment.md`
+- mapping rules and invariants: `docs/architecture.md`
+- upstream source contracts: `data/sources/*.json`
 
 ## Important Notes
 

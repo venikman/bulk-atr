@@ -21,6 +21,29 @@ type ResourcePayload = {
 };
 
 describe('metadata and read surface', () => {
+  test('returns a small HTML landing page at / and keeps unrelated root paths 404', async () => {
+    const server = await createTestServer();
+
+    try {
+      const rootResponse = await server.request('/');
+      const rootBody = await rootResponse.text();
+
+      expect(rootResponse.status).toBe(200);
+      expect(rootResponse.headers.get('content-type')).toContain('text/html');
+      expect(rootBody).toContain('ATR');
+      expect(rootBody).toContain('/fhir/metadata');
+      expect(rootBody).toContain(
+        '/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true',
+      );
+      expect(rootBody).toContain('/fhir/Group/group-2026-northwind-atr-001');
+
+      const unrelatedRoot = await server.request('/foo');
+      expect(unrelatedRoot.status).toBe(404);
+    } finally {
+      await server.cleanup();
+    }
+  });
+
   test('returns a truthful capability statement from /fhir/metadata', async () => {
     const server = await createTestServer();
 

@@ -11,7 +11,7 @@ serve(
     port,
   },
   () => {
-    console.log(`ATR producer server listening on http://localhost:${port}/fhir`);
+    console.log(`Bulk ATR producer listening on http://127.0.0.1:${port}/fhir`);
     console.log(`AUTH_MODE=${process.env.AUTH_MODE || 'none'}`);
   },
 );
