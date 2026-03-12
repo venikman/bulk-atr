@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
+import type { AtrResolver } from '../lib/atr-resolver.js';
 import {
   type AppEnv,
   type AuthMode,
@@ -11,7 +12,6 @@ import type { BackgroundTaskRunner } from '../lib/background-task-runner.js';
 import type { ExportArtifactStore } from '../lib/export-artifact-store.js';
 import type { ExportJobRepository } from '../lib/export-job-repository.js';
 import { fhirOperationOutcome } from '../lib/operation-outcome.js';
-import type { ProjectionStore } from '../lib/projection-store.js';
 import {
   type StoredManifest,
   type SupportedResourceType,
@@ -33,7 +33,7 @@ type NormalizedTypeParameter =
   | null;
 
 type BulkRoutesOptions = {
-  projectionStore: ProjectionStore;
+  resolver: AtrResolver;
   jobRepository: ExportJobRepository;
   artifactStore: ExportArtifactStore;
   backgroundTaskRunner: BackgroundTaskRunner;
@@ -107,14 +107,15 @@ const buildPublicManifest = (origin: string, jobId: string, manifest: StoredMani
 const scheduleExportJob = async (
   jobId: string,
   groupId: string,
+  transactionTime: string,
   requestUrl: string,
   normalizedTypes: SupportedResourceType[],
   authMode: AuthMode,
   jobRepository: ExportJobRepository,
   artifactStore: ExportArtifactStore,
-  projectionStore: ProjectionStore,
+  resolver: AtrResolver,
 ) => {
-  const exportResources = projectionStore.buildExportResources(groupId, normalizedTypes);
+  const exportResources = resolver.buildExportResources(groupId, normalizedTypes);
   if (!exportResources) {
     await jobRepository.markFailed(jobId, ['Group snapshot could not be resolved for export.']);
     return;
@@ -134,19 +135,13 @@ const scheduleExportJob = async (
     });
   }
 
-  const transactionTime = new Date().toISOString();
-  const manifest = buildStoredManifest(
-    transactionTime,
-    buildCanonicalRequestUrl(requestUrl, normalizedTypes, exportTypeValue),
-    normalizedTypes,
-    authMode,
-  );
+  const manifest = buildStoredManifest(transactionTime, requestUrl, normalizedTypes, authMode);
   const manifestKey = await artifactStore.writeManifest(jobId, manifest);
   await jobRepository.markCompleted(jobId, manifestKey, files);
 };
 
 export const createBulkRoutes = ({
-  projectionStore,
+  resolver,
   jobRepository,
   artifactStore,
   backgroundTaskRunner,
@@ -160,7 +155,7 @@ export const createBulkRoutes = ({
 
   app.get('/Group/:id/$davinci-data-export', async (context) => {
     const groupId = context.req.param('id');
-    const group = projectionStore.getGroupById(groupId);
+    const group = resolver.getGroupById(groupId);
     if (!group) {
       return fhirOperationOutcome(context, 404, 'not-found', 'Group was not found.');
     }
@@ -235,11 +230,12 @@ export const createBulkRoutes = ({
 
     const transactionTime = new Date().toISOString();
     const jobId = randomUUID();
+    const requestUrl = buildCanonicalRequestUrl(context.req.url, normalizedTypes, exportTypeValue);
     await jobRepository.createJob({
       jobId,
       groupId,
       transactionTime,
-      requestUrl: buildCanonicalRequestUrl(context.req.url, normalizedTypes, exportTypeValue),
+      requestUrl,
       normalizedTypes,
       exportType: exportTypeValue,
     });
@@ -249,12 +245,13 @@ export const createBulkRoutes = ({
         scheduleExportJob(
           jobId,
           groupId,
-          context.req.url,
+          transactionTime,
+          requestUrl,
           normalizedTypes,
           authMode,
           jobRepository,
           artifactStore,
-          projectionStore,
+          resolver,
         ).catch(async (error: unknown) => {
           const diagnostics =
             error instanceof Error ? error.message : 'Unexpected export generation failure.';

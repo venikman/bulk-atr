@@ -1,5 +1,13 @@
 import { Pool } from 'pg';
-import atrFixture from '../../output/atr_bulk_export_single.json' with { type: 'json' };
+import claimsAttributionSource from '../../input-services/claims-attribution-service.json' with {
+  type: 'json',
+};
+import memberCoverageSource from '../../input-services/member-coverage-service.json' with {
+  type: 'json',
+};
+import providerDirectorySource from '../../input-services/provider-directory-service.json' with {
+  type: 'json',
+};
 import { BlobExportArtifactStore } from '../adapters/blob-export-artifact-store.js';
 import {
   ensureExportJobSchema,
@@ -7,8 +15,14 @@ import {
 } from '../adapters/postgres-export-job-repository.js';
 import { VercelBackgroundTaskRunner } from '../adapters/vercel-background-task-runner.js';
 import { createApp } from '../app.js';
+import { AtrResolver } from '../lib/atr-resolver.js';
 import { type AuthMode, normalizeAuthMode } from '../lib/auth.js';
-import { ProjectionStore } from '../lib/projection-store.js';
+import { createRawDomainStoreFromDocuments } from '../lib/raw-domain-store.js';
+import type {
+  ClaimsAttributionSourceDocument,
+  MemberCoverageSourceDocument,
+  ProviderDirectorySourceDocument,
+} from '../lib/raw-domain-types.js';
 
 let poolPromise: Promise<Pool> | null = null;
 
@@ -49,9 +63,11 @@ export const createVercelApp = async ({
   jobDelayMs?: number;
   blobPrefix?: string;
 } = {}) => {
-  const projectionStore = ProjectionStore.fromFixtureDocument(
-    atrFixture as { resources: Record<string, unknown> },
-  );
+  const rawDomainStore = createRawDomainStoreFromDocuments({
+    memberCoverage: memberCoverageSource as MemberCoverageSourceDocument,
+    providerDirectory: providerDirectorySource as ProviderDirectorySourceDocument,
+    claimsAttribution: claimsAttributionSource as ClaimsAttributionSourceDocument,
+  });
   const jobRepository = new PostgresExportJobRepository(await getPool());
   const artifactStore = new BlobExportArtifactStore({
     prefix: blobPrefix,
@@ -59,7 +75,7 @@ export const createVercelApp = async ({
 
   return createApp({
     authMode,
-    projectionStore,
+    resolver: new AtrResolver(rawDomainStore),
     artifactStore,
     jobRepository,
     backgroundTaskRunner: new VercelBackgroundTaskRunner(),

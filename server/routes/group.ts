@@ -1,14 +1,14 @@
 import { Hono } from 'hono';
+import type { AtrResolver } from '../lib/atr-resolver.js';
 import { type AppEnv, createAuthMiddleware } from '../lib/auth.js';
 import { fhirJson, fhirOperationOutcome } from '../lib/operation-outcome.js';
-import type { ProjectionStore } from '../lib/projection-store.js';
 
 type GroupRoutesOptions = {
-  projectionStore: ProjectionStore;
+  resolver: AtrResolver;
   authMode: 'none' | 'smart-backend';
 };
 
-export const createGroupRoutes = ({ projectionStore, authMode }: GroupRoutesOptions) => {
+export const createGroupRoutes = ({ resolver, authMode }: GroupRoutesOptions) => {
   const app = new Hono<AppEnv>();
   app.use('/Group/*', createAuthMiddleware(authMode));
   app.use('/Group', createAuthMiddleware(authMode));
@@ -41,16 +41,16 @@ export const createGroupRoutes = ({ projectionStore, authMode }: GroupRoutesOpti
           'Group identifier search must use the form {system}|{value}.',
         );
       }
-      groups = projectionStore.findGroupsByIdentifier(identifier);
+      groups = resolver.findGroupsByIdentifier(identifier);
     } else {
-      groups = projectionStore.findGroupsByName(name || '');
+      groups = resolver.findGroupsByName(name || '');
     }
 
-    return fhirJson(context, projectionStore.buildSearchBundle(groups, context.req.url));
+    return fhirJson(context, resolver.buildSearchBundle(groups, context.req.url));
   });
 
   app.get('/Group/:id', (context) => {
-    const group = projectionStore.getGroupById(context.req.param('id'));
+    const group = resolver.getGroupById(context.req.param('id'));
     if (!group) {
       return fhirOperationOutcome(context, 404, 'not-found', 'Group was not found.');
     }

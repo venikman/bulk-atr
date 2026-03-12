@@ -2115,6 +2115,8 @@
       "items": [
         {
           "sourceId": "attr-list-src-001",
+          "fhirId": "group-2026-northwind-atr-001",
+          "displayName": "Northwind ACO 2026 Member Attribution List",
           "contractId": "CTR-2026-NWACO-001",
           "settlementEntityId": "NWACO-001",
           "payerOrganizationSourceId": "org-src-payer-001",

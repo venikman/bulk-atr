@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
+import type { AtrResolver } from '../lib/atr-resolver.js';
 import { type AppEnv, createAuthMiddleware } from '../lib/auth.js';
 import { fhirJson, fhirOperationOutcome } from '../lib/operation-outcome.js';
-import type { ProjectionStore } from '../lib/projection-store.js';
 import { supportedResourceTypes } from '../lib/types.js';
 
 const readableResourceTypes = supportedResourceTypes.filter(
@@ -9,11 +9,11 @@ const readableResourceTypes = supportedResourceTypes.filter(
 );
 
 type ResourceReadOptions = {
-  projectionStore: ProjectionStore;
+  resolver: AtrResolver;
   authMode: 'none' | 'smart-backend';
 };
 
-export const createResourceReadRoutes = ({ projectionStore, authMode }: ResourceReadOptions) => {
+export const createResourceReadRoutes = ({ resolver, authMode }: ResourceReadOptions) => {
   const app = new Hono<AppEnv>();
   app.use('/:resourceType/:id', createAuthMiddleware(authMode));
 
@@ -25,7 +25,7 @@ export const createResourceReadRoutes = ({ projectionStore, authMode }: Resource
       return context.notFound();
     }
 
-    const resource = projectionStore.getResource(resourceType, id);
+    const resource = resolver.getResource(resourceType, id);
     if (!resource) {
       return fhirOperationOutcome(
         context,

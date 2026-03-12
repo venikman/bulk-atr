@@ -43,15 +43,22 @@ describe('metadata and read surface', () => {
     const server = await createTestServer();
 
     try {
-      const groupSearch = await server.request(
-        '/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true',
-      );
-      const bundle = (await groupSearch.json()) as BundlePayload;
+      for (const identifier of [
+        'http://example.org/contracts|CTR-2026-NWACO-001',
+        'http://hl7.org/fhir/sid/us-npi|1992000001',
+        'urn:oid:2.16.840.1.113883.4.4|14-1111111',
+        'http://example.org/settlement-entities|NWACO-001',
+      ]) {
+        const groupSearch = await server.request(
+          `/fhir/Group?identifier=${identifier}&_summary=true`,
+        );
+        const bundle = (await groupSearch.json()) as BundlePayload;
 
-      expect(groupSearch.status).toBe(200);
-      expect(bundle.resourceType).toBe('Bundle');
-      expect(bundle.total).toBe(1);
-      expect(bundle.entry[0].resource.id).toBe('group-2026-northwind-atr-001');
+        expect(groupSearch.status).toBe(200);
+        expect(bundle.resourceType).toBe('Bundle');
+        expect(bundle.total).toBe(1);
+        expect(bundle.entry[0].resource.id).toBe('group-2026-northwind-atr-001');
+      }
 
       const patientRead = await server.request('/fhir/Patient/patient-0001');
       const patient = (await patientRead.json()) as ResourcePayload;

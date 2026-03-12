@@ -1,25 +1,36 @@
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { LocalBackgroundTaskRunner } from '../adapters/local-background-task-runner.js';
 import { createApp } from '../app.js';
+import { AtrResolver } from '../lib/atr-resolver.js';
 import { type AuthMode, normalizeAuthMode } from '../lib/auth.js';
 import { ExportJobStore } from '../lib/export-jobs.js';
 import { FileStore } from '../lib/file-store.js';
-import { ProjectionStore } from '../lib/projection-store.js';
+import { loadRawDomainStore } from '../lib/raw-domain-store.js';
 
 export type CreateLocalAppOptions = {
   authMode?: AuthMode;
   runtimeDir?: string;
-  fixturePath?: string;
+  sourceDir?: string;
+  memberCoveragePath?: string;
+  providerDirectoryPath?: string;
+  claimsAttributionPath?: string;
   jobDelayMs?: number;
 };
 
 export const createLocalApp = async ({
   authMode = normalizeAuthMode(process.env.AUTH_MODE),
   runtimeDir = resolve('.runtime/atr'),
-  fixturePath = resolve('output/atr_bulk_export_single.json'),
+  sourceDir = resolve('input-services'),
+  memberCoveragePath = join(sourceDir, 'member-coverage-service.json'),
+  providerDirectoryPath = join(sourceDir, 'provider-directory-service.json'),
+  claimsAttributionPath = join(sourceDir, 'claims-attribution-service.json'),
   jobDelayMs = 50,
 }: CreateLocalAppOptions = {}) => {
-  const projectionStore = await ProjectionStore.load(fixturePath);
+  const rawDomainStore = await loadRawDomainStore({
+    memberCoveragePath,
+    providerDirectoryPath,
+    claimsAttributionPath,
+  });
   const artifactStore = new FileStore(runtimeDir);
   await artifactStore.init();
   const jobRepository = new ExportJobStore(runtimeDir);
@@ -27,7 +38,7 @@ export const createLocalApp = async ({
 
   return createApp({
     authMode,
-    projectionStore,
+    resolver: new AtrResolver(rawDomainStore),
     artifactStore,
     jobRepository,
     backgroundTaskRunner: new LocalBackgroundTaskRunner(),

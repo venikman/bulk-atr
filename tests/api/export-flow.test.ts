@@ -1,9 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createTestServer } from './test-helpers.js';
 
 const minimumTypes =
   'Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location';
 
 type ManifestPayload = {
+  transactionTime: string;
   requiresAccessToken: boolean;
   output: Array<{
     type: string;
@@ -13,6 +16,45 @@ type ManifestPayload = {
 
 type OutcomePayload = {
   resourceType: string;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForCompletedManifest = async (
+  server: Awaited<ReturnType<typeof createTestServer>>,
+  contentLocation: string,
+  init?: RequestInit,
+  timeoutMs = 4000,
+) => {
+  const deadline = Date.now() + timeoutMs;
+  let lastStatus: number | null = null;
+
+  while (Date.now() < deadline) {
+    const response = await server.request(contentLocation, init);
+    lastStatus = response.status;
+    if (response.status === 200) {
+      return {
+        response,
+        manifest: (await response.json()) as ManifestPayload,
+      };
+    }
+
+    const retryAfterSeconds = Number(response.headers.get('retry-after'));
+    const delayMs =
+      Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+        ? retryAfterSeconds * 1000
+        : response.status === 202 || response.status === 429
+          ? 1000
+          : 150;
+
+    await sleep(delayMs);
+  }
+
+  throw new Error(
+    `Bulk export did not complete within ${timeoutMs}ms for ${contentLocation}. Last status: ${
+      lastStatus ?? 'none'
+    }.`,
+  );
 };
 
 const collectReferences = (value: unknown, refs: Set<string>) => {
@@ -38,6 +80,63 @@ const collectReferences = (value: unknown, refs: Set<string>) => {
 };
 
 describe('bulk export flow', () => {
+  test('waits for Retry-After before polling again', async () => {
+    const firstPollStartedAt = { current: 0 };
+    let retriedTooSoon = false;
+
+    const fakeServer = {
+      request: async () => {
+        const now = Date.now();
+        if (!firstPollStartedAt.current) {
+          firstPollStartedAt.current = now;
+          return new Response(null, {
+            status: 202,
+            headers: {
+              'retry-after': '1',
+            },
+          });
+        }
+
+        if (now - firstPollStartedAt.current < 1000) {
+          retriedTooSoon = true;
+        }
+
+        if (retriedTooSoon) {
+          return new Response(null, {
+            status: 429,
+            headers: {
+              'retry-after': '5',
+            },
+          });
+        }
+
+        return new Response(
+          JSON.stringify({
+            transactionTime: '2026-01-01T00:00:00.000Z',
+            requiresAccessToken: false,
+            output: [],
+          } satisfies ManifestPayload),
+          {
+            status: 200,
+            headers: {
+              'content-type': 'application/json',
+            },
+          },
+        );
+      },
+    } as unknown as Awaited<ReturnType<typeof createTestServer>>;
+
+    const { manifest } = await waitForCompletedManifest(
+      fakeServer,
+      '/fhir/bulk-status/fake',
+      undefined,
+      1600,
+    );
+
+    expect(retriedTooSoon).toBe(false);
+    expect(manifest.output).toEqual([]);
+  });
+
   test('kicks off export, completes asynchronously, and serves ndjson files', async () => {
     const server = await createTestServer();
 
@@ -49,17 +148,24 @@ describe('bulk export flow', () => {
       expect(kickoff.status).toBe(202);
       const contentLocation = kickoff.headers.get('content-location');
       expect(contentLocation).toContain('/fhir/bulk-status/');
+      const jobId = contentLocation?.split('/').at(-1);
+      expect(jobId).toBeTruthy();
+      const jobPath = join(server.runtimeDir, 'jobs', `${jobId}.json`);
+      const createdJob = JSON.parse(await readFile(jobPath, 'utf-8')) as {
+        transactionTime: string;
+      };
 
       const initialStatus = await server.request(contentLocation || '');
       expect(initialStatus.status).toBe(202);
       expect(initialStatus.headers.get('retry-after')).toBe('1');
 
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-
-      const completedStatus = await server.request(contentLocation || '');
-      const manifest = (await completedStatus.json()) as ManifestPayload;
+      const { response: completedStatus, manifest } = await waitForCompletedManifest(
+        server,
+        contentLocation || '',
+      );
 
       expect(completedStatus.status).toBe(200);
+      expect(manifest.transactionTime).toBe(createdJob.transactionTime);
       expect(manifest.requiresAccessToken).toBe(false);
       expect(manifest.output).toHaveLength(8);
 
@@ -147,7 +253,6 @@ describe('bulk export flow', () => {
       expect(secondPoll.status).toBe(429);
       expect(((await secondPoll.json()) as OutcomePayload).resourceType).toBe('OperationOutcome');
 
-      await new Promise((resolve) => setTimeout(resolve, 1100));
       const missingFile = await server.request('/fhir/bulk-files/not-a-job/Patient-1.ndjson');
       expect(missingFile.status).toBe(404);
 
@@ -158,6 +263,49 @@ describe('bulk export flow', () => {
         '/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&resourceTypes=Group,Patient,Coverage',
       );
       expect(aliasKickoff.status).toBe(202);
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  test('traverses through PractitionerRole even when that type is not requested', async () => {
+    const server = await createTestServer();
+
+    try {
+      const requestedTypes = 'Group,Patient,Coverage,Practitioner,Organization';
+      const kickoff = await server.request(
+        `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${requestedTypes}`,
+      );
+      expect(kickoff.status).toBe(202);
+
+      const { response: status, manifest } = await waitForCompletedManifest(
+        server,
+        kickoff.headers.get('content-location') || '',
+      );
+
+      expect(status.status).toBe(200);
+      expect(manifest.output.map((entry) => entry.type)).toEqual([
+        'Group',
+        'Patient',
+        'Coverage',
+        'Practitioner',
+        'Organization',
+      ]);
+
+      const resourcesByType = new Map<string, Array<{ resourceType: string; id: string }>>();
+      for (const entry of manifest.output) {
+        const fileResponse = await server.request(new URL(entry.url).pathname);
+        const ndjson = await fileResponse.text();
+        const lines = ndjson.trim().split('\n').filter(Boolean);
+        resourcesByType.set(
+          entry.type,
+          lines.map((line) => JSON.parse(line) as { resourceType: string; id: string }),
+        );
+      }
+
+      expect(resourcesByType.get('Practitioner')?.length).toBeGreaterThan(0);
+      expect(resourcesByType.get('Organization')?.length).toBeGreaterThan(0);
+      expect(resourcesByType.has('PractitionerRole')).toBe(false);
     } finally {
       await server.cleanup();
     }
@@ -183,14 +331,15 @@ describe('bulk export flow', () => {
       expect(authorizedKickoff.status).toBe(202);
 
       const contentLocation = authorizedKickoff.headers.get('content-location') || '';
-      await new Promise((resolve) => setTimeout(resolve, 1100));
-
-      const manifestResponse = await server.request(contentLocation, {
-        headers: {
-          authorization: 'Bearer dev-token',
+      const { response: manifestResponse, manifest } = await waitForCompletedManifest(
+        server,
+        contentLocation,
+        {
+          headers: {
+            authorization: 'Bearer dev-token',
+          },
         },
-      });
-      const manifest = (await manifestResponse.json()) as ManifestPayload;
+      );
 
       expect(manifestResponse.status).toBe(200);
       expect(manifest.requiresAccessToken).toBe(true);
