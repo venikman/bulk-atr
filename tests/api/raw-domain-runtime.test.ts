@@ -321,4 +321,34 @@ describe('raw-domain runtime', () => {
       await rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  test('does not cache missing resource lookups', async () => {
+    const { resolver } = await loadResolver();
+
+    expect(resolver.getResource('Patient', 'does-not-exist-1')).toBeNull();
+    expect(resolver.cache.has('Patient/does-not-exist-1')).toBe(false);
+  });
+
+  test('caches successful resource lookups', async () => {
+    const { resolver } = await loadResolver();
+
+    const patient = resolver.getResource('Patient', 'patient-0001');
+
+    expect(patient).toMatchObject({
+      resourceType: 'Patient',
+      id: 'patient-0001',
+    });
+    expect(resolver.cache.get('Patient/patient-0001')).toEqual(patient);
+  });
+
+  test('does not grow cache for repeated missing resource probes', async () => {
+    const { resolver } = await loadResolver();
+    const initialSize = resolver.cache.size;
+
+    for (const id of ['does-not-exist-1', 'does-not-exist-2', 'does-not-exist-3']) {
+      expect(resolver.getResource('Patient', id)).toBeNull();
+    }
+
+    expect(resolver.cache.size).toBe(initialSize);
+  });
 });

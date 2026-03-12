@@ -45,7 +45,7 @@ export class AtrResolver {
 
   readonly mapper: AtrMapper;
 
-  readonly cache = new Map<string, FhirResource | null>();
+  readonly cache = new Map<string, FhirResource>();
 
   constructor(store: RawDomainStore) {
     this.store = store;
@@ -53,12 +53,15 @@ export class AtrResolver {
   }
 
   private mapCached(key: string, builder: () => FhirResource | null) {
-    if (this.cache.has(key)) {
-      return this.cache.get(key) || null;
+    const cached = this.cache.get(key);
+    if (cached) {
+      return cached;
     }
 
     const resource = builder();
-    this.cache.set(key, resource);
+    if (resource) {
+      this.cache.set(key, resource);
+    }
     return resource;
   }
 
