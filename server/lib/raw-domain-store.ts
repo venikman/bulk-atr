@@ -61,6 +61,23 @@ const pushIndexValue = <T>(index: Map<string, T[]>, key: string, value: T) => {
   index.set(key, current);
 };
 
+const setUniqueIndexValue = <T extends { sourceId: string }>(
+  index: Map<string, T>,
+  key: string,
+  value: T,
+  resourceType: string,
+  keyType: string,
+) => {
+  const existing = index.get(key);
+  if (existing) {
+    throw new Error(
+      `Duplicate ${resourceType} ${keyType} ${key} for incoming source row ${value.sourceId}; already used by existing source row ${existing.sourceId}.`,
+    );
+  }
+
+  index.set(key, value);
+};
+
 const buildSourceIdSet = (items: Array<{ sourceId: string }>) =>
   new Set(items.map((item) => item.sourceId));
 
@@ -527,18 +544,54 @@ export const createRawDomainStoreFromDocuments = ({
   };
 
   for (const patient of patients) {
-    store.indexes.patientsBySourceId.set(patient.sourceId, patient);
-    store.indexes.patientsByFhirId.set(patient.fhirId, patient);
+    setUniqueIndexValue(
+      store.indexes.patientsBySourceId,
+      patient.sourceId,
+      patient,
+      'Patient',
+      'source id',
+    );
+    setUniqueIndexValue(
+      store.indexes.patientsByFhirId,
+      patient.fhirId,
+      patient,
+      'Patient',
+      'FHIR id',
+    );
   }
 
   for (const coverage of coverages) {
-    store.indexes.coveragesBySourceId.set(coverage.sourceId, coverage);
-    store.indexes.coveragesByFhirId.set(coverage.fhirId, coverage);
+    setUniqueIndexValue(
+      store.indexes.coveragesBySourceId,
+      coverage.sourceId,
+      coverage,
+      'Coverage',
+      'source id',
+    );
+    setUniqueIndexValue(
+      store.indexes.coveragesByFhirId,
+      coverage.fhirId,
+      coverage,
+      'Coverage',
+      'FHIR id',
+    );
   }
 
   for (const relatedPerson of relatedPersons) {
-    store.indexes.relatedPersonsBySourceId.set(relatedPerson.sourceId, relatedPerson);
-    store.indexes.relatedPersonsByFhirId.set(relatedPerson.fhirId, relatedPerson);
+    setUniqueIndexValue(
+      store.indexes.relatedPersonsBySourceId,
+      relatedPerson.sourceId,
+      relatedPerson,
+      'RelatedPerson',
+      'source id',
+    );
+    setUniqueIndexValue(
+      store.indexes.relatedPersonsByFhirId,
+      relatedPerson.fhirId,
+      relatedPerson,
+      'RelatedPerson',
+      'FHIR id',
+    );
     pushIndexValue(
       store.indexes.relatedPersonsByPatientSourceId,
       relatedPerson.patientSourceId,
@@ -547,23 +600,65 @@ export const createRawDomainStoreFromDocuments = ({
   }
 
   for (const practitioner of practitioners) {
-    store.indexes.practitionersBySourceId.set(practitioner.sourceId, practitioner);
-    store.indexes.practitionersByFhirId.set(practitioner.fhirId, practitioner);
+    setUniqueIndexValue(
+      store.indexes.practitionersBySourceId,
+      practitioner.sourceId,
+      practitioner,
+      'Practitioner',
+      'source id',
+    );
+    setUniqueIndexValue(
+      store.indexes.practitionersByFhirId,
+      practitioner.fhirId,
+      practitioner,
+      'Practitioner',
+      'FHIR id',
+    );
   }
 
   for (const role of roles) {
-    store.indexes.rolesBySourceId.set(role.sourceId, role);
-    store.indexes.rolesByFhirId.set(role.fhirId, role);
+    setUniqueIndexValue(
+      store.indexes.rolesBySourceId,
+      role.sourceId,
+      role,
+      'PractitionerRole',
+      'source id',
+    );
+    setUniqueIndexValue(
+      store.indexes.rolesByFhirId,
+      role.fhirId,
+      role,
+      'PractitionerRole',
+      'FHIR id',
+    );
   }
 
   for (const org of orgs) {
-    store.indexes.orgsBySourceId.set(org.sourceId, org);
-    store.indexes.orgsByFhirId.set(org.fhirId, org);
+    setUniqueIndexValue(
+      store.indexes.orgsBySourceId,
+      org.sourceId,
+      org,
+      'Organization',
+      'source id',
+    );
+    setUniqueIndexValue(store.indexes.orgsByFhirId, org.fhirId, org, 'Organization', 'FHIR id');
   }
 
   for (const location of locations) {
-    store.indexes.locationsBySourceId.set(location.sourceId, location);
-    store.indexes.locationsByFhirId.set(location.fhirId, location);
+    setUniqueIndexValue(
+      store.indexes.locationsBySourceId,
+      location.sourceId,
+      location,
+      'Location',
+      'source id',
+    );
+    setUniqueIndexValue(
+      store.indexes.locationsByFhirId,
+      location.fhirId,
+      location,
+      'Location',
+      'FHIR id',
+    );
   }
 
   for (const attributionList of attributionLists) {
@@ -574,7 +669,13 @@ export const createRawDomainStoreFromDocuments = ({
       throw new Error(`Attribution list ${attributionList.sourceId} is missing displayName.`);
     }
 
-    store.indexes.attributionListsBySourceId.set(attributionList.sourceId, attributionList);
+    setUniqueIndexValue(
+      store.indexes.attributionListsBySourceId,
+      attributionList.sourceId,
+      attributionList,
+      'Attribution list',
+      'source id',
+    );
     const existingGroup = store.indexes.attributionListsByGroupId.get(attributionList.fhirId);
     if (existingGroup) {
       throw new Error(

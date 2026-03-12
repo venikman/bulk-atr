@@ -17,6 +17,13 @@ type MapperUnderTest = {
   toOrganizationReference(sourceId?: string | null): { reference: string } | undefined;
 };
 
+type ClonedDocuments = ReturnType<typeof cloneDocuments>;
+
+type DuplicateIndexCase = {
+  name: string;
+  mutate: (docs: ClonedDocuments) => string;
+};
+
 const loadResolver = async () => {
   const store = await loadRawDomainStore({
     memberCoveragePath: resolve('input-services/member-coverage-service.json'),
@@ -35,6 +42,280 @@ const cloneDocuments = (resolver: AtrResolver) => ({
   providerDirectory: structuredClone(resolver.store.providerDirectory),
   claimsAttribution: structuredClone(resolver.store.claimsAttribution),
 });
+
+const duplicateIndexMessage = ({
+  resourceType,
+  keyType,
+  key,
+  incomingSourceId,
+  existingSourceId,
+}: {
+  resourceType: string;
+  keyType: string;
+  key: string;
+  incomingSourceId: string;
+  existingSourceId: string;
+}) =>
+  `Duplicate ${resourceType} ${keyType} ${key} for incoming source row ${incomingSourceId}; already used by existing source row ${existingSourceId}.`;
+
+const duplicateIndexCases: DuplicateIndexCase[] = [
+  {
+    name: 'Patient source id',
+    mutate: (docs) => {
+      const [patient] = docs.memberCoverage.functions.listPatients.items;
+      docs.memberCoverage.functions.listPatients.items.push({
+        ...patient,
+        fhirId: 'patient-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Patient',
+        keyType: 'source id',
+        key: patient.sourceId,
+        incomingSourceId: patient.sourceId,
+        existingSourceId: patient.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Patient FHIR id',
+    mutate: (docs) => {
+      const [patient] = docs.memberCoverage.functions.listPatients.items;
+      docs.memberCoverage.functions.listPatients.items.push({
+        ...patient,
+        sourceId: 'patient-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Patient',
+        keyType: 'FHIR id',
+        key: patient.fhirId,
+        incomingSourceId: 'patient-source-duplicate',
+        existingSourceId: patient.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Coverage source id',
+    mutate: (docs) => {
+      const [coverage] = docs.memberCoverage.functions.listCoverages.items;
+      docs.memberCoverage.functions.listCoverages.items.push({
+        ...coverage,
+        fhirId: 'coverage-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Coverage',
+        keyType: 'source id',
+        key: coverage.sourceId,
+        incomingSourceId: coverage.sourceId,
+        existingSourceId: coverage.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Coverage FHIR id',
+    mutate: (docs) => {
+      const [coverage] = docs.memberCoverage.functions.listCoverages.items;
+      docs.memberCoverage.functions.listCoverages.items.push({
+        ...coverage,
+        sourceId: 'coverage-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Coverage',
+        keyType: 'FHIR id',
+        key: coverage.fhirId,
+        incomingSourceId: 'coverage-source-duplicate',
+        existingSourceId: coverage.sourceId,
+      });
+    },
+  },
+  {
+    name: 'RelatedPerson source id',
+    mutate: (docs) => {
+      const [relatedPerson] = docs.memberCoverage.functions.listRelatedPersons.items;
+      docs.memberCoverage.functions.listRelatedPersons.items.push({
+        ...relatedPerson,
+        fhirId: 'relatedperson-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'RelatedPerson',
+        keyType: 'source id',
+        key: relatedPerson.sourceId,
+        incomingSourceId: relatedPerson.sourceId,
+        existingSourceId: relatedPerson.sourceId,
+      });
+    },
+  },
+  {
+    name: 'RelatedPerson FHIR id',
+    mutate: (docs) => {
+      const [relatedPerson] = docs.memberCoverage.functions.listRelatedPersons.items;
+      docs.memberCoverage.functions.listRelatedPersons.items.push({
+        ...relatedPerson,
+        sourceId: 'relatedperson-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'RelatedPerson',
+        keyType: 'FHIR id',
+        key: relatedPerson.fhirId,
+        incomingSourceId: 'relatedperson-source-duplicate',
+        existingSourceId: relatedPerson.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Practitioner source id',
+    mutate: (docs) => {
+      const [practitioner] = docs.providerDirectory.functions.listPractitioners.items;
+      docs.providerDirectory.functions.listPractitioners.items.push({
+        ...practitioner,
+        fhirId: 'practitioner-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Practitioner',
+        keyType: 'source id',
+        key: practitioner.sourceId,
+        incomingSourceId: practitioner.sourceId,
+        existingSourceId: practitioner.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Practitioner FHIR id',
+    mutate: (docs) => {
+      const [practitioner] = docs.providerDirectory.functions.listPractitioners.items;
+      docs.providerDirectory.functions.listPractitioners.items.push({
+        ...practitioner,
+        sourceId: 'practitioner-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Practitioner',
+        keyType: 'FHIR id',
+        key: practitioner.fhirId,
+        incomingSourceId: 'practitioner-source-duplicate',
+        existingSourceId: practitioner.sourceId,
+      });
+    },
+  },
+  {
+    name: 'PractitionerRole source id',
+    mutate: (docs) => {
+      const [role] = docs.providerDirectory.functions.listPractitionerRoles.items;
+      docs.providerDirectory.functions.listPractitionerRoles.items.push({
+        ...role,
+        fhirId: 'practitionerrole-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'PractitionerRole',
+        keyType: 'source id',
+        key: role.sourceId,
+        incomingSourceId: role.sourceId,
+        existingSourceId: role.sourceId,
+      });
+    },
+  },
+  {
+    name: 'PractitionerRole FHIR id',
+    mutate: (docs) => {
+      const [role] = docs.providerDirectory.functions.listPractitionerRoles.items;
+      docs.providerDirectory.functions.listPractitionerRoles.items.push({
+        ...role,
+        sourceId: 'practitionerrole-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'PractitionerRole',
+        keyType: 'FHIR id',
+        key: role.fhirId,
+        incomingSourceId: 'practitionerrole-source-duplicate',
+        existingSourceId: role.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Organization source id',
+    mutate: (docs) => {
+      const [organization] = docs.providerDirectory.functions.listOrganizations.items;
+      docs.providerDirectory.functions.listOrganizations.items.push({
+        ...organization,
+        fhirId: 'organization-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Organization',
+        keyType: 'source id',
+        key: organization.sourceId,
+        incomingSourceId: organization.sourceId,
+        existingSourceId: organization.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Organization FHIR id',
+    mutate: (docs) => {
+      const [organization] = docs.providerDirectory.functions.listOrganizations.items;
+      docs.providerDirectory.functions.listOrganizations.items.push({
+        ...organization,
+        sourceId: 'organization-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Organization',
+        keyType: 'FHIR id',
+        key: organization.fhirId,
+        incomingSourceId: 'organization-source-duplicate',
+        existingSourceId: organization.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Location source id',
+    mutate: (docs) => {
+      const [location] = docs.providerDirectory.functions.listLocations.items;
+      docs.providerDirectory.functions.listLocations.items.push({
+        ...location,
+        fhirId: 'location-duplicate-source-id',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Location',
+        keyType: 'source id',
+        key: location.sourceId,
+        incomingSourceId: location.sourceId,
+        existingSourceId: location.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Location FHIR id',
+    mutate: (docs) => {
+      const [location] = docs.providerDirectory.functions.listLocations.items;
+      docs.providerDirectory.functions.listLocations.items.push({
+        ...location,
+        sourceId: 'location-source-duplicate',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Location',
+        keyType: 'FHIR id',
+        key: location.fhirId,
+        incomingSourceId: 'location-source-duplicate',
+        existingSourceId: location.sourceId,
+      });
+    },
+  },
+  {
+    name: 'Attribution list source id',
+    mutate: (docs) => {
+      const [attributionList] = docs.claimsAttribution.functions.listAttributionLists.items;
+      docs.claimsAttribution.functions.listAttributionLists.items.push({
+        ...attributionList,
+        fhirId: 'group-2026-northwind-atr-source-id-duplicate',
+        contractId: 'CTR-2026-NWACO-SOURCE-DUPLICATE',
+      });
+      return duplicateIndexMessage({
+        resourceType: 'Attribution list',
+        keyType: 'source id',
+        key: attributionList.sourceId,
+        incomingSourceId: attributionList.sourceId,
+        existingSourceId: attributionList.sourceId,
+      });
+    },
+  },
+];
 
 describe('raw-domain runtime', () => {
   test('indexes the single Group from raw source data', async () => {
@@ -388,6 +669,23 @@ describe('raw-domain runtime', () => {
       `Coverage ${coverage.sourceId} field policyHolderType must be Patient or RelatedPerson. Received Guarantor.`,
     );
   });
+
+  for (const duplicateIndexCase of duplicateIndexCases) {
+    test(`rejects duplicate ${duplicateIndexCase.name} during singular index construction`, async () => {
+      const { resolver } = await loadResolver();
+      const docs = cloneDocuments(resolver);
+
+      const expected = duplicateIndexCase.mutate(docs);
+
+      expect(() =>
+        createRawDomainStoreFromDocuments({
+          memberCoverage: docs.memberCoverage,
+          providerDirectory: docs.providerDirectory,
+          claimsAttribution: docs.claimsAttribution,
+        }),
+      ).toThrow(expected);
+    });
+  }
 
   test('rejects duplicate attribution list group ids during indexing', async () => {
     const { resolver } = await loadResolver();
