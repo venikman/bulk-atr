@@ -44,4 +44,5 @@ export interface ExportJobRepository {
     diagnostics: string[],
   ): Promise<ExportJobRecord | null>;
   canPoll(jobId: string, callerId: string): Promise<boolean>;
+  expireJob(jobId: string): Promise<boolean>;
 }

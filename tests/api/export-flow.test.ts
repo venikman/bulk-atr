@@ -234,7 +234,7 @@ describe("bulk export flow", () => {
     }
   });
 
-  it("completes on the first status poll without waiting for a background worker", async () => {
+  it("kick-off returns 202 and export completes before first poll", async () => {
     const server = await createTestServer();
 
     try {
@@ -244,12 +244,14 @@ describe("bulk export flow", () => {
 
       expect(kickoff.status).toBe(202);
 
-      const firstPoll = await server.request(
-        kickoff.headers.get("content-location") || "",
-      );
-      expect(firstPoll.status).toBe(200);
-
-      const manifest = (await firstPoll.json()) as ManifestPayload;
+      const { response: completedPoll, manifest } =
+        await waitForCompletedManifest(
+          server,
+          kickoff.headers.get("content-location") || "",
+          undefined,
+          4000,
+        );
+      expect(completedPoll.status).toBe(200);
       expect(manifest.output).toHaveLength(8);
     } finally {
       await server.cleanup();
@@ -260,14 +262,31 @@ describe("bulk export flow", () => {
     const server = await createTestServer();
 
     try {
-      const kickoff = await server.request(
-        `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
-      );
-      const contentLocation = kickoff.headers.get("content-location") || "";
-      const jobId = contentLocation.split("/").at(-1);
+      // Create job directly via repository to test the poll-handler fallback
+      // path without fire-and-forget interference from the kick-off handler.
+      const jobId = crypto.randomUUID();
+      await server.jobRepository.createJob({
+        jobId,
+        groupId: "group-2026-northwind-atr-001",
+        transactionTime: new Date().toISOString(),
+        requestUrl:
+          "http://example.test/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location",
+        normalizedTypes: [
+          "Group",
+          "Patient",
+          "Coverage",
+          "RelatedPerson",
+          "Practitioner",
+          "PractitionerRole",
+          "Organization",
+          "Location",
+        ],
+        exportType: "hl7.fhir.us.davinci-atr",
+      });
 
-      expect(jobId).toBeTruthy();
-      await expect(server.jobRepository.claimJob(jobId || "", "worker-blocker"))
+      const contentLocation = `http://example.test/fhir/bulk-status/${jobId}`;
+
+      await expect(server.jobRepository.claimJob(jobId, "worker-blocker"))
         .resolves.toMatchObject({
           job: {
             status: "running",
@@ -404,6 +423,142 @@ describe("bulk export flow", () => {
     } finally {
       await server.cleanup();
     }
+  });
+
+  describe("_outputFormat validation", () => {
+    it("accepts _outputFormat=application/fhir+ndjson", async () => {
+      const server = await createTestServer();
+
+      try {
+        const response = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}&_outputFormat=application/fhir%2Bndjson`,
+        );
+        expect(response.status).toBe(202);
+      } finally {
+        await server.cleanup();
+      }
+    });
+
+    it("accepts _outputFormat=application/ndjson", async () => {
+      const server = await createTestServer();
+
+      try {
+        const response = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}&_outputFormat=application/ndjson`,
+        );
+        expect(response.status).toBe(202);
+      } finally {
+        await server.cleanup();
+      }
+    });
+
+    it("accepts absent _outputFormat (defaults to ndjson)", async () => {
+      const server = await createTestServer();
+
+      try {
+        const response = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
+        );
+        expect(response.status).toBe(202);
+      } finally {
+        await server.cleanup();
+      }
+    });
+
+    it("rejects _outputFormat=text/csv with 400 and OperationOutcome", async () => {
+      const server = await createTestServer();
+
+      try {
+        const response = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}&_outputFormat=text/csv`,
+        );
+        expect(response.status).toBe(400);
+        const body = (await response.json()) as OutcomePayload;
+        expect(body.resourceType).toBe("OperationOutcome");
+      } finally {
+        await server.cleanup();
+      }
+    });
+  });
+
+  describe("DELETE /fhir/bulk-status/:jobId", () => {
+    it("returns 202 for an active job", async () => {
+      const server = await createTestServer();
+
+      try {
+        const kickoff = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
+        );
+        expect(kickoff.status).toBe(202);
+        const contentLocation = kickoff.headers.get("content-location") || "";
+
+        const deleteResponse = await server.request(contentLocation, {
+          method: "DELETE",
+        });
+        expect(deleteResponse.status).toBe(202);
+      } finally {
+        await server.cleanup();
+      }
+    });
+
+    it("returns 404 for an unknown jobId", async () => {
+      const server = await createTestServer();
+
+      try {
+        const deleteResponse = await server.request(
+          "/fhir/bulk-status/00000000-0000-1000-8000-000000000000",
+          { method: "DELETE" },
+        );
+        expect(deleteResponse.status).toBe(404);
+        const body = (await deleteResponse.json()) as OutcomePayload;
+        expect(body.resourceType).toBe("OperationOutcome");
+      } finally {
+        await server.cleanup();
+      }
+    });
+
+    it("returns 404 when deleting an already-expired job", async () => {
+      const server = await createTestServer();
+
+      try {
+        const kickoff = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
+        );
+        const contentLocation = kickoff.headers.get("content-location") || "";
+
+        const firstDelete = await server.request(contentLocation, {
+          method: "DELETE",
+        });
+        expect(firstDelete.status).toBe(202);
+
+        const secondDelete = await server.request(contentLocation, {
+          method: "DELETE",
+        });
+        expect(secondDelete.status).toBe(404);
+      } finally {
+        await server.cleanup();
+      }
+    });
+
+    it("GET after DELETE returns 404", async () => {
+      const server = await createTestServer();
+
+      try {
+        const kickoff = await server.request(
+          `/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=${minimumTypes}`,
+        );
+        const contentLocation = kickoff.headers.get("content-location") || "";
+
+        await server.request(contentLocation, { method: "DELETE" });
+
+        const pollAfterDelete = await server.request(contentLocation);
+        expect(pollAfterDelete.status).toBe(404);
+        const body = (await pollAfterDelete.json()) as OutcomePayload;
+        expect(body.resourceType).toBe("OperationOutcome");
+      } finally {
+        await server.cleanup();
+      }
+    });
   });
 
   it("requires bearer auth in smart-backend mode and marks manifest accordingly", async () => {

@@ -380,6 +380,30 @@ export class PostgresExportJobRepository implements ExportJobRepository {
     return result.rows[0] ? mapRowToJob(result.rows[0]) : null;
   }
 
+  async expireJob(jobId: string): Promise<boolean> {
+    if (!isUuid(jobId)) {
+      return false;
+    }
+
+    const now = new Date().toISOString();
+    const result = await this.sql.query<ExportJobRow>(
+      `
+        UPDATE export_jobs
+        SET status = 'expired',
+            updated_at = $2,
+            expires_at = $2,
+            lease_owner = null,
+            lease_token = null,
+            lease_expires_at = null
+        WHERE job_id = $1
+        RETURNING *
+      `,
+      [jobId, now],
+    );
+
+    return result.rows.length > 0;
+  }
+
   canPoll(jobId: string, callerId: string) {
     return this.sql.transaction(async (transaction) => {
       const current = await transaction.query<{ last_polled_at: string }>(

@@ -206,6 +206,21 @@ export const createBulkRoutes = ({
       );
     }
 
+    const outputFormat = context.req.query("_outputFormat");
+    const acceptedFormats = [
+      "application/fhir+ndjson",
+      "application/ndjson",
+      "ndjson",
+    ];
+    if (outputFormat && !acceptedFormats.includes(outputFormat)) {
+      return fhirOperationOutcome(
+        context,
+        400,
+        "not-supported",
+        `_outputFormat "${outputFormat}" is not supported. Accepted values: application/fhir+ndjson, application/ndjson, ndjson.`,
+      );
+    }
+
     for (const parameter of unsupportedParameters) {
       if (context.req.query(parameter)) {
         return fhirOperationOutcome(
@@ -295,6 +310,33 @@ export const createBulkRoutes = ({
       exportType: exportTypeValue,
     });
 
+    // Fire-and-forget: process export immediately in background.
+    // The claim/lease mechanism in the poll handler acts as a retry path
+    // if this processing fails or the Deno runtime restarts mid-flight.
+    const claimedJob = await jobRepository.claimJob(jobId, "kickoff");
+    if (claimedJob) {
+      queueMicrotask(async () => {
+        try {
+          await processClaimedJob(
+            claimedJob,
+            authMode,
+            jobRepository,
+            artifactStore,
+            resolver,
+          );
+        } catch (error: unknown) {
+          const diagnostics = error instanceof Error
+            ? error.message
+            : "Background export processing failed.";
+          await jobRepository.markFailedWithClaim(
+            jobId,
+            claimedJob.claimToken,
+            [diagnostics],
+          );
+        }
+      });
+    }
+
     const contentLocation = `${
       new URL(context.req.url).origin
     }/fhir/bulk-status/${jobId}`;
@@ -330,6 +372,10 @@ export const createBulkRoutes = ({
 
     let currentJob: Awaited<ReturnType<ExportJobRepository["getJob"]>> = job;
 
+    // Fallback processing path: if the kick-off fire-and-forget did not
+    // complete (e.g., runtime restart, transient error), the first poll
+    // claims and processes the job inline. Under normal operation this
+    // branch is not reached because kick-off already completed the export.
     if (currentJob.status === "accepted" || currentJob.status === "running") {
       const claimedJob = await jobRepository.claimJob(jobId, callerId);
       if (claimedJob) {
@@ -395,6 +441,23 @@ export const createBulkRoutes = ({
     return context.json(
       buildPublicManifest(new URL(context.req.url).origin, jobId, manifest),
     );
+  });
+
+  app.delete("/bulk-status/:jobId", async (context) => {
+    const jobId = context.req.param("jobId");
+    const job = await jobRepository.getJob(jobId);
+
+    if (!job || job.status === "expired") {
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "Bulk export job was not found.",
+      );
+    }
+
+    await jobRepository.expireJob(jobId);
+    return context.body(null, 202);
   });
 
   app.get("/bulk-files/:jobId/:fileName", async (context) => {
