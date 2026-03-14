@@ -32,8 +32,7 @@ export const fhirJson = (
   status: FhirStatus = 200,
 ) => {
   context.header("content-type", "application/fhir+json; charset=utf-8");
-  context.status(status);
-  return context.json(payload);
+  return context.body(JSON.stringify(payload), status);
 };
 
 export const fhirOperationOutcome = (

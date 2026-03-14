@@ -3,6 +3,7 @@ import type { AtrResolver } from "./lib/atr-resolver.ts";
 import { type AppEnv, type AuthMode } from "./lib/auth.ts";
 import type { ExportArtifactStore } from "./lib/export-artifact-store.ts";
 import type { ExportJobRepository } from "./lib/export-job-repository.ts";
+import { fhirOperationOutcome } from "./lib/operation-outcome.ts";
 import { createBulkRoutes } from "./routes/bulk.ts";
 import { createGroupRoutes } from "./routes/group.ts";
 import { createMetadataRoutes } from "./routes/metadata.ts";
@@ -107,6 +108,19 @@ export const createApp = ({
   fhir.route("/", createResourceReadRoutes({ resolver, authMode }));
 
   app.route("/fhir", fhir);
+
+  app.notFound((context) => {
+    const path = new URL(context.req.url).pathname;
+    if (path === "/fhir" || path.startsWith("/fhir/")) {
+      return fhirOperationOutcome(
+        context,
+        404,
+        "not-found",
+        "The requested FHIR endpoint does not exist on this server.",
+      );
+    }
+    return context.text("404 Not Found", 404);
+  });
 
   return app;
 };
