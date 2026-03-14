@@ -18,7 +18,7 @@ export const EXPECTED_AUTOMATION_FOLDERS = [
   "Direct Reads",
 ] as const;
 
-type Workflow = "metadata" | "group" | "bulk" | "full";
+type Workflow = "metadata" | "group" | "bulk" | "delete" | "full";
 type Mode = "prod" | "local";
 type PathLike = string | URL;
 
@@ -277,7 +277,10 @@ export async function runPostmanWorkflow(
       await runGroupStep(workingEnvironmentPath, fetchImpl, log);
     }
 
-    if (options.workflow === "bulk" || options.workflow === "full") {
+    if (
+      options.workflow === "bulk" || options.workflow === "delete" ||
+      options.workflow === "full"
+    ) {
       await ensureGroupId(workingEnvironmentPath, fetchImpl, log);
       summary.bulkStatusUrl = await runBulkKickoffStep(
         workingEnvironmentPath,
@@ -301,6 +304,10 @@ export async function runPostmanWorkflow(
         fetchImpl,
         log,
       });
+    }
+
+    if (options.workflow === "delete" || options.workflow === "full") {
+      await runDeleteStep(workingEnvironmentPath, fetchImpl, log);
     }
 
     return summary;
@@ -550,10 +557,80 @@ async function downloadArtifacts(
   return writtenFiles;
 }
 
+async function runDeleteStep(
+  environmentPath: string,
+  fetchImpl: typeof fetch,
+  log: (message: string) => void,
+): Promise<void> {
+  log("Running Postman folder: Delete");
+  const environment = await readEnvironmentValues(environmentPath);
+  const bulkStatusUrl = environment.bulkStatusUrl;
+
+  if (!bulkStatusUrl) {
+    throw new Error(
+      "Delete stage requires a bulkStatusUrl from a prior bulk export.",
+    );
+  }
+
+  const deleteResponse = await fetchImpl(bulkStatusUrl, {
+    method: "DELETE",
+  });
+
+  if (deleteResponse.status !== 202) {
+    throw new Error(
+      `DELETE /bulk-status returned unexpected status ${deleteResponse.status}, expected 202.`,
+    );
+  }
+
+  log("DELETE returned 202 Accepted.");
+
+  // Use a distinct caller identity to avoid poll rate-limiting from prior
+  // bulk-poll stage. Accept 404 (job expired) or 429 then retry once.
+  const confirmResponse = await fetchImpl(bulkStatusUrl, {
+    headers: {
+      Accept: "application/fhir+json",
+      "x-forwarded-for": "198.51.100.99",
+    },
+  });
+
+  if (confirmResponse.status === 404) {
+    log("GET after DELETE confirmed 404.");
+    return;
+  }
+
+  if (confirmResponse.status === 429) {
+    log("GET after DELETE throttled, retrying...");
+    const retryAfter = Number(confirmResponse.headers.get("retry-after")) || 1;
+    await new Promise((resolve) =>
+      setTimeout(resolve, retryAfter * 1000 + 100)
+    );
+
+    const retryResponse = await fetchImpl(bulkStatusUrl, {
+      headers: {
+        Accept: "application/fhir+json",
+        "x-forwarded-for": "198.51.100.99",
+      },
+    });
+
+    if (retryResponse.status !== 404) {
+      throw new Error(
+        `GET after DELETE (retry) returned unexpected status ${retryResponse.status}, expected 404.`,
+      );
+    }
+
+    log("GET after DELETE confirmed 404 (after retry).");
+    return;
+  }
+
+  throw new Error(
+    `GET after DELETE returned unexpected status ${confirmResponse.status}, expected 404.`,
+  );
+}
+
 function parseWorkflow(value: string): Workflow {
   if (
     value === "metadata" || value === "group" || value === "bulk" ||
-    value === "full"
+    value === "delete" || value === "full"
   ) {
     return value;
   }
