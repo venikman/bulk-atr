@@ -33,6 +33,9 @@ export const createCapabilityStatement = (
   kind: "instance",
   fhirVersion: "4.0.1",
   format: ["json"],
+  instantiates: [
+    "http://hl7.org/fhir/us/davinci-atr/CapabilityStatement/atr-producer",
+  ],
   software: {
     name: "bulk-atr export-first producer",
     version: "0.1.0",
@@ -47,6 +50,17 @@ export const createCapabilityStatement = (
       mode: "server",
       security: {
         cors: false,
+        ...(authMode === "smart-backend"
+          ? {
+            service: [{
+              coding: [{
+                system:
+                  "http://terminology.hl7.org/CodeSystem/restful-security-service",
+                code: "SMART-on-FHIR",
+              }],
+            }],
+          }
+          : {}),
         description: authMode === "smart-backend"
           ? "Protected read and export routes using a SMART-backend-ready bearer seam."
           : "Development-open profile with no auth enforcement on read and export routes.",

@@ -4,8 +4,14 @@ import { createTestServer } from "./test-helpers.ts";
 type CapabilityStatementPayload = {
   resourceType: string;
   fhirVersion: string;
+  instantiates?: string[];
   rest: Array<{
     resource: Array<{ type: string }>;
+    security?: {
+      service?: Array<{
+        coding: Array<{ system: string; code: string }>;
+      }>;
+    };
   }>;
 };
 
@@ -83,6 +89,67 @@ describe("metadata and read surface", () => {
           resource.type === "Group"
         ),
       ).toBe(true);
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  it("declares ATR producer profile in instantiates", async () => {
+    const server = await createTestServer();
+
+    try {
+      const response = await server.request("/fhir/metadata");
+      const body = (await response.json()) as CapabilityStatementPayload;
+
+      expect(body.instantiates).toContain(
+        "http://hl7.org/fhir/us/davinci-atr/CapabilityStatement/atr-producer",
+      );
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  it("includes SMART-on-FHIR security service in smart-backend mode", async () => {
+    const server = await createTestServer("smart-backend");
+
+    try {
+      const response = await server.request("/fhir/metadata", {
+        headers: {
+          authorization: "Bearer dev-token",
+        },
+      });
+      const body = (await response.json()) as CapabilityStatementPayload;
+
+      expect(body.rest[0].security?.service).toBeDefined();
+      expect(body.rest[0].security?.service?.[0]?.coding?.[0]?.code).toBe(
+        "SMART-on-FHIR",
+      );
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  it("returns FHIR OperationOutcome for unknown /fhir/* paths", async () => {
+    const server = await createTestServer();
+
+    try {
+      const res = await server.request("/fhir/FakeResource/fake-id");
+      expect(res.status).toBe(404);
+      const body = (await res.json()) as ResourcePayload;
+      expect(body.resourceType).toBe("OperationOutcome");
+    } finally {
+      await server.cleanup();
+    }
+  });
+
+  it("returns application/fhir+json content-type on 404", async () => {
+    const server = await createTestServer();
+
+    try {
+      const res = await server.request("/fhir/Nope");
+      expect(res.headers.get("content-type")).toContain(
+        "application/fhir+json",
+      );
     } finally {
       await server.cleanup();
     }
