@@ -24,6 +24,37 @@ const fullExportTypes =
 const countNdjsonLines = (payload: string) =>
   payload.trim().split("\n").filter(Boolean).length;
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForCompletedManifest = async (
+  server: Awaited<ReturnType<typeof createTestServer>>,
+  contentLocation: string,
+  timeoutMs = 4000,
+) => {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const response = await server.request(contentLocation);
+    if (response.status === 200) {
+      return {
+        response,
+        manifest: (await response.json()) as ManifestPayload,
+      };
+    }
+
+    const retryAfterSeconds = Number(response.headers.get("retry-after"));
+    const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1000
+      : 150;
+
+    await sleep(delayMs);
+  }
+
+  throw new Error(
+    `Bulk export did not complete within ${timeoutMs}ms for ${contentLocation}.`,
+  );
+};
+
 describe("data profiles", () => {
   it("defaults to the default profile when DATA_PROFILE is unset", () => {
     expect(getDataProfileFromEnv(undefined)).toBe("default");
@@ -83,10 +114,11 @@ describe("data profiles", () => {
 
       expect(kickoff.status).toBe(202);
 
-      const statusResponse = await server.request(
-        kickoff.headers.get("content-location") || "",
-      );
-      const manifest = (await statusResponse.json()) as ManifestPayload;
+      const { response: statusResponse, manifest } =
+        await waitForCompletedManifest(
+          server,
+          kickoff.headers.get("content-location") || "",
+        );
       expect(statusResponse.status).toBe(200);
       expect(manifest.output).toHaveLength(8);
 
