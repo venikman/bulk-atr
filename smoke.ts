@@ -33,6 +33,8 @@ const DEFAULT_ENVIRONMENT_VALUES: EnvironmentValues = {
   organizationId: "org-payer-001",
   locationId: "location-001",
   relatedPersonId: "relatedperson-0003",
+  encounterId: "encounter-0001",
+  conditionId: "condition-0001",
 };
 
 type Workflow = "metadata" | "group" | "bulk" | "delete" | "full";
@@ -839,76 +841,251 @@ async function runSearchStep(
   log("Smoke step: Search Parameters");
   const environment = await readEnvironmentValues(environmentPath);
   const baseUrl = environment.baseUrl;
+  const patientRef = `Patient/${environment.patientId}`;
+  const practitionerRef = `Practitioner/${environment.practitionerId}`;
+  const practitionerRoleRef = `PractitionerRole/${environment.practitionerRoleId}`;
+  const locationRef = `Location/${environment.locationId}`;
   let checks = 0;
 
-  // Patient search by name — should return a Bundle
-  const patientNameBundle = await fetchBundle(baseUrl, "Patient?name=a", fetchImpl);
-  if ((patientNameBundle.total ?? 0) < 1) {
-    throw new Error("Patient?name=a returned no results.");
-  }
-  checks++;
+  const assertNonEmpty = (bundle: FhirBundle, label: string) => {
+    if ((bundle.total ?? 0) < 1) throw new Error(`${label} returned no results.`);
+  };
 
-  // Patient search by gender
-  const patientGenderBundle = await fetchBundle(baseUrl, "Patient?gender=female", fetchImpl);
-  if ((patientGenderBundle.total ?? 0) < 1) {
-    throw new Error("Patient?gender=female returned no results.");
-  }
-  checks++;
-
-  // Encounter search by patient
-  const encBundle = await fetchBundle(baseUrl, `Encounter?patient=Patient/${environment.patientId}`, fetchImpl);
-  if ((encBundle.total ?? 0) < 1) {
-    throw new Error(`Encounter?patient=Patient/${environment.patientId} returned no results.`);
-  }
-  // Verify all returned encounters reference the requested patient
-  for (const entry of encBundle.entry ?? []) {
-    const subjectRef = (entry.resource?.subject as { reference?: string })?.reference ?? "";
-    if (subjectRef !== `Patient/${environment.patientId}`) {
-      throw new Error(`Encounter search returned entry with subject "${subjectRef}", expected "Patient/${environment.patientId}".`);
+  const assertAllMatch = (
+    bundle: FhirBundle,
+    label: string,
+    predicate: (resource: FhirBundleEntry["resource"]) => boolean,
+    predicateDescription: string,
+  ) => {
+    for (const entry of bundle.entry ?? []) {
+      if (!predicate(entry.resource)) {
+        throw new Error(`${label}: entry ${entry.resource?.id} failed assertion: ${predicateDescription}`);
+      }
     }
-  }
+  };
+
+  // ── Patient search (4 checks) ────────────────────────────────────
+  log("  Patient searches...");
+
+  // 1. Patient?name=a
+  const patNameBundle = await fetchBundle(baseUrl, "Patient?name=a", fetchImpl);
+  assertNonEmpty(patNameBundle, "Patient?name=a");
   checks++;
 
-  // Encounter search by status
+  // 2. Patient?birthdate=ge1960-01-01&birthdate=le2000-12-31
+  const patBdBundle = await fetchBundle(baseUrl, "Patient?birthdate=ge1960-01-01&birthdate=le2000-12-31", fetchImpl);
+  assertNonEmpty(patBdBundle, "Patient?birthdate range");
+  assertAllMatch(patBdBundle, "Patient?birthdate range", (r) => {
+    const bd = String(r?.birthDate ?? "");
+    return bd >= "1960-01-01" && bd <= "2000-12-31";
+  }, "birthDate within 1960–2000");
+  checks++;
+
+  // 3. Patient?gender=female
+  const patGenderBundle = await fetchBundle(baseUrl, "Patient?gender=female", fetchImpl);
+  assertNonEmpty(patGenderBundle, "Patient?gender=female");
+  assertAllMatch(patGenderBundle, "Patient?gender=female", (r) => r?.gender === "female", "gender is female");
+  checks++;
+
+  // 4. Patient?general-practitioner=PractitionerRole/{id}
+  //    (existing patients reference PractitionerRole, not Practitioner)
+  const patGpBundle = await fetchBundle(baseUrl, `Patient?general-practitioner=${practitionerRoleRef}`, fetchImpl);
+  assertNonEmpty(patGpBundle, `Patient?general-practitioner=${practitionerRoleRef}`);
+  assertAllMatch(patGpBundle, "Patient?general-practitioner", (r) => {
+    const gps = r?.generalPractitioner as Array<{ reference?: string }> | undefined;
+    return Array.isArray(gps) && gps.some((gp) => gp.reference === practitionerRoleRef);
+  }, `generalPractitioner contains ${practitionerRoleRef}`);
+  checks++;
+
+  // ── Encounter search (8 checks) ─────────────────────────────────
+  log("  Encounter searches...");
+
+  // 5. Encounter?patient=Patient/{id}
+  const encPatBundle = await fetchBundle(baseUrl, `Encounter?patient=${patientRef}`, fetchImpl);
+  assertNonEmpty(encPatBundle, `Encounter?patient=${patientRef}`);
+  assertAllMatch(encPatBundle, "Encounter?patient", (r) => {
+    return (r?.subject as { reference?: string })?.reference === patientRef;
+  }, `subject.reference is ${patientRef}`);
+  checks++;
+
+  // 6. Encounter?date=ge2025-01-01&date=le2025-12-31
+  const encDateBundle = await fetchBundle(baseUrl, "Encounter?date=ge2025-01-01&date=le2025-12-31", fetchImpl);
+  assertNonEmpty(encDateBundle, "Encounter?date range 2025");
+  checks++;
+
+  // 7. Encounter?status=finished
   const encStatusBundle = await fetchBundle(baseUrl, "Encounter?status=finished", fetchImpl);
-  if ((encStatusBundle.total ?? 0) < 1) {
-    throw new Error("Encounter?status=finished returned no results.");
-  }
+  assertNonEmpty(encStatusBundle, "Encounter?status=finished");
+  assertAllMatch(encStatusBundle, "Encounter?status=finished", (r) => r?.status === "finished", "status is finished");
   checks++;
 
-  // Condition search by patient
-  const condBundle = await fetchBundle(baseUrl, `Condition?patient=Patient/${environment.patientId}`, fetchImpl);
-  if ((condBundle.total ?? 0) < 1) {
-    throw new Error(`Condition?patient=Patient/${environment.patientId} returned no results.`);
-  }
+  // 8. Encounter?type=http://www.ama-assn.org/go/cpt|99213
+  const encTypeBundle = await fetchBundle(baseUrl, `Encounter?type=${encodeURIComponent("http://www.ama-assn.org/go/cpt|99213")}`, fetchImpl);
+  assertNonEmpty(encTypeBundle, "Encounter?type=CPT|99213");
+  assertAllMatch(encTypeBundle, "Encounter?type=CPT|99213", (r) => {
+    const types = r?.type as Array<{ coding?: Array<{ system?: string; code?: string }> }> | undefined;
+    return Array.isArray(types) && types.some((t) => t.coding?.some((c) => c.system === "http://www.ama-assn.org/go/cpt" && c.code?.startsWith("99213")));
+  }, "type contains CPT 99213");
   checks++;
 
-  // Condition search by code prefix
+  // 9. Encounter?practitioner=Practitioner/{id}
+  const encPracBundle = await fetchBundle(baseUrl, `Encounter?practitioner=${practitionerRef}`, fetchImpl);
+  assertNonEmpty(encPracBundle, `Encounter?practitioner=${practitionerRef}`);
+  assertAllMatch(encPracBundle, "Encounter?practitioner", (r) => {
+    const participants = r?.participant as Array<{ individual?: { reference?: string } }> | undefined;
+    return Array.isArray(participants) && participants.some((p) => p.individual?.reference === practitionerRef);
+  }, `participant.individual.reference is ${practitionerRef}`);
+  checks++;
+
+  // 10. Encounter?location=Location/{id}
+  const encLocBundle = await fetchBundle(baseUrl, `Encounter?location=${locationRef}`, fetchImpl);
+  assertNonEmpty(encLocBundle, `Encounter?location=${locationRef}`);
+  assertAllMatch(encLocBundle, "Encounter?location", (r) => {
+    const locations = r?.location as Array<{ location?: { reference?: string } }> | undefined;
+    return Array.isArray(locations) && locations.some((l) => l.location?.reference === locationRef);
+  }, `location.location.reference is ${locationRef}`);
+  checks++;
+
+  // 11. Encounter?reason-code=http://hl7.org/fhir/sid/icd-10-cm|E11.9
+  const encReasonBundle = await fetchBundle(baseUrl, `Encounter?reason-code=${encodeURIComponent("http://hl7.org/fhir/sid/icd-10-cm|E11.9")}`, fetchImpl);
+  assertNonEmpty(encReasonBundle, "Encounter?reason-code=ICD10|E11.9");
+  assertAllMatch(encReasonBundle, "Encounter?reason-code", (r) => {
+    const reasons = r?.reasonCode as Array<{ coding?: Array<{ system?: string; code?: string }> }> | undefined;
+    return Array.isArray(reasons) && reasons.some((rc) => rc.coding?.some((c) => c.system === "http://hl7.org/fhir/sid/icd-10-cm" && c.code?.startsWith("E11.9")));
+  }, "reasonCode contains ICD-10 E11.9");
+  checks++;
+
+  // 12. Encounter combined: practitioner + date + status
+  const encCombinedBundle = await fetchBundle(baseUrl, `Encounter?practitioner=${practitionerRef}&date=ge2025-01-01&status=finished`, fetchImpl);
+  assertNonEmpty(encCombinedBundle, "Encounter combined (practitioner+date+status)");
+  assertAllMatch(encCombinedBundle, "Encounter combined", (r) => {
+    const matchStatus = r?.status === "finished";
+    const participants = r?.participant as Array<{ individual?: { reference?: string } }> | undefined;
+    const matchPrac = Array.isArray(participants) && participants.some((p) => p.individual?.reference === practitionerRef);
+    return matchStatus && matchPrac;
+  }, "status=finished AND practitioner matches");
+  checks++;
+
+  // ── Condition search (4 checks) ─────────────────────────────────
+  log("  Condition searches...");
+
+  // 13. Condition?patient=Patient/{id}
+  const condPatBundle = await fetchBundle(baseUrl, `Condition?patient=${patientRef}`, fetchImpl);
+  assertNonEmpty(condPatBundle, `Condition?patient=${patientRef}`);
+  assertAllMatch(condPatBundle, "Condition?patient", (r) => {
+    return (r?.subject as { reference?: string })?.reference === patientRef;
+  }, `subject.reference is ${patientRef}`);
+  checks++;
+
+  // 14. Condition?code=http://hl7.org/fhir/sid/icd-10-cm|E11 (prefix match)
   const condCodeBundle = await fetchBundle(baseUrl, `Condition?code=${encodeURIComponent("http://hl7.org/fhir/sid/icd-10-cm|E11")}`, fetchImpl);
-  if ((condCodeBundle.total ?? 0) < 1) {
-    throw new Error("Condition?code=http://hl7.org/fhir/sid/icd-10-cm|E11 returned no results.");
-  }
+  assertNonEmpty(condCodeBundle, "Condition?code=ICD10|E11 prefix");
+  assertAllMatch(condCodeBundle, "Condition?code=E11", (r) => {
+    const code = r?.code as { coding?: Array<{ system?: string; code?: string }> } | undefined;
+    return Array.isArray(code?.coding) && code.coding.some((c) => c.system === "http://hl7.org/fhir/sid/icd-10-cm" && c.code?.startsWith("E11"));
+  }, "code contains ICD-10 E11*");
   checks++;
 
-  // Observation search by patient + category
-  const obsBundle = await fetchBundle(baseUrl, `Observation?patient=Patient/${environment.patientId}&category=vital-signs`, fetchImpl);
-  if ((obsBundle.total ?? 0) < 1) {
-    throw new Error(`Observation vital-signs for patient returned no results.`);
-  }
+  // 15. Condition?clinical-status=active&code=http://hl7.org/fhir/sid/icd-10-cm|I10
+  const condCsBundle = await fetchBundle(baseUrl, `Condition?clinical-status=active&code=${encodeURIComponent("http://hl7.org/fhir/sid/icd-10-cm|I10")}`, fetchImpl);
+  assertNonEmpty(condCsBundle, "Condition?clinical-status=active&code=I10");
+  assertAllMatch(condCsBundle, "Condition?clinical-status+code", (r) => {
+    const cs = r?.clinicalStatus as { coding?: Array<{ code?: string }> } | undefined;
+    return Array.isArray(cs?.coding) && cs.coding.some((c) => c.code === "active");
+  }, "clinicalStatus is active");
   checks++;
 
-  // MedicationRequest search by patient
-  const medBundle = await fetchBundle(baseUrl, `MedicationRequest?patient=Patient/${environment.patientId}`, fetchImpl);
-  if ((medBundle.total ?? 0) < 1) {
-    throw new Error(`MedicationRequest?patient=Patient/${environment.patientId} returned no results.`);
-  }
+  // 16. Condition?category=encounter-diagnosis&patient=Patient/{id}
+  const condCatBundle = await fetchBundle(baseUrl, `Condition?category=encounter-diagnosis&patient=${patientRef}`, fetchImpl);
+  assertNonEmpty(condCatBundle, "Condition?category=encounter-diagnosis&patient");
+  assertAllMatch(condCatBundle, "Condition?category+patient", (r) => {
+    const subj = (r?.subject as { reference?: string })?.reference === patientRef;
+    const cats = r?.category as Array<{ coding?: Array<{ code?: string }> }> | undefined;
+    const catMatch = Array.isArray(cats) && cats.some((cat) => cat.coding?.some((c) => c.code === "encounter-diagnosis"));
+    return subj && catMatch;
+  }, "patient matches AND category is encounter-diagnosis");
   checks++;
 
-  // AllergyIntolerance search by patient
-  const allergyBundle = await fetchBundle(baseUrl, `AllergyIntolerance?patient=Patient/${environment.patientId}`, fetchImpl);
-  if ((allergyBundle.total ?? 0) < 1) {
-    throw new Error(`AllergyIntolerance?patient=Patient/${environment.patientId} returned no results.`);
-  }
+  // ── Procedure search (2 checks) ─────────────────────────────────
+  log("  Procedure searches...");
+
+  // 17. Procedure?patient=Patient/{id}
+  const procPatBundle = await fetchBundle(baseUrl, `Procedure?patient=${patientRef}`, fetchImpl);
+  assertNonEmpty(procPatBundle, `Procedure?patient=${patientRef}`);
+  assertAllMatch(procPatBundle, "Procedure?patient", (r) => {
+    return (r?.subject as { reference?: string })?.reference === patientRef;
+  }, `subject.reference is ${patientRef}`);
+  checks++;
+
+  // 18. Procedure?code=http://www.ama-assn.org/go/cpt|99385
+  const procCodeBundle = await fetchBundle(baseUrl, `Procedure?code=${encodeURIComponent("http://www.ama-assn.org/go/cpt|99385")}`, fetchImpl);
+  assertNonEmpty(procCodeBundle, "Procedure?code=CPT|99385");
+  assertAllMatch(procCodeBundle, "Procedure?code=99385", (r) => {
+    const code = r?.code as { coding?: Array<{ system?: string; code?: string }> } | undefined;
+    return Array.isArray(code?.coding) && code.coding.some((c) => c.system === "http://www.ama-assn.org/go/cpt" && c.code?.startsWith("99385"));
+  }, "code contains CPT 99385");
+  checks++;
+
+  // ── Observation search (3 checks) ───────────────────────────────
+  log("  Observation searches...");
+
+  // 19. Observation?patient=Patient/{id}&category=vital-signs
+  const obsVitalBundle = await fetchBundle(baseUrl, `Observation?patient=${patientRef}&category=vital-signs`, fetchImpl);
+  assertNonEmpty(obsVitalBundle, "Observation?patient+category=vital-signs");
+  assertAllMatch(obsVitalBundle, "Observation vitals", (r) => {
+    const cats = r?.category as Array<{ coding?: Array<{ code?: string }> }> | undefined;
+    return Array.isArray(cats) && cats.some((cat) => cat.coding?.some((c) => c.code === "vital-signs"));
+  }, "category contains vital-signs");
+  checks++;
+
+  // 20. Observation?patient=Patient/{id}&category=laboratory
+  const obsLabBundle = await fetchBundle(baseUrl, `Observation?patient=${patientRef}&category=laboratory`, fetchImpl);
+  assertNonEmpty(obsLabBundle, "Observation?patient+category=laboratory");
+  assertAllMatch(obsLabBundle, "Observation labs", (r) => {
+    const cats = r?.category as Array<{ coding?: Array<{ code?: string }> }> | undefined;
+    return Array.isArray(cats) && cats.some((cat) => cat.coding?.some((c) => c.code === "laboratory"));
+  }, "category contains laboratory");
+  checks++;
+
+  // 21. Observation?code=http://loinc.org|4548-4&date=ge2025-01-01
+  const obsLoincBundle = await fetchBundle(baseUrl, `Observation?code=${encodeURIComponent("http://loinc.org|4548-4")}&date=ge2025-01-01`, fetchImpl);
+  assertNonEmpty(obsLoincBundle, "Observation?code=LOINC|4548-4&date>=2025");
+  assertAllMatch(obsLoincBundle, "Observation LOINC 4548-4", (r) => {
+    const code = r?.code as { coding?: Array<{ system?: string; code?: string }> } | undefined;
+    return Array.isArray(code?.coding) && code.coding.some((c) => c.system === "http://loinc.org" && c.code === "4548-4");
+  }, "code contains LOINC 4548-4");
+  checks++;
+
+  // ── MedicationRequest search (2 checks) ─────────────────────────
+  log("  MedicationRequest searches...");
+
+  // 22. MedicationRequest?patient=Patient/{id}&status=active
+  const medPatBundle = await fetchBundle(baseUrl, `MedicationRequest?patient=${patientRef}&status=active`, fetchImpl);
+  assertNonEmpty(medPatBundle, "MedicationRequest?patient+status=active");
+  assertAllMatch(medPatBundle, "MedicationRequest?patient+status", (r) => {
+    const subj = (r?.subject as { reference?: string })?.reference === patientRef;
+    return subj && r?.status === "active";
+  }, "subject matches AND status is active");
+  checks++;
+
+  // 23. MedicationRequest?code=http://www.nlm.nih.gov/research/umls/rxnorm|860975
+  const medCodeBundle = await fetchBundle(baseUrl, `MedicationRequest?code=${encodeURIComponent("http://www.nlm.nih.gov/research/umls/rxnorm|860975")}`, fetchImpl);
+  assertNonEmpty(medCodeBundle, "MedicationRequest?code=RxNorm|860975");
+  assertAllMatch(medCodeBundle, "MedicationRequest?code=860975", (r) => {
+    const med = r?.medicationCodeableConcept as { coding?: Array<{ system?: string; code?: string }> } | undefined;
+    return Array.isArray(med?.coding) && med.coding.some((c) => c.system === "http://www.nlm.nih.gov/research/umls/rxnorm" && c.code?.startsWith("860975"));
+  }, "medicationCodeableConcept contains RxNorm 860975");
+  checks++;
+
+  // ── AllergyIntolerance search (1 check) ─────────────────────────
+  log("  AllergyIntolerance searches...");
+
+  // 24. AllergyIntolerance?patient=Patient/{id}
+  const allergyBundle = await fetchBundle(baseUrl, `AllergyIntolerance?patient=${patientRef}`, fetchImpl);
+  assertNonEmpty(allergyBundle, `AllergyIntolerance?patient=${patientRef}`);
+  assertAllMatch(allergyBundle, "AllergyIntolerance?patient", (r) => {
+    return (r?.patient as { reference?: string })?.reference === patientRef;
+  }, `patient.reference is ${patientRef}`);
   checks++;
 
   log(`  ${checks} search checks passed.`);
