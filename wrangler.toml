@@ -1,6 +1,7 @@
 name = "bulk-atr"
 main = "index.ts"
 compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"

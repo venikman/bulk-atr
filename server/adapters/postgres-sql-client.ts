@@ -25,11 +25,12 @@ const toQueryable = (queryable: PostgresQueryable): SqlQueryable => ({
 
 export const createPostgresSqlClient = (
   connectionString: string,
+  options?: { ssl?: boolean | "require" },
 ): SqlClient => {
   const sql = postgres(connectionString, {
     prepare: false,
     max: 1,
-    ssl: "require",
+    ssl: options?.ssl ?? "require",
   });
 
   return {
