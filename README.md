@@ -1,12 +1,14 @@
 # Bulk ATR Producer
 
 DaVinci ATR (Member Attribution) FHIR R4 producer server. Provides Group
-discovery, linked resource reads, and group-level asynchronous bulk data export.
+discovery, linked resource reads, FHIR search parameters, and group-level
+asynchronous bulk data export.
 
 ## Commands
 
 ```bash
 bun run start                    # start the server (auto-migrates)
+bun run seed                     # seed clinical resources (Encounter, Condition, etc.)
 bun run check                    # typecheck only
 bun run smoke full               # E2E smoke tests against prod
 bun run smoke full --mode=local  # auto-start server + test
@@ -38,7 +40,7 @@ bun run deploy                   # deploy to Cloudflare Workers
 - `bun run smoke full --mode=local` auto-starts `bun run start`, waits for
   `http://127.0.0.1:3001/fhir/metadata`, then tears the local server down when
   done.
-- Local mode requires `DATABASE_URL` or `POSTGRES_URL`.
+- Local mode requires `DATABASE_URL`, `POSTGRES_URL`, or `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
 - The runner is fully native — no external CLI dependencies.
 - NDJSON downloads are saved under `.artifacts/` unless you override
   `--download-dir`.

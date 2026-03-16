@@ -37,7 +37,16 @@
         },
         {
           "type": "Patient",
-          "interaction": [{ "code": "read" }]
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "name", "type": "string" },
+            { "name": "birthdate", "type": "date" },
+            { "name": "gender", "type": "token" },
+            { "name": "general-practitioner", "type": "reference" }
+          ]
         },
         {
           "type": "Coverage",
@@ -62,6 +71,81 @@
         {
           "type": "Location",
           "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "Encounter",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" },
+            { "name": "date", "type": "date" },
+            { "name": "status", "type": "token" },
+            { "name": "type", "type": "token" },
+            { "name": "practitioner", "type": "reference" },
+            { "name": "location", "type": "reference" },
+            { "name": "reason-code", "type": "token" }
+          ]
+        },
+        {
+          "type": "Condition",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" },
+            { "name": "code", "type": "token" },
+            { "name": "clinical-status", "type": "token" },
+            { "name": "category", "type": "token" }
+          ]
+        },
+        {
+          "type": "Procedure",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" },
+            { "name": "code", "type": "token" }
+          ]
+        },
+        {
+          "type": "Observation",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" },
+            { "name": "code", "type": "token" },
+            { "name": "category", "type": "token" },
+            { "name": "date", "type": "date" }
+          ]
+        },
+        {
+          "type": "MedicationRequest",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" },
+            { "name": "code", "type": "token" },
+            { "name": "status", "type": "token" }
+          ]
+        },
+        {
+          "type": "AllergyIntolerance",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" }
+          ]
         }
       ]
     }

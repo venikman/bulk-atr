@@ -46,15 +46,18 @@
 |----------|----------|---------|-------------|
 | DATABASE_URL | Yes* | -- | Postgres connection string |
 | POSTGRES_URL | Yes* | -- | Alternative to DATABASE_URL |
+| SUPABASE_URL | Yes* | -- | Supabase project URL (REST API mode) |
+| SUPABASE_SERVICE_ROLE_KEY | Yes* | -- | Supabase service role key (REST API mode) |
 | PORT | No | 3001 | HTTP listen port |
 
-*One of DATABASE_URL or POSTGRES_URL required.
+*One of: DATABASE_URL, POSTGRES_URL, or SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
 
 ## Local workflow
 
 ```bash
 bun install
-bun run start        # start the server (auto-migrates, reads from DB)
+bun run start                    # start the server (auto-migrates, reads from DB)
+bun run seed                     # seed clinical resources (Encounter, Condition, etc.)
 bun run smoke full               # run E2E smoke tests against prod
 bun run smoke full --mode=local  # auto-start server + test
 ```
