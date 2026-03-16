@@ -35,8 +35,11 @@ export class PostgresFhirStore implements FhirStore {
     const result = await this.queryable.query<ResourceRow>(
       `SELECT resource_json FROM fhir_resources
        WHERE resource_type = 'Group'
-       AND resource_json @> $1::jsonb`,
-      [JSON.stringify({ identifier: [{ system, value }] })],
+       AND EXISTS (
+         SELECT 1 FROM jsonb_array_elements(resource_json->'identifier') AS ident
+         WHERE ident->>'system' = $1 AND ident->>'value' = $2
+       )`,
+      [system, value],
     );
     return result.rows.map(parseResourceJson);
   }
