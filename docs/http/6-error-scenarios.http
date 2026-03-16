@@ -1,0 +1,60 @@
+### Group Search — Missing Parameter
+# Calling Group search with no identifier or name parameter returns 400.
+# Expected: OperationOutcome with code "invalid".
+
+GET {{baseUrl}}/fhir/Group
+Accept: application/fhir+json
+
+?? status == 400
+
+### Resource Read — Not Found
+# Reading a resource that does not exist returns 404.
+# Expected: OperationOutcome with code "not-found".
+
+GET {{baseUrl}}/fhir/Patient/does-not-exist-999
+Accept: application/fhir+json
+
+?? status == 404
+
+### Export — Wrong exportType
+# Using an invalid exportType returns 400.
+# The only accepted value is hl7.fhir.us.davinci-atr.
+
+GET {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType=wrong-type&_type=Patient
+Accept: application/fhir+json
+
+?? status == 400
+
+### Export — Missing Required Types
+# Requesting an export without the minimum required types (Group, Patient, Coverage) returns 400.
+# Here we only request Patient, which is missing Group and Coverage.
+
+GET {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Patient
+Accept: application/fhir+json
+
+?? status == 400
+
+### Export — Unsupported _since Parameter
+# The _since parameter is not supported and returns 400.
+# Other unsupported parameters: _until, _typeFilter, patient.
+
+GET {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage&_since=2025-01-01
+Accept: application/fhir+json
+
+?? status == 400
+
+### Unknown FHIR Route
+# Accessing an unsupported FHIR resource type returns 404 OperationOutcome.
+
+GET {{baseUrl}}/fhir/UnknownResource
+Accept: application/fhir+json
+
+?? status == 404
+
+### Bulk Status — Job Not Found
+# Polling a non-existent or expired job returns 404.
+
+GET {{baseUrl}}/fhir/bulk-status/00000000-0000-0000-0000-000000000000
+Accept: application/json
+
+?? status == 404

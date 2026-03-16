@@ -1,0 +1,181 @@
+### List All Patients
+
+GET {{baseUrl}}/fhir/Patient
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Patient by ID
+
+GET {{baseUrl}}/fhir/Patient/{{patientId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Coverages
+
+GET {{baseUrl}}/fhir/Coverage
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Coverage by ID
+
+GET {{baseUrl}}/fhir/Coverage/{{coverageId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All RelatedPersons
+
+GET {{baseUrl}}/fhir/RelatedPerson
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read RelatedPerson by ID
+
+GET {{baseUrl}}/fhir/RelatedPerson/{{relatedPersonId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Practitioners
+
+GET {{baseUrl}}/fhir/Practitioner
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Practitioner by ID
+
+GET {{baseUrl}}/fhir/Practitioner/{{practitionerId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All PractitionerRoles
+
+GET {{baseUrl}}/fhir/PractitionerRole
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read PractitionerRole by ID
+
+GET {{baseUrl}}/fhir/PractitionerRole/{{practitionerRoleId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Organizations
+
+GET {{baseUrl}}/fhir/Organization
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Organization by ID
+
+GET {{baseUrl}}/fhir/Organization/{{organizationId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Locations
+
+GET {{baseUrl}}/fhir/Location
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Location by ID
+
+GET {{baseUrl}}/fhir/Location/{{locationId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Encounters
+
+GET {{baseUrl}}/fhir/Encounter
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Encounter by ID
+
+GET {{baseUrl}}/fhir/Encounter/{{encounterId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Conditions
+
+GET {{baseUrl}}/fhir/Condition
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Condition by ID
+
+GET {{baseUrl}}/fhir/Condition/{{conditionId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Procedures
+
+GET {{baseUrl}}/fhir/Procedure
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Procedure by ID
+
+GET {{baseUrl}}/fhir/Procedure/{{procedureId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All Observations
+
+GET {{baseUrl}}/fhir/Observation
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read Observation by ID
+
+GET {{baseUrl}}/fhir/Observation/{{observationId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All MedicationRequests
+
+GET {{baseUrl}}/fhir/MedicationRequest
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read MedicationRequest by ID
+
+GET {{baseUrl}}/fhir/MedicationRequest/{{medicationRequestId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### List All AllergyIntolerances
+
+GET {{baseUrl}}/fhir/AllergyIntolerance
+Accept: application/fhir+json
+
+?? status == 200
+
+### Read AllergyIntolerance by ID
+
+GET {{baseUrl}}/fhir/AllergyIntolerance/{{allergyIntoleranceId}}
+Accept: application/fhir+json
+
+?? status == 200

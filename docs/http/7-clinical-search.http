@@ -1,0 +1,191 @@
+### Patient Search by Name
+# Search patients by name (partial match across family and given names).
+
+GET {{baseUrl}}/fhir/Patient?name=Smith
+Accept: application/fhir+json
+
+?? status == 200
+
+### Patient Search by Birthdate
+# Search patients by birth date range using ge/le prefixes.
+
+GET {{baseUrl}}/fhir/Patient?birthdate=ge1960-01-01&birthdate=le2000-12-31
+Accept: application/fhir+json
+
+?? status == 200
+
+### Patient Search by Gender
+# Search patients by administrative gender.
+
+GET {{baseUrl}}/fhir/Patient?gender=female
+Accept: application/fhir+json
+
+?? status == 200
+
+### Patient Search by General Practitioner
+# Search patients by assigned general practitioner reference.
+
+GET {{baseUrl}}/fhir/Patient?general-practitioner=PractitionerRole/{{practitionerRoleId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Patient
+# Search encounters for a specific patient.
+
+GET {{baseUrl}}/fhir/Encounter?patient=Patient/{{patientId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Date
+# Search encounters by date range using ge/le prefixes.
+
+GET {{baseUrl}}/fhir/Encounter?date=ge2025-01-01&date=le2025-12-31
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Status
+# Search encounters by status (planned, arrived, triaged, in-progress, onleave, finished, cancelled).
+
+GET {{baseUrl}}/fhir/Encounter?status=finished
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Type
+# Search encounters by CPT type code.
+
+GET {{baseUrl}}/fhir/Encounter?type=http://www.ama-assn.org/go/cpt|99213
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Practitioner
+# Search encounters by participating practitioner.
+
+GET {{baseUrl}}/fhir/Encounter?practitioner=Practitioner/{{practitionerId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Location
+# Search encounters by location.
+
+GET {{baseUrl}}/fhir/Encounter?location=Location/{{locationId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search by Reason Code
+# Search encounters by ICD-10 reason code.
+
+GET {{baseUrl}}/fhir/Encounter?reason-code=http://hl7.org/fhir/sid/icd-10-cm|E11.9
+Accept: application/fhir+json
+
+?? status == 200
+
+### Encounter Search Combined
+# Combined encounter search with practitioner, date range, and status.
+
+GET {{baseUrl}}/fhir/Encounter?practitioner=Practitioner/{{practitionerId}}&date=ge2025-01-01&status=finished
+Accept: application/fhir+json
+
+?? status == 200
+
+### Condition Search by Patient
+# Search conditions for a specific patient (problem list).
+
+GET {{baseUrl}}/fhir/Condition?patient=Patient/{{patientId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Condition Search by Code
+# Search conditions by ICD-10 code prefix.
+
+GET {{baseUrl}}/fhir/Condition?code=http://hl7.org/fhir/sid/icd-10-cm|E11
+Accept: application/fhir+json
+
+?? status == 200
+
+### Condition Search by Clinical Status
+# Search active conditions filtered by ICD-10 code.
+
+GET {{baseUrl}}/fhir/Condition?clinical-status=active&code=http://hl7.org/fhir/sid/icd-10-cm|I10
+Accept: application/fhir+json
+
+?? status == 200
+
+### Condition Search by Category
+# Search conditions by category (encounter-diagnosis or problem-list-item) for a patient.
+
+GET {{baseUrl}}/fhir/Condition?category=encounter-diagnosis&patient=Patient/{{patientId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Procedure Search by Patient
+# Search procedures for a specific patient.
+
+GET {{baseUrl}}/fhir/Procedure?patient=Patient/{{patientId}}
+Accept: application/fhir+json
+
+?? status == 200
+
+### Procedure Search by Code
+# Search procedures by CPT code.
+
+GET {{baseUrl}}/fhir/Procedure?code=http://www.ama-assn.org/go/cpt|99385
+Accept: application/fhir+json
+
+?? status == 200
+
+### Observation Search Vitals
+# Search vital-signs observations for a patient.
+
+GET {{baseUrl}}/fhir/Observation?patient=Patient/{{patientId}}&category=vital-signs
+Accept: application/fhir+json
+
+?? status == 200
+
+### Observation Search Labs
+# Search laboratory observations for a patient.
+
+GET {{baseUrl}}/fhir/Observation?patient=Patient/{{patientId}}&category=laboratory
+Accept: application/fhir+json
+
+?? status == 200
+
+### Observation Search by LOINC
+# Search observations by LOINC code (4548-4 = Hemoglobin A1c) with date filter.
+
+GET {{baseUrl}}/fhir/Observation?code=http://loinc.org|4548-4&date=ge2025-01-01
+Accept: application/fhir+json
+
+?? status == 200
+
+### MedicationRequest Search by Patient
+# Search active medication requests for a patient.
+
+GET {{baseUrl}}/fhir/MedicationRequest?patient=Patient/{{patientId}}&status=active
+Accept: application/fhir+json
+
+?? status == 200
+
+### MedicationRequest Search by Code
+# Search medication requests by RxNorm code (860975 = Metformin 500mg).
+
+GET {{baseUrl}}/fhir/MedicationRequest?code=http://www.nlm.nih.gov/research/umls/rxnorm|860975
+Accept: application/fhir+json
+
+?? status == 200
+
+### AllergyIntolerance Search by Patient
+# Search allergy intolerances for a patient.
+
+GET {{baseUrl}}/fhir/AllergyIntolerance?patient=Patient/{{patientId}}
+Accept: application/fhir+json
+
+?? status == 200

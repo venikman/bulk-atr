@@ -1,0 +1,72 @@
+### Download Group NDJSON
+# The attribution Group resource with its full member list.
+# Each line is a complete FHIR Group resource in JSON format.
+# Prerequisite: Run the Bulk Export Workflow first.
+
+GET {{groupFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download Patient NDJSON
+# All Patient resources attributed to the Group.
+# Each line is a complete FHIR Patient resource in JSON format.
+
+GET {{patientFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download Coverage NDJSON
+# Coverage resources linking patients to their insurance plans.
+# Each line is a complete FHIR Coverage resource in JSON format.
+
+GET {{coverageFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download RelatedPerson NDJSON
+# Persons related to attributed patients (e.g. guardians).
+# Each line is a complete FHIR RelatedPerson resource in JSON format.
+
+GET {{relatedPersonFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download Practitioner NDJSON
+# Healthcare practitioners linked to the attribution group.
+# Each line is a complete FHIR Practitioner resource in JSON format.
+
+GET {{practitionerFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download PractitionerRole NDJSON
+# Role assignments linking practitioners to organizations.
+# Each line is a complete FHIR PractitionerRole resource in JSON format.
+
+GET {{practitionerRoleFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download Organization NDJSON
+# Payer and provider organizations in the attribution group.
+# Each line is a complete FHIR Organization resource in JSON format.
+
+GET {{organizationFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200
+
+### Download Location NDJSON
+# Physical locations where care is delivered.
+# Each line is a complete FHIR Location resource in JSON format.
+
+GET {{locationFileUrl}}
+Accept: application/fhir+ndjson
+
+?? status == 200

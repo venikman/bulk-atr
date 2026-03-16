@@ -55,7 +55,7 @@ docs/
   capability-statement.json     # FHIR CapabilityStatement reference
   architecture.md               # mapping rules and invariants
   deployment.md                 # deployment, platform, and observability
-  bruno/                        # Bruno API collection for developers
+  http/                         # httpyac API collection (.http files)
 ```
 
 ## Testing rules

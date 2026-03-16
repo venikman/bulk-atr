@@ -1,0 +1,69 @@
+### Kick Off Bulk Export
+# @name kickOffExport
+# Initiates an asynchronous bulk export of the attribution Group and all linked resources.
+# Required parameters:
+#   exportType = hl7.fhir.us.davinci-atr
+#   _type = comma-separated list (minimum: Group,Patient,Coverage)
+# Optional parameters:
+#   _outputFormat — defaults to application/fhir+ndjson
+#   resourceTypes — alias for _type
+# Unsupported parameters (will return 400):
+#   _since, _until, _typeFilter, patient
+# Response: 202 Accepted with Content-Location header for status polling.
+# Auto-populates bulkStatusUrl and jobId.
+
+GET {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType={{exportType}}&_type={{exportTypes}}
+Accept: application/fhir+json
+Prefer: respond-async
+
+?? status == 202
+
+{{
+  const contentLocation = response.headers["content-location"] || "";
+  exports.bulkStatusUrl = contentLocation;
+  exports.jobId = contentLocation ? contentLocation.split("/").pop() : "";
+}}
+
+### Poll Export Status
+# @name pollExportStatus
+# Poll the bulk export job for status.
+# Responses:
+#   202 — Still processing. Check X-Progress header. Wait Retry-After seconds.
+#   200 — Complete. Body contains export manifest with download URLs.
+#   404 — Job not found or expired.
+#   429 — Polling too fast (max 1 req/sec per caller).
+# When complete (200), auto-populates *FileUrl variables for each resource type.
+# Tip: Keep re-sending this request until you get 200.
+
+GET {{bulkStatusUrl}}
+Accept: application/json
+
+{{
+  if (response.statusCode === 200) {
+    const output = Array.isArray(response.parsedBody.output) ? response.parsedBody.output : [];
+    const byType = Object.fromEntries(output.map(e => [e.type, e.url]));
+    const typeMap = {
+      Group: "groupFileUrl",
+      Patient: "patientFileUrl",
+      Coverage: "coverageFileUrl",
+      RelatedPerson: "relatedPersonFileUrl",
+      Practitioner: "practitionerFileUrl",
+      PractitionerRole: "practitionerRoleFileUrl",
+      Organization: "organizationFileUrl",
+      Location: "locationFileUrl"
+    };
+    for (const [type, envKey] of Object.entries(typeMap)) {
+      exports[envKey] = byType[type] || "";
+    }
+  }
+}}
+
+### Cancel / Delete Export Job
+# Cancel a running export or clean up a completed job.
+# Expires the job immediately. Returns 202 on success.
+# After deletion, the job's status URL and file download URLs will return 404.
+
+DELETE {{baseUrl}}/fhir/bulk-status/{{jobId}}
+Accept: application/fhir+json
+
+?? status == 202

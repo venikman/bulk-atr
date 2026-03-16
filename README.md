@@ -18,7 +18,7 @@ bun run deploy                   # deploy to Cloudflare Workers
 ## Repo layout
 
 - `server/`: Hono app, route modules, adapters, and domain logic
-- `docs/bruno/`: Bruno API collection for developers (import into Bruno)
+- `docs/http/`: httpyac API collection (`.http` files — works in VS Code, IntelliJ, or CLI)
 - `docs/openapi.yaml`: OpenAPI 3.1 specification
 - `docs/architecture.md`: mapping rules and invariants
 - `docs/deployment.md`: deployment and runtime notes
