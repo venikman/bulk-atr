@@ -1,5 +1,6 @@
 import type { FhirStore } from "../lib/fhir-store.ts";
 import type { FhirResource } from "../lib/types.ts";
+import { resourceMatchesParams } from "../lib/search-params.ts";
 
 export class SupabaseRestFhirStore implements FhirStore {
   private readonly baseUrl: string;
@@ -36,6 +37,11 @@ export class SupabaseRestFhirStore implements FhirStore {
     return this.query(
       `resource_type=eq.${encodeURIComponent(resourceType)}&select=resource_json&order=resource_id`,
     );
+  }
+
+  async searchByParams(resourceType: string, params: Record<string, string | string[]>) {
+    const all = await this.listByType(resourceType);
+    return all.filter((r) => resourceMatchesParams(r as Record<string, unknown>, resourceType, params));
   }
 
   async searchGroupsByIdentifier(identifier: string) {

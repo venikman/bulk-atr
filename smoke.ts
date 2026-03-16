@@ -290,6 +290,7 @@ export async function runSmokeWorkflow(
     if (options.workflow === "full") {
       await runDirectReadsStep(workingEnvironmentPath, fetchImpl, log);
       await runResourceListsStep(workingEnvironmentPath, fetchImpl, log);
+      await runSearchStep(workingEnvironmentPath, fetchImpl, log);
       await runNotFoundStep(workingEnvironmentPath, fetchImpl, log);
       await runContentTypeStep(workingEnvironmentPath, fetchImpl, log);
     }
@@ -623,6 +624,12 @@ const LISTABLE_RESOURCE_TYPES = [
   "PractitionerRole",
   "Organization",
   "Location",
+  "Encounter",
+  "Condition",
+  "Procedure",
+  "Observation",
+  "MedicationRequest",
+  "AllergyIntolerance",
 ] as const;
 
 async function runDirectReadsStep(
@@ -822,6 +829,89 @@ async function runResourceListsStep(
     }
   }
   log(`  All ${locBundle.total} Locations reference a managing Organization.`);
+}
+
+async function runSearchStep(
+  environmentPath: string,
+  fetchImpl: typeof fetch,
+  log: (message: string) => void,
+): Promise<void> {
+  log("Smoke step: Search Parameters");
+  const environment = await readEnvironmentValues(environmentPath);
+  const baseUrl = environment.baseUrl;
+  let checks = 0;
+
+  // Patient search by name — should return a Bundle
+  const patientNameBundle = await fetchBundle(baseUrl, "Patient?name=a", fetchImpl);
+  if ((patientNameBundle.total ?? 0) < 1) {
+    throw new Error("Patient?name=a returned no results.");
+  }
+  checks++;
+
+  // Patient search by gender
+  const patientGenderBundle = await fetchBundle(baseUrl, "Patient?gender=female", fetchImpl);
+  if ((patientGenderBundle.total ?? 0) < 1) {
+    throw new Error("Patient?gender=female returned no results.");
+  }
+  checks++;
+
+  // Encounter search by patient
+  const encBundle = await fetchBundle(baseUrl, `Encounter?patient=Patient/${environment.patientId}`, fetchImpl);
+  if ((encBundle.total ?? 0) < 1) {
+    throw new Error(`Encounter?patient=Patient/${environment.patientId} returned no results.`);
+  }
+  // Verify all returned encounters reference the requested patient
+  for (const entry of encBundle.entry ?? []) {
+    const subjectRef = (entry.resource?.subject as { reference?: string })?.reference ?? "";
+    if (subjectRef !== `Patient/${environment.patientId}`) {
+      throw new Error(`Encounter search returned entry with subject "${subjectRef}", expected "Patient/${environment.patientId}".`);
+    }
+  }
+  checks++;
+
+  // Encounter search by status
+  const encStatusBundle = await fetchBundle(baseUrl, "Encounter?status=finished", fetchImpl);
+  if ((encStatusBundle.total ?? 0) < 1) {
+    throw new Error("Encounter?status=finished returned no results.");
+  }
+  checks++;
+
+  // Condition search by patient
+  const condBundle = await fetchBundle(baseUrl, `Condition?patient=Patient/${environment.patientId}`, fetchImpl);
+  if ((condBundle.total ?? 0) < 1) {
+    throw new Error(`Condition?patient=Patient/${environment.patientId} returned no results.`);
+  }
+  checks++;
+
+  // Condition search by code prefix
+  const condCodeBundle = await fetchBundle(baseUrl, `Condition?code=${encodeURIComponent("http://hl7.org/fhir/sid/icd-10-cm|E11")}`, fetchImpl);
+  if ((condCodeBundle.total ?? 0) < 1) {
+    throw new Error("Condition?code=http://hl7.org/fhir/sid/icd-10-cm|E11 returned no results.");
+  }
+  checks++;
+
+  // Observation search by patient + category
+  const obsBundle = await fetchBundle(baseUrl, `Observation?patient=Patient/${environment.patientId}&category=vital-signs`, fetchImpl);
+  if ((obsBundle.total ?? 0) < 1) {
+    throw new Error(`Observation vital-signs for patient returned no results.`);
+  }
+  checks++;
+
+  // MedicationRequest search by patient
+  const medBundle = await fetchBundle(baseUrl, `MedicationRequest?patient=Patient/${environment.patientId}`, fetchImpl);
+  if ((medBundle.total ?? 0) < 1) {
+    throw new Error(`MedicationRequest?patient=Patient/${environment.patientId} returned no results.`);
+  }
+  checks++;
+
+  // AllergyIntolerance search by patient
+  const allergyBundle = await fetchBundle(baseUrl, `AllergyIntolerance?patient=Patient/${environment.patientId}`, fetchImpl);
+  if ((allergyBundle.total ?? 0) < 1) {
+    throw new Error(`AllergyIntolerance?patient=Patient/${environment.patientId} returned no results.`);
+  }
+  checks++;
+
+  log(`  ${checks} search checks passed.`);
 }
 
 async function runNotFoundStep(

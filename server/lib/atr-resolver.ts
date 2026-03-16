@@ -69,6 +69,10 @@ export class AtrResolver {
     return this.store.listByType(resourceType);
   }
 
+  searchByParams(resourceType: string, params: Record<string, string | string[]>) {
+    return this.store.searchByParams(resourceType, params);
+  }
+
   buildSearchBundle(resources: FhirResource[], requestUrl: string) {
     return {
       resourceType: "Bundle",

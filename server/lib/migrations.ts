@@ -24,6 +24,18 @@ export const ensureFhirResourceSchema = async (queryable: SqlQueryable) => {
       ON fhir_resources ((lower(resource_json->>'name')))
       WHERE resource_type = 'Group';
   `);
+
+  await queryable.query(`
+    CREATE INDEX IF NOT EXISTS idx_fhir_resources_subject_ref
+      ON fhir_resources ((resource_json->'subject'->>'reference'))
+      WHERE resource_type IN ('Encounter','Condition','Procedure','Observation','MedicationRequest');
+  `);
+
+  await queryable.query(`
+    CREATE INDEX IF NOT EXISTS idx_fhir_resources_allergy_patient_ref
+      ON fhir_resources ((resource_json->'patient'->>'reference'))
+      WHERE resource_type = 'AllergyIntolerance';
+  `);
 };
 
 export const applyPendingMigrations = async (sql: SqlClient) => {

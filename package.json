@@ -5,6 +5,7 @@
   "scripts": {
     "start": "bun run index.ts",
     "check": "bun run tsc --noEmit",
+    "seed": "bun run seed.ts",
     "smoke": "bun run smoke.ts",
     "deploy": "bunx wrangler deploy"
   },

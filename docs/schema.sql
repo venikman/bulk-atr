@@ -68,3 +68,11 @@ CREATE INDEX IF NOT EXISTS idx_fhir_resources_type ON fhir_resources (resource_t
 CREATE INDEX IF NOT EXISTS idx_fhir_resources_group_name
   ON fhir_resources ((lower(resource_json->>'name')))
   WHERE resource_type = 'Group';
+
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_subject_ref
+  ON fhir_resources ((resource_json->'subject'->>'reference'))
+  WHERE resource_type IN ('Encounter','Condition','Procedure','Observation','MedicationRequest');
+
+CREATE INDEX IF NOT EXISTS idx_fhir_resources_allergy_patient_ref
+  ON fhir_resources ((resource_json->'patient'->>'reference'))
+  WHERE resource_type = 'AllergyIntolerance';

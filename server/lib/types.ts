@@ -13,7 +13,13 @@ export type SupportedResourceType =
   | "Practitioner"
   | "PractitionerRole"
   | "Organization"
-  | "Location";
+  | "Location"
+  | "Encounter"
+  | "Condition"
+  | "Procedure"
+  | "Observation"
+  | "MedicationRequest"
+  | "AllergyIntolerance";
 
 export const supportedResourceTypes: SupportedResourceType[] = [
   "Group",
@@ -24,6 +30,12 @@ export const supportedResourceTypes: SupportedResourceType[] = [
   "PractitionerRole",
   "Organization",
   "Location",
+  "Encounter",
+  "Condition",
+  "Procedure",
+  "Observation",
+  "MedicationRequest",
+  "AllergyIntolerance",
 ];
 
 export type ResourceCollection = Record<SupportedResourceType, FhirResource[]>;

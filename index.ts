@@ -45,7 +45,12 @@ export default {
   port: Number.parseInt(process.env.PORT ?? "3001", 10),
 
   async fetch(request: Request, env?: Env): Promise<Response> {
-    const resolvedEnv: Env = env ?? {
+    // Cloudflare Workers passes env bindings; Bun passes a Server object.
+    // Detect Workers env by checking for a known property shape.
+    const isWorkersEnv = env && (
+      env.HYPERDRIVE || env.DATABASE_URL || env.SUPABASE_URL
+    );
+    const resolvedEnv: Env = isWorkersEnv ? env : {
       DATABASE_URL: process.env.DATABASE_URL,
       POSTGRES_URL: process.env.POSTGRES_URL,
       SUPABASE_URL: process.env.SUPABASE_URL,

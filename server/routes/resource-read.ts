@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { AtrResolver } from "../lib/atr-resolver.ts";
 import { fhirJson, fhirOperationOutcome } from "../lib/operation-outcome.ts";
 import { supportedResourceTypes } from "../lib/types.ts";
+import { extractSearchParams } from "../lib/search-params.ts";
 
 const readableResourceTypes = supportedResourceTypes.filter(
   (resourceType) => resourceType !== "Group",
@@ -21,7 +22,17 @@ export const createResourceReadRoutes = ({ resolver }: ResourceReadOptions) => {
       return context.notFound();
     }
 
-    const resources = await resolver.listByType(resourceType);
+    const allQuery = context.req.queries();
+    const queryRecord: Record<string, string | string[]> = {};
+    for (const [key, values] of Object.entries(allQuery)) {
+      queryRecord[key] = values.length === 1 ? values[0] : values;
+    }
+    const searchParams = extractSearchParams(queryRecord);
+
+    const resources = Object.keys(searchParams).length > 0
+      ? await resolver.searchByParams(resourceType, searchParams)
+      : await resolver.listByType(resourceType);
+
     return fhirJson(context, resolver.buildSearchBundle(resources, context.req.url));
   });
 
