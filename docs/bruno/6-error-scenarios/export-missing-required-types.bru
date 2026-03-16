@@ -1,0 +1,29 @@
+meta {
+  name: Export — missing required types
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Patient
+  body: none
+  auth: none
+}
+
+params:query {
+  exportType: hl7.fhir.us.davinci-atr
+  _type: Patient
+}
+
+tests {
+  test("Returns 400 for missing required types", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.resourceType).to.equal("OperationOutcome");
+  });
+}
+
+docs {
+  Requesting an export without the minimum required types (Group, Patient, Coverage) returns 400.
+
+  Here we only request Patient, which is missing Group and Coverage.
+}

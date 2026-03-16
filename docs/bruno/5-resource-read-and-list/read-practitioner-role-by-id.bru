@@ -1,0 +1,22 @@
+meta {
+  name: Read PractitionerRole by ID
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/fhir/PractitionerRole/{{practitionerRoleId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("PractitionerRole read succeeds", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("PractitionerRole");
+  });
+}
+
+docs {
+  Read a single PractitionerRole resource by ID.
+}

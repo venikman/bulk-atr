@@ -1,111 +1,72 @@
 import { Hono } from "hono";
-import type { AtrResolver } from "./lib/atr-resolver.ts";
-import { type AppEnv, type AuthMode } from "./lib/auth.ts";
+import { AtrResolver } from "./lib/atr-resolver.ts";
 import type { ExportArtifactStore } from "./lib/export-artifact-store.ts";
 import type { ExportJobRepository } from "./lib/export-job-repository.ts";
+import type { FhirStore } from "./lib/fhir-store.ts";
 import { fhirOperationOutcome } from "./lib/operation-outcome.ts";
+import type { SqlClient } from "./lib/sql-client.ts";
 import { createBulkRoutes } from "./routes/bulk.ts";
 import { createGroupRoutes } from "./routes/group.ts";
 import { createMetadataRoutes } from "./routes/metadata.ts";
 import { createResourceReadRoutes } from "./routes/resource-read.ts";
 
 export type AppOptions = {
-  authMode: AuthMode;
-  resolver: AtrResolver;
+  fhirStore: FhirStore;
   artifactStore: ExportArtifactStore;
   jobRepository: ExportJobRepository;
+  sql?: SqlClient;
 };
 
 export const createApp = ({
-  authMode,
-  resolver,
+  fhirStore,
   artifactStore,
   jobRepository,
+  sql,
 }: AppOptions) => {
-  const app = new Hono<AppEnv>();
-  const fhir = new Hono<AppEnv>();
+  const resolver = new AtrResolver(fhirStore);
+  const app = new Hono();
+  const fhir = new Hono();
 
-  app.get("/", (context) =>
-    context.html(`<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bulk ATR Producer API</title>
-  </head>
-  <body>
-    <main>
-      <h1>Bulk ATR Producer API</h1>
-      <p>ATR/FHIR API for Group discovery, linked reads, and asynchronous bulk export.</p>
-      <h2>API Surface</h2>
+  app.use("*", async (context, next) => {
+    const start = Date.now();
+    await next();
+    const ms = Date.now() - start;
+    console.log(
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        method: context.req.method,
+        path: context.req.path,
+        status: context.res.status,
+        ms,
+      }),
+    );
+  });
 
-      <section>
-        <h3>Metadata</h3>
-        <ul>
-          <li><a href="/fhir/metadata">CapabilityStatement</a></li>
-        </ul>
-      </section>
+  app.get("/health", async (context) => {
+    if (sql) {
+      try {
+        await sql.query("SELECT 1");
+      } catch {
+        return context.json(
+          { status: "error", detail: "database unreachable" },
+          503,
+        );
+      }
+    }
+    return context.json({ status: "ok" }, 200);
+  });
 
-      <section>
-        <h3>Group</h3>
-        <ul>
-          <li>
-            <a href="/fhir/Group?identifier=http://example.org/contracts|CTR-2026-NWACO-001&_summary=true">
-              Search by identifier
-            </a>
-          </li>
-          <li>
-            <a href="/fhir/Group?name=Northwind%20ACO%202026%20Member%20Attribution%20List&_summary=true">
-              Search by name
-            </a>
-          </li>
-          <li><a href="/fhir/Group/group-2026-northwind-atr-001">Read Group by id</a></li>
-        </ul>
-      </section>
-
-      <section>
-        <h3>Bulk Export</h3>
-        <ul>
-          <li>
-            <a href="/fhir/Group/group-2026-northwind-atr-001/$davinci-data-export?exportType=hl7.fhir.us.davinci-atr&_type=Group,Patient,Coverage">
-              Kick off export
-            </a>
-          </li>
-          <li><code>/fhir/bulk-status/{jobId}</code></li>
-          <li><code>/fhir/bulk-files/{jobId}/{fileName}</code></li>
-        </ul>
-      </section>
-
-      <section>
-        <h3>Direct Reads</h3>
-        <ul>
-          <li><a href="/fhir/Patient/patient-0001">Patient</a></li>
-          <li><a href="/fhir/Coverage/coverage-0001">Coverage</a></li>
-          <li><a href="/fhir/RelatedPerson/relatedperson-0003">RelatedPerson</a></li>
-          <li><a href="/fhir/Practitioner/practitioner-001">Practitioner</a></li>
-          <li><a href="/fhir/PractitionerRole/practitionerrole-001">PractitionerRole</a></li>
-          <li><a href="/fhir/Organization/organization-payer-001">Organization</a></li>
-          <li><a href="/fhir/Location/location-001">Location</a></li>
-        </ul>
-      </section>
-
-      <p>Some routes require a bearer token when the server runs in smart-backend mode.</p>
-    </main>
-  </body>
-</html>`));
-
-  fhir.route("/", createMetadataRoutes(authMode));
-  fhir.route("/", createGroupRoutes({ resolver, authMode }));
+  fhir.route("/", createMetadataRoutes());
+  fhir.route("/", createGroupRoutes({ resolver }));
   fhir.route(
     "/",
     createBulkRoutes({
       resolver,
       artifactStore,
       jobRepository,
-      authMode,
     }),
   );
-  fhir.route("/", createResourceReadRoutes({ resolver, authMode }));
+  fhir.route("/", createResourceReadRoutes({ resolver }));
 
   app.route("/fhir", fhir);
 

@@ -5,5 +5,7 @@ coverage/
 .artifacts/
 .DS_Store
 .tmp/
-.vercel
+.wrangler
 .env*.local
+.env
+.claude/

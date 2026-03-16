@@ -1,0 +1,25 @@
+meta {
+  name: Cancel / delete export job
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/fhir/bulk-status/{{jobId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("Job deleted (202)", function() {
+    expect(res.status).to.equal(202);
+  });
+}
+
+docs {
+  Cancel a running export or clean up a completed job.
+
+  Expires the job immediately. Returns 202 on success.
+
+  After deletion, the job's status URL and file download URLs will return 404.
+}

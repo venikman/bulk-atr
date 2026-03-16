@@ -27,8 +27,8 @@ export const createPostgresSqlClient = (
   connectionString: string,
 ): SqlClient => {
   const sql = postgres(connectionString, {
-    max: 1,
     prepare: false,
+    max: 1,
     ssl: "require",
   });
 

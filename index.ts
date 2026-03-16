@@ -1,25 +1,35 @@
 import { createPostgresSqlClient } from "./server/adapters/postgres-sql-client.ts";
-import { getDataProfileFromEnv } from "./server/bootstrap/data-profile.ts";
+import { SupabaseRestSqlClient } from "./server/adapters/supabase-rest-client.ts";
 import { createRuntimeApp } from "./server/bootstrap/runtime.ts";
-import { normalizeAuthMode } from "./server/lib/auth.ts";
+import { applyPendingMigrations } from "./server/lib/migrations.ts";
+import type { SqlClient } from "./server/lib/sql-client.ts";
 
-const databaseUrl = Deno.env.get("DATABASE_URL") ??
-  Deno.env.get("POSTGRES_URL");
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!databaseUrl) {
+const buildSqlClient = (): SqlClient => {
+  const explicit = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+  if (explicit) {
+    return createPostgresSqlClient(explicit);
+  }
+
+  if (supabaseUrl && supabaseKey) {
+    return new SupabaseRestSqlClient({ supabaseUrl, serviceRoleKey: supabaseKey });
+  }
+
   throw new Error(
-    "DATABASE_URL or POSTGRES_URL must be configured for the runtime app.",
+    "Set DATABASE_URL, or SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.",
   );
-}
+};
 
-const port = Number.parseInt(Deno.env.get("PORT") ?? "3001", 10);
-const authMode = normalizeAuthMode(Deno.env.get("AUTH_MODE"));
-const dataProfile = getDataProfileFromEnv(Deno.env.get("DATA_PROFILE"));
-const sql = createPostgresSqlClient(databaseUrl);
-const app = await createRuntimeApp({
-  authMode,
-  sql,
-  dataProfile,
-});
+const port = Number.parseInt(process.env.PORT ?? "3001", 10);
+const sql = buildSqlClient();
 
-Deno.serve({ port }, app.fetch);
+await applyPendingMigrations(sql);
+
+const app = createRuntimeApp({ sql, supabaseUrl, supabaseKey });
+
+export default {
+  port,
+  fetch: app.fetch,
+};

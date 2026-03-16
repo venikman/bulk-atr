@@ -1,0 +1,30 @@
+meta {
+  name: Download Coverage NDJSON
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{coverageFileUrl}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/fhir+ndjson
+}
+
+tests {
+  test("NDJSON download succeeds", function() {
+    expect(res.status).to.equal(200);
+  });
+}
+
+docs {
+  Download the Coverage NDJSON file. Coverage resources linking patients to their insurance plans.
+
+  Each line is a complete FHIR Coverage resource in JSON format.
+  Parse by splitting on newlines and JSON.parse() each line.
+
+  Prerequisite: Run the Bulk Export Workflow first — the poll step auto-populates this URL.
+}

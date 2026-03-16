@@ -1,0 +1,30 @@
+meta {
+  name: Download RelatedPerson NDJSON
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{relatedPersonFileUrl}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/fhir+ndjson
+}
+
+tests {
+  test("NDJSON download succeeds", function() {
+    expect(res.status).to.equal(200);
+  });
+}
+
+docs {
+  Download the RelatedPerson NDJSON file. Persons related to attributed patients (e.g. guardians).
+
+  Each line is a complete FHIR RelatedPerson resource in JSON format.
+  Parse by splitting on newlines and JSON.parse() each line.
+
+  Prerequisite: Run the Bulk Export Workflow first — the poll step auto-populates this URL.
+}

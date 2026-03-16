@@ -1,0 +1,30 @@
+meta {
+  name: Download Location NDJSON
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{locationFileUrl}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/fhir+ndjson
+}
+
+tests {
+  test("NDJSON download succeeds", function() {
+    expect(res.status).to.equal(200);
+  });
+}
+
+docs {
+  Download the Location NDJSON file. Physical locations where care is delivered.
+
+  Each line is a complete FHIR Location resource in JSON format.
+  Parse by splitting on newlines and JSON.parse() each line.
+
+  Prerequisite: Run the Bulk Export Workflow first — the poll step auto-populates this URL.
+}

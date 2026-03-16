@@ -1,0 +1,7 @@
+name = "bulk-atr"
+main = "index.ts"
+compatibility_date = "2025-04-01"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "b7beb35a9db44c1ebdd6a8e53662b5be"

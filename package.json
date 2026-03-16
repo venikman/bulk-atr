@@ -1,0 +1,19 @@
+{
+  "name": "bulk-atr",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "check": "bun run tsc --noEmit",
+    "smoke": "bun run smoke.ts",
+    "deploy": "bunx wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.7.0"
+  }
+}

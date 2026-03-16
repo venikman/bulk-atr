@@ -1,0 +1,30 @@
+meta {
+  name: Download PractitionerRole NDJSON
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{practitionerRoleFileUrl}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/fhir+ndjson
+}
+
+tests {
+  test("NDJSON download succeeds", function() {
+    expect(res.status).to.equal(200);
+  });
+}
+
+docs {
+  Download the PractitionerRole NDJSON file. Role assignments linking practitioners to organizations.
+
+  Each line is a complete FHIR PractitionerRole resource in JSON format.
+  Parse by splitting on newlines and JSON.parse() each line.
+
+  Prerequisite: Run the Bulk Export Workflow first — the poll step auto-populates this URL.
+}

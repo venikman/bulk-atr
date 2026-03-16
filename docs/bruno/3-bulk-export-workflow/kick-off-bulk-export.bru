@@ -1,0 +1,65 @@
+meta {
+  name: Kick off bulk export
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType={{exportType}}&_type={{exportTypes}}
+  body: none
+  auth: none
+}
+
+headers {
+  Prefer: respond-async
+}
+
+params:query {
+  exportType: {{exportType}}
+  _type: {{exportTypes}}
+}
+
+tests {
+  test("Export kickoff accepted (202)", function() {
+    expect(res.status).to.equal(202);
+  });
+
+  test("Content-Location header present", function() {
+    expect(res.headers["content-location"]).to.be.a("string");
+  });
+}
+
+script:post-response {
+  const contentLocation = res.headers["content-location"] || "";
+  bru.setEnvVar("bulkStatusUrl", contentLocation);
+
+  const jobId = contentLocation ? contentLocation.split("/").pop() : "";
+  bru.setEnvVar("jobId", jobId);
+
+  // Clear previous file URLs
+  ["groupFileUrl", "patientFileUrl", "coverageFileUrl",
+   "relatedPersonFileUrl", "practitionerFileUrl",
+   "practitionerRoleFileUrl", "organizationFileUrl", "locationFileUrl"
+  ].forEach(key => bru.setEnvVar(key, ""));
+}
+
+docs {
+  Initiates an asynchronous bulk export of the attribution Group and all linked resources.
+
+  Required parameters:
+  - exportType = hl7.fhir.us.davinci-atr
+  - _type = comma-separated list (minimum: Group,Patient,Coverage)
+
+  Optional parameters:
+  - _outputFormat — defaults to application/fhir+ndjson
+  - resourceTypes — alias for _type
+
+  Unsupported parameters (will return 400):
+  - _since, _until, _typeFilter, patient
+
+  Response: 202 Accepted
+  - Content-Location header: URL to poll for status
+  - Retry-After: 1 header
+
+  Auto-populates `bulkStatusUrl` and `jobId`.
+}

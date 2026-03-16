@@ -1,0 +1,25 @@
+meta {
+  name: Group search — missing parameter
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/fhir/Group
+  body: none
+  auth: none
+}
+
+tests {
+  test("Returns 400 OperationOutcome", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.resourceType).to.equal("OperationOutcome");
+    expect(res.body.issue[0].severity).to.equal("error");
+  });
+}
+
+docs {
+  Calling Group search with no `identifier` or `name` parameter returns 400.
+
+  Expected: OperationOutcome with code `invalid`.
+}

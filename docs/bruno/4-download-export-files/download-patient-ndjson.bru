@@ -1,0 +1,30 @@
+meta {
+  name: Download Patient NDJSON
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{patientFileUrl}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/fhir+ndjson
+}
+
+tests {
+  test("NDJSON download succeeds", function() {
+    expect(res.status).to.equal(200);
+  });
+}
+
+docs {
+  Download the Patient NDJSON file. All Patient resources attributed to the Group.
+
+  Each line is a complete FHIR Patient resource in JSON format.
+  Parse by splitting on newlines and JSON.parse() each line.
+
+  Prerequisite: Run the Bulk Export Workflow first — the poll step auto-populates this URL.
+}

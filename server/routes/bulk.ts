@@ -1,12 +1,5 @@
 import { Hono } from "hono";
 import type { AtrResolver } from "../lib/atr-resolver.ts";
-import {
-  type AppEnv,
-  type AuthMode,
-  createAuthMiddleware,
-  getCallerId,
-  requiresAccessToken,
-} from "../lib/auth.ts";
 import type { ExportArtifactStore } from "../lib/export-artifact-store.ts";
 import type {
   ClaimedExportJob,
@@ -46,7 +39,6 @@ type BulkRoutesOptions = {
   resolver: AtrResolver;
   jobRepository: ExportJobRepository;
   artifactStore: ExportArtifactStore;
-  authMode: AuthMode;
 };
 
 const normalizeTypeParameter = (
@@ -99,11 +91,10 @@ const buildStoredManifest = (
   transactionTime: string,
   requestUrl: string,
   normalizedTypes: SupportedResourceType[],
-  authMode: AuthMode,
 ): StoredManifest => ({
   transactionTime,
   request: requestUrl,
-  requiresAccessToken: requiresAccessToken(authMode),
+  requiresAccessToken: false,
   output: normalizedTypes.map((type) => ({
     type,
     fileName: `${type}-1.ndjson`,
@@ -123,15 +114,23 @@ const buildPublicManifest = (
   })),
 });
 
+const getCallerId = (context: { req: { header: (name: string) => string | undefined } }) => {
+  const forwarded = context.req.header("x-forwarded-for") ||
+    context.req.header("x-real-ip");
+  if (!forwarded) {
+    return "anonymous";
+  }
+  return forwarded.split(",")[0]?.trim() || "anonymous";
+};
+
 const processClaimedJob = async (
   claimedJob: ClaimedExportJob,
-  authMode: AuthMode,
   jobRepository: ExportJobRepository,
   artifactStore: ExportArtifactStore,
   resolver: AtrResolver,
 ) => {
   const { claimToken, job } = claimedJob;
-  const exportResources = resolver.buildExportResources(
+  const exportResources = await resolver.buildExportResources(
     job.groupId,
     job.normalizedTypes,
   );
@@ -162,7 +161,6 @@ const processClaimedJob = async (
     job.transactionTime,
     job.requestUrl,
     job.normalizedTypes,
-    authMode,
   );
   const manifestKey = await artifactStore.writeManifest(job.jobId, manifest);
   await jobRepository.markCompletedWithClaim(
@@ -177,16 +175,12 @@ export const createBulkRoutes = ({
   resolver,
   jobRepository,
   artifactStore,
-  authMode,
 }: BulkRoutesOptions) => {
-  const app = new Hono<AppEnv>();
-  app.use("/Group/:id/$davinci-data-export", createAuthMiddleware(authMode));
-  app.use("/bulk-status/:jobId", createAuthMiddleware(authMode));
-  app.use("/bulk-files/:jobId/:fileName", createAuthMiddleware(authMode));
+  const app = new Hono();
 
   app.get("/Group/:id/$davinci-data-export", async (context) => {
     const groupId = context.req.param("id");
-    const group = resolver.getGroupById(groupId);
+    const group = await resolver.getGroupById(groupId);
     if (!group) {
       return fhirOperationOutcome(
         context,
@@ -312,27 +306,31 @@ export const createBulkRoutes = ({
 
     // Fire-and-forget: process export immediately in background.
     // The claim/lease mechanism in the poll handler acts as a retry path
-    // if this processing fails or the Deno runtime restarts mid-flight.
+    // if this processing fails or the runtime restarts mid-flight.
     const claimedJob = await jobRepository.claimJob(jobId, "kickoff");
     if (claimedJob) {
       queueMicrotask(async () => {
         try {
           await processClaimedJob(
             claimedJob,
-            authMode,
             jobRepository,
             artifactStore,
             resolver,
           );
         } catch (error: unknown) {
+          console.error("Background export failed:", error);
           const diagnostics = error instanceof Error
             ? error.message
             : "Background export processing failed.";
-          await jobRepository.markFailedWithClaim(
-            jobId,
-            claimedJob.claimToken,
-            [diagnostics],
-          );
+          try {
+            await jobRepository.markFailedWithClaim(
+              jobId,
+              claimedJob.claimToken,
+              [diagnostics],
+            );
+          } catch (markError) {
+            console.error("Failed to mark job as failed:", markError);
+          }
         }
       });
     }
@@ -346,8 +344,7 @@ export const createBulkRoutes = ({
   });
 
   app.get("/bulk-status/:jobId", async (context) => {
-    const auth = context.get("auth");
-    const callerId = getCallerId(auth);
+    const callerId = getCallerId(context);
     const jobId = context.req.param("jobId");
     const job = await jobRepository.getJob(jobId);
 
@@ -382,7 +379,6 @@ export const createBulkRoutes = ({
         try {
           await processClaimedJob(
             claimedJob,
-            authMode,
             jobRepository,
             artifactStore,
             resolver,

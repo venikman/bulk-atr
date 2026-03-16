@@ -1,61 +1,33 @@
-import type { SqlClient } from "./sql-client.ts";
+import { ensureExportArtifactSchema } from "../adapters/postgres-export-artifact-store.ts";
+import { ensureExportJobSchema } from "../adapters/postgres-export-job-repository.ts";
+import type { SqlClient, SqlQueryable } from "./sql-client.ts";
 
-const defaultMigrationsUrl = new URL("../../db/migrations/", import.meta.url);
-
-const createMigrationsTable = async (sql: SqlClient) => {
-  await sql.query(`
-    create table if not exists _schema_migrations (
-      name text primary key,
-      applied_at timestamptz not null
+export const ensureFhirResourceSchema = async (queryable: SqlQueryable) => {
+  await queryable.query(`
+    CREATE TABLE IF NOT EXISTS fhir_resources (
+      resource_type TEXT NOT NULL,
+      resource_id TEXT NOT NULL,
+      resource_json JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (resource_type, resource_id)
     );
+  `);
+
+  await queryable.query(`
+    CREATE INDEX IF NOT EXISTS idx_fhir_resources_type
+      ON fhir_resources (resource_type);
+  `);
+
+  await queryable.query(`
+    CREATE INDEX IF NOT EXISTS idx_fhir_resources_group_name
+      ON fhir_resources ((lower(resource_json->>'name')))
+      WHERE resource_type = 'Group';
   `);
 };
 
-const listMigrationNames = async (migrationsUrl: URL) => {
-  const names: string[] = [];
-
-  for await (const entry of Deno.readDir(migrationsUrl)) {
-    if (entry.isFile && entry.name.endsWith(".sql")) {
-      names.push(entry.name);
-    }
-  }
-
-  names.sort((left, right) => left.localeCompare(right));
-  return names;
-};
-
-export const applyPendingMigrations = async (
-  sql: SqlClient,
-  migrationsUrl = defaultMigrationsUrl,
-) => {
-  await createMigrationsTable(sql);
-
-  const [available, appliedRows] = await Promise.all([
-    listMigrationNames(migrationsUrl),
-    sql.query<{ name: string }>("select name from _schema_migrations"),
-  ]);
-
-  const applied = new Set(appliedRows.rows.map((row) => row.name));
-  const executed: string[] = [];
-
-  for (const name of available) {
-    if (applied.has(name)) {
-      continue;
-    }
-
-    const sqlText = await Deno.readTextFile(new URL(name, migrationsUrl));
-    const appliedAt = new Date().toISOString();
-
-    await sql.transaction(async (transaction) => {
-      await transaction.query(sqlText);
-      await transaction.query(
-        "insert into _schema_migrations (name, applied_at) values ($1, $2)",
-        [name, appliedAt],
-      );
-    });
-
-    executed.push(name);
-  }
-
-  return executed;
+export const applyPendingMigrations = async (sql: SqlClient) => {
+  await ensureExportJobSchema(sql);
+  await ensureExportArtifactSchema(sql);
+  await ensureFhirResourceSchema(sql);
 };

@@ -1,5 +1,4 @@
-import { AtrMapper } from "./atr-mapper.ts";
-import type { RawDomainStore } from "./raw-domain-store.ts";
+import type { FhirStore } from "./fhir-store.ts";
 import type {
   FhirResource,
   JsonObject,
@@ -43,181 +42,31 @@ const parseReference = (reference: string) => {
   return { resourceType: match[1] as SupportedResourceType, id: match[2] };
 };
 
-const buildResourceOrder = (store: RawDomainStore) =>
-  ({
-    Group: new Map(
-      store.claimsAttribution.functions.listAttributionLists.items.map((
-        raw,
-        index,
-      ) => [
-        raw.fhirId,
-        index,
-      ]),
-    ),
-    Patient: new Map(
-      store.memberCoverage.functions.listPatients.items.map((
-        raw,
-        index,
-      ) => [raw.fhirId, index]),
-    ),
-    Coverage: new Map(
-      store.memberCoverage.functions.listCoverages.items.map((
-        raw,
-        index,
-      ) => [raw.fhirId, index]),
-    ),
-    RelatedPerson: new Map(
-      store.memberCoverage.functions.listRelatedPersons.items.map((
-        raw,
-        index,
-      ) => [
-        raw.fhirId,
-        index,
-      ]),
-    ),
-    Practitioner: new Map(
-      store.providerDirectory.functions.listPractitioners.items.map((
-        raw,
-        index,
-      ) => [
-        raw.fhirId,
-        index,
-      ]),
-    ),
-    PractitionerRole: new Map(
-      store.providerDirectory.functions.listPractitionerRoles.items.map((
-        raw,
-        index,
-      ) => [
-        raw.fhirId,
-        index,
-      ]),
-    ),
-    Organization: new Map(
-      store.providerDirectory.functions.listOrganizations.items.map((
-        raw,
-        index,
-      ) => [
-        raw.fhirId,
-        index,
-      ]),
-    ),
-    Location: new Map(
-      store.providerDirectory.functions.listLocations.items.map((
-        raw,
-        index,
-      ) => [
-        raw.fhirId,
-        index,
-      ]),
-    ),
-  }) satisfies Record<SupportedResourceType, Map<string, number>>;
-
 export class AtrResolver {
-  readonly store: RawDomainStore;
+  readonly store: FhirStore;
 
-  readonly mapper: AtrMapper;
-
-  readonly cache = new Map<string, FhirResource>();
-
-  readonly resourceOrder: Record<SupportedResourceType, Map<string, number>>;
-
-  constructor(store: RawDomainStore) {
+  constructor(store: FhirStore) {
     this.store = store;
-    this.mapper = new AtrMapper(store);
-    this.resourceOrder = buildResourceOrder(store);
-  }
-
-  private mapCached(key: string, builder: () => FhirResource | null) {
-    const cached = this.cache.get(key);
-    if (cached) {
-      return cached;
-    }
-
-    const resource = builder();
-    if (resource) {
-      this.cache.set(key, resource);
-    }
-    return resource;
   }
 
   getGroupById(id: string) {
-    return this.mapCached(`Group/${id}`, () => {
-      const raw = this.store.indexes.attributionListsByGroupId.get(id);
-      return raw ? this.mapper.mapGroup(raw) : null;
-    });
+    return this.store.getGroupById(id);
   }
 
   findGroupsByIdentifier(identifier: string) {
-    return (this.store.indexes.attributionListsByIdentifier.get(identifier) ||
-      []).map((raw) => this.getGroupById(raw.fhirId)) as FhirResource[];
+    return this.store.searchGroupsByIdentifier(identifier);
   }
 
   findGroupsByName(name: string) {
-    const lowered = name.toLowerCase();
-    const exact = this.store.indexes.attributionListsByName.get(lowered);
-    if (exact) {
-      return exact.map((raw) =>
-        this.getGroupById(raw.fhirId)
-      ) as FhirResource[];
-    }
-
-    const matches: FhirResource[] = [];
-    for (
-      const [candidate, groups] of this.store.indexes.attributionListsByName
-        .entries()
-    ) {
-      if (candidate.includes(lowered)) {
-        matches.push(
-          ...(groups.map((raw) =>
-            this.getGroupById(raw.fhirId)
-          ) as FhirResource[]),
-        );
-      }
-    }
-
-    return matches;
+    return this.store.searchGroupsByName(name);
   }
 
   getResource(resourceType: string, id: string) {
-    return this.mapCached(`${resourceType}/${id}`, () => {
-      switch (resourceType) {
-        case "Group": {
-          const raw = this.store.indexes.attributionListsByGroupId.get(id);
-          return raw ? this.mapper.mapGroup(raw) : null;
-        }
-        case "Patient": {
-          const raw = this.store.indexes.patientsByFhirId.get(id);
-          return raw ? this.mapper.mapPatient(raw) : null;
-        }
-        case "Coverage": {
-          const raw = this.store.indexes.coveragesByFhirId.get(id);
-          return raw ? this.mapper.mapCoverage(raw) : null;
-        }
-        case "RelatedPerson": {
-          const raw = this.store.indexes.relatedPersonsByFhirId.get(id);
-          return raw ? this.mapper.mapRelatedPerson(raw) : null;
-        }
-        case "Practitioner": {
-          const raw = this.store.indexes.practitionersByFhirId.get(id);
-          return raw ? this.mapper.mapPractitioner(raw) : null;
-        }
-        case "PractitionerRole": {
-          const raw = this.store.indexes.rolesByFhirId.get(id);
-          return raw ? this.mapper.mapPractitionerRole(raw) : null;
-        }
-        case "Organization": {
-          const raw = this.store.indexes.orgsByFhirId.get(id);
-          return raw ? this.mapper.mapOrganization(raw) : null;
-        }
-        case "Location": {
-          const raw = this.store.indexes.locationsByFhirId.get(id);
-          return raw ? this.mapper.mapLocation(raw) : null;
-        }
-        default:
-          return null;
-      }
-    });
+    return this.store.getResource(resourceType, id);
+  }
+
+  listByType(resourceType: string) {
+    return this.store.listByType(resourceType);
   }
 
   buildSearchBundle(resources: FhirResource[], requestUrl: string) {
@@ -240,15 +89,29 @@ export class AtrResolver {
     } satisfies JsonObject;
   }
 
-  buildExportResources(
+  async buildExportResources(
     groupId: string,
     requestedTypes: SupportedResourceType[],
   ) {
-    const group = this.getGroupById(groupId);
+    const group = await this.getGroupById(groupId);
     if (!group) {
       return null;
     }
 
+    // Batch-load all resources of each requested type into an in-memory index.
+    // This avoids hundreds of individual REST calls during BFS traversal.
+    const resourceIndex = new Map<string, FhirResource>();
+    resourceIndex.set(`Group/${group.id}`, group);
+
+    for (const type of requestedTypes) {
+      if (type === "Group") continue;
+      const resources = await this.store.listByType(type);
+      for (const resource of resources) {
+        resourceIndex.set(`${resource.resourceType}/${resource.id}`, resource);
+      }
+    }
+
+    // BFS through references using the in-memory index
     const requested = new Set(requestedTypes);
     const visitedKeys = new Set<string>([`Group/${group.id}`]);
     const queue: FhirResource[] = [group];
@@ -274,22 +137,15 @@ export class AtrResolver {
       collectReferences(resource, references);
 
       for (const reference of references) {
+        if (visitedKeys.has(reference)) continue;
+
         const parsed = parseReference(reference);
-        if (!parsed) {
-          continue;
-        }
+        if (!parsed) continue;
 
-        const referenced = this.getResource(parsed.resourceType, parsed.id);
-        if (!referenced) {
-          continue;
-        }
+        const referenced = resourceIndex.get(reference);
+        if (!referenced) continue;
 
-        const referencedKey = `${referenced.resourceType}/${referenced.id}`;
-        if (visitedKeys.has(referencedKey)) {
-          continue;
-        }
-
-        visitedKeys.add(referencedKey);
+        visitedKeys.add(reference);
         queue.push(referenced);
       }
     }
@@ -298,12 +154,6 @@ export class AtrResolver {
       requestedTypes.map((type) => {
         const resources = Array.from(
           selectedResources.get(type)?.values() || [],
-        );
-        const order = this.resourceOrder[type];
-        resources.sort(
-          (left, right) =>
-            (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-            (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
         );
         return [type, resources];
       }),

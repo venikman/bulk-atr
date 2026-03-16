@@ -1,0 +1,29 @@
+meta {
+  name: Export — wrong exportType
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/fhir/Group/{{groupId}}/$davinci-data-export?exportType=wrong-type&_type=Patient
+  body: none
+  auth: none
+}
+
+params:query {
+  exportType: wrong-type
+  _type: Patient
+}
+
+tests {
+  test("Returns 400 for invalid exportType", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.resourceType).to.equal("OperationOutcome");
+  });
+}
+
+docs {
+  Using an invalid `exportType` returns 400.
+
+  The only accepted value is `hl7.fhir.us.davinci-atr`.
+}

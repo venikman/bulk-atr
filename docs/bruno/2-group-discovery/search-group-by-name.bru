@@ -1,0 +1,43 @@
+meta {
+  name: Search Group by name
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/fhir/Group?name={{groupName}}
+  body: none
+  auth: none
+}
+
+params:query {
+  name: {{groupName}}
+}
+
+tests {
+  test("Returns a searchset Bundle or 400 if groupName is empty", function() {
+    if (!bru.getEnvVar("groupName")) {
+      expect(res.status).to.equal(400);
+      return;
+    }
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("Bundle");
+    expect(res.body.type).to.equal("searchset");
+  });
+}
+
+script:post-response {
+  const groupId = res.body?.entry?.[0]?.resource?.id || "";
+  if (groupId) {
+    bru.setEnvVar("groupId", groupId);
+  }
+}
+
+docs {
+  Search for attribution Groups by name (case-insensitive partial match).
+
+  Set `groupName` in your environment before running.
+  Auto-sets `groupId` from the first result.
+
+  Note: You must provide exactly one of `identifier` or `name` — not both.
+}

@@ -230,7 +230,7 @@ Mapped FHIR output:
 If you need:
 
 - live capability and route behavior: `/fhir/*`
-- async export semantics and persistence model: `docs/deno-deployment.md`
+- async export semantics and persistence model: `docs/deployment.md`
 - mapping rules and invariants: `docs/architecture.md`
 - upstream source contracts: `data/sources/*.json`
 

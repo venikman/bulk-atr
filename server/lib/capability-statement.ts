@@ -1,4 +1,3 @@
-import type { AuthMode } from "./auth.ts";
 import type { JsonObject } from "./types.ts";
 
 const buildResource = (
@@ -25,14 +24,13 @@ const buildResource = (
 
 export const createCapabilityStatement = (
   baseUrl: string,
-  authMode: AuthMode,
 ): JsonObject => ({
   resourceType: "CapabilityStatement",
   status: "active",
   date: new Date().toISOString(),
   kind: "instance",
   fhirVersion: "4.0.1",
-  format: ["json"],
+  format: ["json", "application/fhir+json"],
   instantiates: [
     "http://hl7.org/fhir/us/davinci-atr/CapabilityStatement/atr-producer",
   ],
@@ -42,29 +40,12 @@ export const createCapabilityStatement = (
   },
   implementation: {
     description:
-      "Truthful producer-lite ATR server with Group discovery, linked reads, and group-level asynchronous bulk export.",
+      "ATR producer server with Group discovery, linked reads, and group-level asynchronous bulk export.",
     url: baseUrl,
   },
   rest: [
     {
       mode: "server",
-      security: {
-        cors: false,
-        ...(authMode === "smart-backend"
-          ? {
-            service: [{
-              coding: [{
-                system:
-                  "http://terminology.hl7.org/CodeSystem/restful-security-service",
-                code: "SMART-on-FHIR",
-              }],
-            }],
-          }
-          : {}),
-        description: authMode === "smart-backend"
-          ? "Protected read and export routes using a SMART-backend-ready bearer seam."
-          : "Development-open profile with no auth enforcement on read and export routes.",
-      },
       resource: [
         buildResource(
           "Group",

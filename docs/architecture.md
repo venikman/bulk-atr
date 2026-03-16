@@ -64,8 +64,8 @@ path.
 - Role `i` maps to provider organization `((i-1) mod 3)+1`.
 - Change types are fixed: `1..35 nochange`, `36..45 changed`, `46..50 new`.
 
-## Test parity helper
+## Test strategy
 
-`tests/api/reference-export-helpers.ts` produces the same resource graph as the
-live bulk export flow. That keeps parity and validation coverage without leaving
-test-only assembly code inside `server/`.
+Tests exercise the full HTTP surface through `createTestServer()`, which boots
+an in-memory Postgres (pg-mem) and the Hono app. There are no isolated unit
+tests; all coverage comes from E2E scenarios against the running API.

@@ -1,0 +1,69 @@
+{
+  "resourceType": "CapabilityStatement",
+  "status": "active",
+  "kind": "instance",
+  "fhirVersion": "4.0.1",
+  "format": ["json"],
+  "instantiates": [
+    "http://hl7.org/fhir/us/davinci-atr/CapabilityStatement/atr-producer"
+  ],
+  "software": {
+    "name": "bulk-atr export-first producer",
+    "version": "0.1.0"
+  },
+  "implementation": {
+    "description": "ATR producer server with Group discovery, linked reads, and group-level asynchronous bulk export."
+  },
+  "rest": [
+    {
+      "mode": "server",
+      "resource": [
+        {
+          "type": "Group",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "identifier", "type": "token" },
+            { "name": "name", "type": "string" }
+          ],
+          "operation": [
+            {
+              "name": "davinci-data-export",
+              "definition": "http://hl7.org/fhir/us/davinci-atr/OperationDefinition/atr-group-davinci-data-export"
+            }
+          ]
+        },
+        {
+          "type": "Patient",
+          "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "Coverage",
+          "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "RelatedPerson",
+          "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "Practitioner",
+          "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "PractitionerRole",
+          "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "Organization",
+          "interaction": [{ "code": "read" }]
+        },
+        {
+          "type": "Location",
+          "interaction": [{ "code": "read" }]
+        }
+      ]
+    }
+  ]
+}

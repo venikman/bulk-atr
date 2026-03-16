@@ -1,0 +1,638 @@
+openapi: 3.1.0
+info:
+  title: Bulk ATR Producer API
+  description: |
+    DaVinci ATR (Member Attribution) FHIR R4 producer server.
+    Provides Group discovery, linked resource reads, resource listing,
+    and group-level asynchronous bulk data export following the
+    HL7 DaVinci ATR Implementation Guide.
+  version: 0.1.0
+  contact:
+    name: Bulk ATR Producer
+  license:
+    name: Private
+
+servers:
+  - url: http://localhost:3001
+    description: Local development
+  - url: https://fjpnwaejxyybeminhcul.supabase.co
+    description: Supabase (data API only)
+
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      description: Returns server and database connectivity status.
+      tags: [System]
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+        "503":
+          description: Database unreachable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [error]
+                  detail:
+                    type: string
+
+  /fhir/metadata:
+    get:
+      operationId: getCapabilityStatement
+      summary: FHIR CapabilityStatement
+      description: Returns the server's CapabilityStatement declaring supported resources, interactions, and profiles.
+      tags: [FHIR Metadata]
+      responses:
+        "200":
+          description: CapabilityStatement resource
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/CapabilityStatement"
+
+  /fhir/Group:
+    get:
+      operationId: searchGroups
+      summary: Search Groups
+      description: |
+        Search for attribution Groups by identifier or name.
+        Exactly one search parameter must be provided.
+      tags: [Group]
+      parameters:
+        - name: identifier
+          in: query
+          description: "Token search in format `{system}|{value}` (e.g. `http://example.org/contracts|CTR-2026-NWACO-001`)"
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: Case-insensitive partial match on Group name
+          schema:
+            type: string
+        - name: _summary
+          in: query
+          description: Only `true` is supported
+          schema:
+            type: string
+            enum: ["true"]
+      responses:
+        "200":
+          description: Bundle of matching Groups
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+        "400":
+          description: Invalid search parameters
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
+
+  /fhir/Group/{id}:
+    get:
+      operationId: readGroup
+      summary: Read Group by ID
+      tags: [Group]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Group resource
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/Group/{id}/$davinci-data-export:
+    get:
+      operationId: kickOffExport
+      summary: Kick off DaVinci ATR bulk data export
+      description: |
+        Initiates an asynchronous bulk export of the attribution Group and its
+        linked resources. Returns 202 with a `Content-Location` header pointing
+        to the bulk status endpoint for polling.
+      tags: [Bulk Export]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+        - name: exportType
+          in: query
+          required: true
+          description: Must be `hl7.fhir.us.davinci-atr`
+          schema:
+            type: string
+            enum: [hl7.fhir.us.davinci-atr]
+        - name: _type
+          in: query
+          required: true
+          description: |
+            Comma-separated resource types to include.
+            Must include at least Group, Patient, Coverage.
+            Supported: Group, Patient, Coverage, RelatedPerson, Practitioner, PractitionerRole, Organization, Location.
+          schema:
+            type: string
+          example: Group,Patient,Coverage,RelatedPerson,Practitioner,PractitionerRole,Organization,Location
+        - name: resourceTypes
+          in: query
+          description: Alias for `_type`
+          schema:
+            type: string
+        - name: _outputFormat
+          in: query
+          description: Output format (defaults to ndjson)
+          schema:
+            type: string
+            enum: [application/fhir+ndjson, application/ndjson, ndjson]
+      responses:
+        "202":
+          description: Export accepted
+          headers:
+            Content-Location:
+              description: URL to poll for export status
+              schema:
+                type: string
+            Retry-After:
+              description: Seconds to wait before polling
+              schema:
+                type: string
+        "400":
+          description: Invalid export parameters
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/bulk-status/{jobId}:
+    get:
+      operationId: pollExportStatus
+      summary: Poll bulk export job status
+      description: |
+        Poll for the status of a bulk export job.
+        Returns 202 while processing, 200 with manifest when complete.
+      tags: [Bulk Export]
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Export complete — manifest with download URLs
+          headers:
+            Expires:
+              description: When this export will expire
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportManifest"
+        "202":
+          description: Export in progress
+          headers:
+            X-Progress:
+              description: Progress indicator
+              schema:
+                type: string
+            Retry-After:
+              description: Seconds to wait before next poll
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: Polling too frequently
+          headers:
+            Retry-After:
+              schema:
+                type: string
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
+        "500":
+          description: Export failed
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
+    delete:
+      operationId: deleteExportJob
+      summary: Cancel/delete a bulk export job
+      tags: [Bulk Export]
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Job deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/bulk-files/{jobId}/{fileName}:
+    get:
+      operationId: downloadExportFile
+      summary: Download an NDJSON export file
+      tags: [Bulk Export]
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: fileName
+          in: path
+          required: true
+          description: "e.g. Patient-1.ndjson"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: NDJSON file content
+          content:
+            application/fhir+ndjson:
+              schema:
+                type: string
+                description: Newline-delimited FHIR JSON resources
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/Patient:
+    get:
+      operationId: listPatients
+      summary: List all Patients
+      tags: [Resource Read]
+      responses:
+        "200":
+          description: Bundle of all Patient resources
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/Patient/{id}:
+    get:
+      operationId: readPatient
+      summary: Read Patient by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Patient resource
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/Coverage:
+    get:
+      operationId: listCoverages
+      summary: List all Coverages
+      tags: [Resource Read]
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/Coverage/{id}:
+    get:
+      operationId: readCoverage
+      summary: Read Coverage by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/RelatedPerson:
+    get:
+      operationId: listRelatedPersons
+      summary: List all RelatedPersons
+      tags: [Resource Read]
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/RelatedPerson/{id}:
+    get:
+      operationId: readRelatedPerson
+      summary: Read RelatedPerson by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/Practitioner:
+    get:
+      operationId: listPractitioners
+      summary: List all Practitioners
+      tags: [Resource Read]
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/Practitioner/{id}:
+    get:
+      operationId: readPractitioner
+      summary: Read Practitioner by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/PractitionerRole:
+    get:
+      operationId: listPractitionerRoles
+      summary: List all PractitionerRoles
+      tags: [Resource Read]
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/PractitionerRole/{id}:
+    get:
+      operationId: readPractitionerRole
+      summary: Read PractitionerRole by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/Organization:
+    get:
+      operationId: listOrganizations
+      summary: List all Organizations
+      tags: [Resource Read]
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/Organization/{id}:
+    get:
+      operationId: readOrganization
+      summary: Read Organization by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fhir/Location:
+    get:
+      operationId: listLocations
+      summary: List all Locations
+      tags: [Resource Read]
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+
+  /fhir/Location/{id}:
+    get:
+      operationId: readLocation
+      summary: Read Location by ID
+      tags: [Resource Read]
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FhirResource"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/fhir+json:
+          schema:
+            $ref: "#/components/schemas/OperationOutcome"
+
+  schemas:
+    FhirResource:
+      type: object
+      required: [resourceType, id]
+      properties:
+        resourceType:
+          type: string
+        id:
+          type: string
+        meta:
+          type: object
+          properties:
+            profile:
+              type: array
+              items:
+                type: string
+      additionalProperties: true
+
+    Bundle:
+      type: object
+      required: [resourceType, type, total]
+      properties:
+        resourceType:
+          type: string
+          enum: [Bundle]
+        type:
+          type: string
+          enum: [searchset]
+        total:
+          type: integer
+        link:
+          type: array
+          items:
+            type: object
+            properties:
+              relation:
+                type: string
+              url:
+                type: string
+        entry:
+          type: array
+          items:
+            type: object
+            properties:
+              fullUrl:
+                type: string
+              resource:
+                $ref: "#/components/schemas/FhirResource"
+
+    OperationOutcome:
+      type: object
+      required: [resourceType, issue]
+      properties:
+        resourceType:
+          type: string
+          enum: [OperationOutcome]
+        issue:
+          type: array
+          items:
+            type: object
+            required: [severity, code]
+            properties:
+              severity:
+                type: string
+                enum: [error, fatal]
+              code:
+                type: string
+                enum: [invalid, not-supported, not-found, exception, login, throttled]
+              diagnostics:
+                type: string
+
+    CapabilityStatement:
+      type: object
+      required: [resourceType, status, fhirVersion]
+      properties:
+        resourceType:
+          type: string
+          enum: [CapabilityStatement]
+        status:
+          type: string
+        fhirVersion:
+          type: string
+        format:
+          type: array
+          items:
+            type: string
+        instantiates:
+          type: array
+          items:
+            type: string
+        rest:
+          type: array
+          items:
+            type: object
+            properties:
+              mode:
+                type: string
+              resource:
+                type: array
+                items:
+                  type: object
+
+    ExportManifest:
+      type: object
+      required: [transactionTime, request, requiresAccessToken, output]
+      properties:
+        transactionTime:
+          type: string
+          format: date-time
+        request:
+          type: string
+        requiresAccessToken:
+          type: boolean
+        output:
+          type: array
+          items:
+            type: object
+            required: [type, url]
+            properties:
+              type:
+                type: string
+                enum: [Group, Patient, Coverage, RelatedPerson, Practitioner, PractitionerRole, Organization, Location]
+              url:
+                type: string
+        error:
+          type: array
+          items:
+            type: string
+
+tags:
+  - name: System
+    description: Health and operational endpoints
+  - name: FHIR Metadata
+    description: FHIR CapabilityStatement
+  - name: Group
+    description: Attribution Group discovery and read
+  - name: Bulk Export
+    description: DaVinci ATR asynchronous bulk data export
+  - name: Resource Read
+    description: Individual FHIR resource read and list
