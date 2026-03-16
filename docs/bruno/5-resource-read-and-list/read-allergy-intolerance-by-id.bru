@@ -1,0 +1,22 @@
+meta {
+  name: Read AllergyIntolerance by ID
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{baseUrl}}/fhir/AllergyIntolerance/{{allergyIntoleranceId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("AllergyIntolerance read succeeds", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("AllergyIntolerance");
+  });
+}
+
+docs {
+  Read a single AllergyIntolerance resource by ID.
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Condition Search by Code
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/fhir/Condition?code=http://hl7.org/fhir/sid/icd-10-cm|E11
+  body: none
+  auth: none
+}
+
+tests {
+  test("Returns a searchset Bundle", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("Bundle");
+    expect(res.body.type).to.equal("searchset");
+  });
+}
+
+docs {
+  Search conditions by ICD-10 code prefix.
+}

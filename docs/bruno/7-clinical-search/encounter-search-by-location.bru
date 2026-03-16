@@ -1,0 +1,23 @@
+meta {
+  name: Encounter Search by Location
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/fhir/Encounter?location=Location/{{locationId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("Returns a searchset Bundle", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("Bundle");
+    expect(res.body.type).to.equal("searchset");
+  });
+}
+
+docs {
+  Search encounters by location.
+}

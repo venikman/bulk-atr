@@ -1,0 +1,23 @@
+meta {
+  name: Observation Search Vitals
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrl}}/fhir/Observation?patient=Patient/{{patientId}}&category=vital-signs
+  body: none
+  auth: none
+}
+
+tests {
+  test("Returns a searchset Bundle", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("Bundle");
+    expect(res.body.type).to.equal("searchset");
+  });
+}
+
+docs {
+  Search vital-signs observations for a patient.
+}

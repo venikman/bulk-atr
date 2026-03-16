@@ -1,0 +1,23 @@
+meta {
+  name: Observation Search by LOINC
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/fhir/Observation?code=http://loinc.org|4548-4&date=ge2025-01-01
+  body: none
+  auth: none
+}
+
+tests {
+  test("Returns a searchset Bundle", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("Bundle");
+    expect(res.body.type).to.equal("searchset");
+  });
+}
+
+docs {
+  Search observations by LOINC code (4548-4 = Hemoglobin A1c) with date filter.
+}

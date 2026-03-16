@@ -1,0 +1,23 @@
+meta {
+  name: Patient Search by Birthdate
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/fhir/Patient?birthdate=ge1960-01-01&birthdate=le2000-12-31
+  body: none
+  auth: none
+}
+
+tests {
+  test("Returns a searchset Bundle", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.resourceType).to.equal("Bundle");
+    expect(res.body.type).to.equal("searchset");
+  });
+}
+
+docs {
+  Search patients by birth date range using ge/le prefixes.
+}
